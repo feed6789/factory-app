@@ -33,7 +33,7 @@ The content is organized as follows:
 <notes>
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
-- Files matching these patterns are excluded: android/**, ios/**, web/**, linux/**, macos/**, windows/**, build/**, .dart_tool/**, **/*.g.dart, **/*.freezed.dart, assets/**, pubspec.lock, test/**
+- Files matching these patterns are excluded: android/**, ios/**, web/**, linux/**, macos/**, windows/**, build/**, .dart_tool/**, **/*.g.dart, **/*.freezed.dart, assets/**, pubspec.lock, test/**, node_modules/**, **/.env*, supabase/.temp/**, **/*.png, **/*.jpg, **/*.svg, **/*.ico
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
 - Code comments have been removed from supported file types
@@ -66,6 +66,7 @@ lib/features/attendance/models/profile_model.dart
 lib/features/attendance/models/timesheet_model.dart
 lib/features/attendance/repositories/attendance_repository.dart
 lib/features/attendance/views/leave_approval_page.dart
+lib/features/attendance/views/manager_attendance_page.dart
 lib/features/attendance/views/tab_bang_cong_thang.dart
 lib/features/attendance/views/tab_cham_cong_ngay.dart
 lib/features/attendance/views/widgets/attendance_row_card.dart
@@ -74,6 +75,7 @@ lib/features/auth/controllers/auth_controller.dart
 lib/features/auth/repositories/auth_repository.dart
 lib/features/auth/views/login_page.dart
 lib/features/auth/views/register_page.dart
+lib/features/home/views/home_dashboard_page.dart
 lib/features/home/views/main_navigation_page.dart
 lib/main.dart
 package.json
@@ -81,14 +83,6 @@ public/index.html
 pubspec.yaml
 README.md
 repomix.config.json
-supabase/.temp/cli-latest
-supabase/.temp/gotrue-version
-supabase/.temp/pooler-url
-supabase/.temp/postgres-version
-supabase/.temp/project-ref
-supabase/.temp/rest-version
-supabase/.temp/storage-migration
-supabase/.temp/storage-version
 supabase/config.toml
 supabase/functions/create_employee/.npmrc
 supabase/functions/create_employee/deno.json
@@ -96,7 +90,6 @@ supabase/functions/create_employee/index.ts
 supabase/functions/delete_employee/.npmrc
 supabase/functions/delete_employee/deno.json
 supabase/functions/delete_employee/index.ts
-ungdung.env
 </directory_structure>
 
 <files>
@@ -130,18 +123,18 @@ canvaskit/chromium/canvaskit.wasm,1772848895586,5d567191a93c5590268429b7831b7c66
 canvaskit/chromium/canvaskit.js.symbols,1772848895556,18d71aedfe906702127b1bbb76c0b8be8cbf43798c018e12028021aaa105817f
 canvaskit/chromium/canvaskit.js,1772848895550,ed67753aa5382460fefd96876bf5dc40c5d242d56b37664abc8468a6772478df
 assets/ungdung.env,1773650406386,d4f85ca8d67958b7c9332c458dd3b5097a9788577fca4b79cb6809a17b4e1a4b
-version.json,1773732391679,0991ba9f33fd5128f4c08b84607a4eb4f9fe038498610efddb1807fe3672405b
-flutter_service_worker.js,1773732397137,c73b271847ffc78c576de35e95f6b46187eefb1d97dcb08eb9d84c45954ff310
-index.html,1773732344247,4caaf70c2efc4ca461448d6f4ced39396363ef88fdf18b91b583978786b57d8d
-flutter_bootstrap.js,1773732344228,b17e6df2f4ab735f7292f50d56969c9af49e238ab5bbb0291db764d84dee2fde
-assets/FontManifest.json,1773732391870,1479aae12a3a535d1646297c7d9007f9819906eb6c4040f9db852e215f4d9782
-assets/AssetManifest.bin.json,1773732391870,8c9cb3ffcddb2212829b3840e2a2d50decfdf58ee62a1bf25d088c430eb82ae2
-assets/AssetManifest.bin,1773732391869,1c14fa8bf42ca1404292b1091128a93e4158a885b4d91e22a878b8af4679e27e
-assets/shaders/ink_sparkle.frag,1773732392125,9d529f4d93e5dabf338537416221237a0042f9cee61c98a357340d0273c67293
-assets/fonts/MaterialIcons-Regular.otf,1773732394166,4eee6a907b3b511dfc19faba1eeb8edb8dc96b9552cd440d8fb19c38b0f70021
-assets/shaders/stretch_effect.frag,1773732392134,df37894a7ac7854986bfa5d515e9af03d9138bb77be4d027db848785ebe9e357
-assets/NOTICES,1773732391872,679b887b0af77767804e8e6bd3de7141a83d8b56130997123877ceed5f47ed24
-main.dart.js,1773732380568,a8205980538df54eec2b9bc564b0ccc66e3e8396fae7a41d87b59e51687d947e
+version.json,1773997031391,0991ba9f33fd5128f4c08b84607a4eb4f9fe038498610efddb1807fe3672405b
+index.html,1773996977678,4caaf70c2efc4ca461448d6f4ced39396363ef88fdf18b91b583978786b57d8d
+flutter_service_worker.js,1773997035627,c73b271847ffc78c576de35e95f6b46187eefb1d97dcb08eb9d84c45954ff310
+assets/FontManifest.json,1773997031572,1479aae12a3a535d1646297c7d9007f9819906eb6c4040f9db852e215f4d9782
+assets/AssetManifest.bin.json,1773997031572,8c9cb3ffcddb2212829b3840e2a2d50decfdf58ee62a1bf25d088c430eb82ae2
+assets/AssetManifest.bin,1773997031572,1c14fa8bf42ca1404292b1091128a93e4158a885b4d91e22a878b8af4679e27e
+flutter_bootstrap.js,1773996977652,62d094afdc6dafea13593b8e2a8b8623bc85b193c32e9fbbce32e6396e9ffaae
+assets/shaders/stretch_effect.frag,1773997031825,df37894a7ac7854986bfa5d515e9af03d9138bb77be4d027db848785ebe9e357
+assets/shaders/ink_sparkle.frag,1773997031810,9d529f4d93e5dabf338537416221237a0042f9cee61c98a357340d0273c67293
+assets/fonts/MaterialIcons-Regular.otf,1773997033548,46e8a289db9fc9d618553b4134baf1825a60e599f315861bccce5c5457b7a496
+assets/NOTICES,1773997031572,679b887b0af77767804e8e6bd3de7141a83d8b56130997123877ceed5f47ed24
+main.dart.js,1773997016442,b553e7b3e21e17fb2e7ad03bb445dd4729579003a4379fdd65a548bc3a1907ff
 </file>
 
 <file path=".firebaserc">
@@ -198,6 +191,22 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+/node_modules/
+
+windows/flutter/
+
+# --- Environment Variables (Supabase Keys) ---
+.env
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Supabase Local Development
+supabase/.temp/
+supabase/functions/.env
 </file>
 
 <file path=".metadata">
@@ -331,80 +340,190 @@ import '../../../core/services/supabase_provider.dart';
 
 
 
-final departmentListProvider = FutureProvider<List<Map<String, dynamic>>>((
+final divisionListProvider = FutureProvider<List<Map<String, dynamic>>>((
   ref,
 ) async {
   final supabase = ref.read(supabaseProvider);
-
   final response = await supabase
-      .from('departments')
-      .select('id, name, description')
+      .from('divisions')
+      .select()
       .order('name', ascending: true);
   return List<Map<String, dynamic>>.from(response);
 });
 
+final departmentListProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final response = await supabase
+      .from('departments')
+      .select('id, name, description, division_id')
+      .order('name', ascending: true);
+  return List<Map<String, dynamic>>.from(response);
+});
 
-final departmentActionProvider = Provider(
-  (ref) => DepartmentActionController(ref),
-);
+final rolePermissionsProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final response = await supabase.from('role_permissions').select();
+  return List<Map<String, dynamic>>.from(response);
+});
 
-class DepartmentActionController {
+final roleHierarchyProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final response = await supabase.from('role_hierarchy').select();
+  return List<Map<String, dynamic>>.from(response);
+});
+
+
+
+final systemActionProvider = Provider((ref) => SystemActionController(ref));
+
+class SystemActionController {
   final Ref ref;
-  DepartmentActionController(this.ref);
+  SystemActionController(this.ref);
+
+
+  Future<bool> addDivision(String name, String? description) async {
+    try {
+      await ref.read(supabaseProvider).from('divisions').insert({
+        'name': name,
+        'description': description,
+      });
+      ref.invalidate(divisionListProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updateDivision(
+    String id,
+    String name,
+    String? description,
+  ) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('divisions')
+          .update({'name': name, 'description': description})
+          .eq('id', id);
+      ref.invalidate(divisionListProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String> deleteDivision(String id) async {
+    try {
+      await ref.read(supabaseProvider).from('divisions').delete().eq('id', id);
+      ref.invalidate(divisionListProvider);
+      return "OK";
+    } catch (e) {
+      return "Không thể xóa bộ phận này vì đang có phòng ban thuộc về nó.";
+    }
+  }
 
 
   Future<bool> addDepartment({
     required String name,
     String? description,
+    String? divisionId,
   }) async {
     try {
-      final supabase = ref.read(supabaseProvider);
-      await supabase.from('departments').insert({
+      await ref.read(supabaseProvider).from('departments').insert({
         'name': name,
         'description': description,
+        'division_id': divisionId,
       });
-
       ref.invalidate(departmentListProvider);
       return true;
     } catch (e) {
-      print("Lỗi thêm phòng ban: $e");
       return false;
     }
   }
-
 
   Future<bool> updateDepartment({
     required String id,
     required String name,
     String? description,
+    String? divisionId,
   }) async {
     try {
-      final supabase = ref.read(supabaseProvider);
-      await supabase
+      await ref
+          .read(supabaseProvider)
           .from('departments')
-          .update({'name': name, 'description': description})
+          .update({
+            'name': name,
+            'description': description,
+            'division_id': divisionId,
+          })
           .eq('id', id);
       ref.invalidate(departmentListProvider);
       return true;
     } catch (e) {
-      print("Lỗi cập nhật phòng ban: $e");
+      return false;
+    }
+  }
+
+  Future<String> deleteDepartment(String id) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('departments')
+          .delete()
+          .eq('id', id);
+      ref.invalidate(departmentListProvider);
+      return "OK";
+    } catch (e) {
+      return "Không thể xóa phòng ban này vì vẫn còn nhân viên.";
+    }
+  }
+
+
+  Future<bool> updateRolePermissions(String role, List<String> features) async {
+    try {
+      await ref.read(supabaseProvider).from('role_permissions').upsert({
+        'role': role,
+        'allowed_features': features,
+      });
+      ref.invalidate(rolePermissionsProvider);
+      return true;
+    } catch (e) {
       return false;
     }
   }
 
 
-  Future<String> deleteDepartment(String id) async {
+  Future<bool> addRoleHierarchy(String role, String managedBy) async {
     try {
-      final supabase = ref.read(supabaseProvider);
-      await supabase.from('departments').delete().eq('id', id);
-      ref.invalidate(departmentListProvider);
-      return "OK";
+      await ref.read(supabaseProvider).from('role_hierarchy').insert({
+        'role': role,
+        'managed_by_role': managedBy,
+      });
+      ref.invalidate(roleHierarchyProvider);
+      return true;
     } catch (e) {
+      return false;
+    }
+  }
 
-      if (e.toString().contains('violates foreign key constraint')) {
-        return "Không thể xóa phòng ban này vì vẫn còn nhân viên trong đó.";
-      }
-      return "Lỗi không xác định: ${e.toString()}";
+  Future<bool> deleteRoleHierarchy(String role, String managedBy) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('role_hierarchy')
+          .delete()
+          .eq('role', role)
+          .eq('managed_by_role', managedBy);
+      ref.invalidate(roleHierarchyProvider);
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 }
@@ -430,6 +549,14 @@ final employeeListProvider = FutureProvider<List<ProfileModel>>((ref) async {
 
 final employeeActionProvider = Provider((ref) => EmployeeActionController(ref));
 
+
+
+
+
+
+
+
+
 class EmployeeActionController {
   final Ref ref;
   EmployeeActionController(this.ref);
@@ -442,6 +569,7 @@ class EmployeeActionController {
     required String role,
     required bool isActive,
     String? departmentId,
+    String? divisionId,
     String? managerId,
     String? email,
     String? phoneNumber,
@@ -456,6 +584,7 @@ class EmployeeActionController {
             'role': role,
             'is_active': isActive,
             'department_id': departmentId,
+            'division_id': divisionId,
             'manager_id': managerId,
             'email': email,
             'phone_number': phoneNumber,
@@ -708,137 +837,335 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ung_dung_nm/features/admin/controllers/department_controller.dart';
 
+
+const Map<String, String> ALL_FEATURES = {
+  "nhan_su": "Quản lý Nhân sự",
+  "phong_ban": "Cơ Cấu Tổ Chức & Cấu Hình",
+  "cham_cong_tram": "Chấm Công Tổ/Trạm",
+  "duyet_don": "Duyệt Đơn Từ",
+  "cong_ca_nhan": "Bảng Công & Xin Nghỉ Cá Nhân",
+  "bao_cao": "Báo cáo & Thống kê",
+  "vat_tu": "Quản lý Vật tư",
+  "tai_san": "Quản lý Tài sản",
+  "san_xuat": "Nhật ký Sản xuất",
+  "giao_viec": "Giao Việc",
+};
+const List<String> ROLES = [
+  'admin',
+  'director',
+  'team_leader',
+  'section_head',
+  'office_staff',
+  'worker',
+];
+
 class DepartmentManagementPage extends ConsumerWidget {
   const DepartmentManagementPage({super.key});
 
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            "Cơ Cấu & Cấu Hình Hệ Thống",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
 
-  void _showAddOrEditDialog(
+          backgroundColor: Colors.blue.shade800,
+          foregroundColor: Colors.white,
+          bottom: const TabBar(
+            isScrollable: true,
+            labelColor: Colors.orangeAccent,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: Colors.orangeAccent,
+            tabs: [
+              Tab(icon: Icon(Icons.apartment), text: "Bộ Phận"),
+              Tab(icon: Icon(Icons.business), text: "Phòng Ban"),
+              Tab(icon: Icon(Icons.security), text: "Phân Quyền App"),
+              Tab(icon: Icon(Icons.account_tree), text: "Cấp Bậc Quản Lý"),
+            ],
+          ),
+        ),
+        body: const TabBarView(
+          children: [
+            _DivisionTab(),
+            _DepartmentTab(),
+            _RolePermissionsTab(),
+            _RoleHierarchyTab(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class _DivisionTab extends ConsumerWidget {
+  const _DivisionTab();
+
+  void _showAddOrEdit(
     BuildContext context,
     WidgetRef ref, {
-    Map<String, dynamic>? department,
+    Map<String, dynamic>? item,
   }) {
-    final bool isEditing = department != null;
-    final nameCtrl = TextEditingController(
-      text: isEditing ? department['name'] : '',
-    );
+    final isEditing = item != null;
+    final nameCtrl = TextEditingController(text: isEditing ? item['name'] : '');
     final descCtrl = TextEditingController(
-      text: isEditing ? department['description'] ?? '' : '',
+      text: isEditing ? item['description'] : '',
     );
 
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(isEditing ? "Sửa Phòng Ban" : "Thêm Phòng Ban Mới"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: const InputDecoration(labelText: "Tên phòng ban"),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: descCtrl,
-                decoration: const InputDecoration(
-                  labelText: "Mô tả (không bắt buộc)",
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Hủy"),
+      builder: (c) => AlertDialog(
+        title: Text(isEditing ? "Sửa Bộ Phận" : "Thêm Bộ Phận"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              decoration: const InputDecoration(labelText: "Tên bộ phận"),
             ),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameCtrl.text.isEmpty) return;
-
-                bool success = false;
-                if (isEditing) {
-                  success = await ref
-                      .read(departmentActionProvider)
-                      .updateDepartment(
-                        id: department['id'],
-                        name: nameCtrl.text.trim(),
-                        description: descCtrl.text.trim(),
-                      );
-                } else {
-                  success = await ref
-                      .read(departmentActionProvider)
-                      .addDepartment(
-                        name: nameCtrl.text.trim(),
-                        description: descCtrl.text.trim(),
-                      );
-                }
-
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        success ? "Thao tác thành công!" : "Thao tác thất bại.",
-                      ),
-                    ),
-                  );
-                }
-              },
-              child: const Text("LƯU"),
+            TextField(
+              controller: descCtrl,
+              decoration: const InputDecoration(labelText: "Mô tả"),
             ),
           ],
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c),
+            child: const Text("Hủy"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameCtrl.text.isEmpty) return;
+              final act = ref.read(systemActionProvider);
+              final success = isEditing
+                  ? await act.updateDivision(
+                      item['id'],
+                      nameCtrl.text,
+                      descCtrl.text,
+                    )
+                  : await act.addDivision(nameCtrl.text, descCtrl.text);
+              if (context.mounted) {
+                Navigator.pop(c);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success ? "Thành công!" : "Thất bại."),
+                  ),
+                );
+              }
+            },
+            child: const Text("Lưu"),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final departmentsAsync = ref.watch(departmentListProvider);
-
+    final asyncData = ref.watch(divisionListProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text("Quản Lý Phòng Ban")),
-      body: departmentsAsync.when(
+      body: asyncData.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, st) => Center(child: Text("Lỗi tải dữ liệu: $err")),
-        data: (departments) {
-          if (departments.isEmpty) {
-            return const Center(
-              child: Text("Chưa có phòng ban nào. Hãy thêm mới!"),
-            );
-          }
-          return ListView.builder(
-            itemCount: departments.length,
-            itemBuilder: (context, index) {
-              final dept = departments[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: ListTile(
-                  title: Text(
-                    dept['name'],
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+        error: (e, s) => Center(child: Text("Lỗi: $e")),
+        data: (data) => ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: data.length,
+          itemBuilder: (c, i) => Card(
+            child: ListTile(
+              title: Text(
+                data[i]['name'],
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(data[i]['description'] ?? ''),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    onPressed: () =>
+                        _showAddOrEdit(context, ref, item: data[i]),
                   ),
-                  subtitle: Text(dept['description'] ?? 'Không có mô tả'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showAddOrEditDialog(
-                          context,
-                          ref,
-                          department: dept,
-                        ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () async {
+                      if (await _confirmDelete(context, data[i]['name'])) {
+                        final result = await ref
+                            .read(systemActionProvider)
+                            .deleteDivision(data[i]['id']);
+                        if (context.mounted)
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(result)));
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddOrEdit(context, ref),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Future<bool> _confirmDelete(BuildContext context, String name) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (c) => AlertDialog(
+            title: const Text("Xác nhận xóa"),
+            content: Text("Xóa bộ phận '$name'?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c, false),
+                child: const Text("Hủy"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(c, true),
+                child: const Text("Xóa", style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+}
+
+
+class _DepartmentTab extends ConsumerWidget {
+  const _DepartmentTab();
+
+  void _showAddOrEdit(
+    BuildContext context,
+    WidgetRef ref, {
+    Map<String, dynamic>? item,
+  }) {
+    final isEditing = item != null;
+    final nameCtrl = TextEditingController(text: isEditing ? item['name'] : '');
+    final descCtrl = TextEditingController(
+      text: isEditing ? item['description'] : '',
+    );
+    String? selectedDivId = item?['division_id'];
+
+    showDialog(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (context, setState) {
+          final divAsync = ref.watch(divisionListProvider);
+          return AlertDialog(
+            title: Text(isEditing ? "Sửa Phòng Ban" : "Thêm Phòng Ban"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: "Tên phòng ban"),
+                ),
+                divAsync.when(
+                  loading: () => const CircularProgressIndicator(),
+                  error: (e, s) => const Text("Lỗi tải bộ phận"),
+                  data: (divisions) => DropdownButtonFormField<String>(
+                    value: selectedDivId,
+                    hint: const Text("Thuộc bộ phận nào? (Ko bắt buộc)"),
+                    items: divisions
+                        .map(
+                          (div) => DropdownMenuItem(
+                            value: div['id'].toString(),
+                            child: Text(div['name'].toString()),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => selectedDivId = v),
+                  ),
+                ),
+                TextField(
+                  controller: descCtrl,
+                  decoration: const InputDecoration(labelText: "Mô tả"),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c),
+                child: const Text("Hủy"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (nameCtrl.text.isEmpty) return;
+                  final act = ref.read(systemActionProvider);
+                  final success = isEditing
+                      ? await act.updateDepartment(
+                          id: item['id'],
+                          name: nameCtrl.text,
+                          description: descCtrl.text,
+                          divisionId: selectedDivId,
+                        )
+                      : await act.addDepartment(
+                          name: nameCtrl.text,
+                          description: descCtrl.text,
+                          divisionId: selectedDivId,
+                        );
+                  if (context.mounted) {
+                    Navigator.pop(c);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(success ? "Thành công!" : "Thất bại."),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () async {
-                          final confirm = await showDialog<bool>(
+                    );
+                  }
+                },
+                child: const Text("Lưu"),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncData = ref.watch(departmentListProvider);
+    return Scaffold(
+      body: asyncData.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, s) => Center(child: Text("Lỗi: $e")),
+        data: (data) => ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: data.length,
+          itemBuilder: (c, i) => Card(
+            child: ListTile(
+              title: Text(
+                data[i]['name'],
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(data[i]['description'] ?? ''),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    onPressed: () =>
+                        _showAddOrEdit(context, ref, item: data[i]),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () async {
+                      final confirm =
+                          await showDialog<bool>(
                             context: context,
                             builder: (c) => AlertDialog(
                               title: const Text("Xác nhận xóa"),
                               content: Text(
-                                "Bạn có chắc muốn xóa phòng ban '${dept['name']}'?",
+                                "Xóa phòng ban '${data[i]['name']}'?",
                               ),
                               actions: [
                                 TextButton(
@@ -854,36 +1181,187 @@ class DepartmentManagementPage extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                          );
-                          if (confirm == true) {
-                            final result = await ref
-                                .read(departmentActionProvider)
-                                .deleteDepartment(dept['id']);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    result == "OK" ? "Xóa thành công!" : result,
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                      ),
-                    ],
+                          ) ??
+                          false;
+                      if (confirm) {
+                        final result = await ref
+                            .read(systemActionProvider)
+                            .deleteDepartment(data[i]['id']);
+                        if (context.mounted)
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(result)));
+                      }
+                    },
                   ),
-                ),
-              );
-            },
-          );
-        },
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddOrEditDialog(context, ref),
+        onPressed: () => _showAddOrEdit(context, ref),
         child: const Icon(Icons.add),
-        tooltip: "Thêm phòng ban mới",
       ),
+    );
+  }
+}
+
+
+class _RolePermissionsTab extends ConsumerWidget {
+  const _RolePermissionsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissionsAsync = ref.watch(rolePermissionsProvider);
+
+    return permissionsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => Center(child: Text("Lỗi: $e")),
+      data: (perms) {
+        return ListView.builder(
+          itemCount: ROLES.length,
+          itemBuilder: (context, index) {
+            final role = ROLES[index];
+            final existingRecord = perms
+                .where((p) => p['role'] == role)
+                .toList();
+            List<dynamic> currentFeatures = existingRecord.isNotEmpty
+                ? existingRecord.first['allowed_features']
+                : [];
+
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              elevation: 2,
+              child: ExpansionTile(
+                title: Text(
+                  "Chức vụ: ${role.toUpperCase()}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
+                children: ALL_FEATURES.entries.map((feature) {
+                  final isAllowed = currentFeatures.contains(feature.key);
+                  return CheckboxListTile(
+                    title: Text(feature.value),
+                    value: isAllowed,
+                    activeColor: Colors.blue.shade800,
+                    onChanged: (bool? checked) async {
+                      if (checked == null) return;
+                      List<String> newFeatures = List<String>.from(
+                        currentFeatures,
+                      );
+                      if (checked) {
+                        newFeatures.add(feature.key);
+                      } else {
+                        newFeatures.remove(feature.key);
+                      }
+
+                      await ref
+                          .read(systemActionProvider)
+                          .updateRolePermissions(role, newFeatures);
+                    },
+                  );
+                }).toList(),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+
+class _RoleHierarchyTab extends ConsumerWidget {
+  const _RoleHierarchyTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hierarchyAsync = ref.watch(roleHierarchyProvider);
+
+    return hierarchyAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => Center(child: Text("Lỗi: $e")),
+      data: (hierarchy) {
+        return ListView.builder(
+          itemCount: ROLES.length,
+          itemBuilder: (context, index) {
+            final role = ROLES[index];
+            final managedByRoles = hierarchy
+                .where((h) => h['role'] == role)
+                .map((h) => h['managed_by_role'])
+                .toList();
+
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              elevation: 2,
+              child: ListTile(
+                title: Text(
+                  "Chức vụ: ${role.toUpperCase()}",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Wrap(
+                    spacing: 8,
+                    children: managedByRoles
+                        .map(
+                          (m) => Chip(
+                            label: Text(
+                              "Báo cáo cho: $m",
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            backgroundColor: Colors.blue.shade50,
+                            deleteIconColor: Colors.red,
+                            onDeleted: () => ref
+                                .read(systemActionProvider)
+                                .deleteRoleHierarchy(role, m.toString()),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+                trailing: IconButton(
+                  icon: const Icon(
+                    Icons.add_circle,
+                    color: Colors.green,
+                    size: 32,
+                  ),
+                  tooltip: "Thêm người quản lý",
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (c) => SimpleDialog(
+                        title: Text("Thêm cấp trên cho $role"),
+                        children: ROLES
+                            .where(
+                              (r) => r != role && !managedByRoles.contains(r),
+                            )
+                            .map(
+                              (r) => ListTile(
+                                leading: const Icon(Icons.person_add),
+                                title: Text(r),
+                                onTap: () {
+                                  ref
+                                      .read(systemActionProvider)
+                                      .addRoleHierarchy(role, r);
+                                  Navigator.pop(c);
+                                },
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -896,11 +1374,32 @@ import 'package:ung_dung_nm/features/admin/controllers/department_controller.dar
 import '../controllers/employee_controller.dart';
 import '../../attendance/models/profile_model.dart';
 
-class TabQuanLyNhanSu extends ConsumerWidget {
+class TabQuanLyNhanSu extends ConsumerStatefulWidget {
   const TabQuanLyNhanSu({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TabQuanLyNhanSu> createState() => _TabQuanLyNhanSuState();
+}
+
+class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
+
+  String searchQuery = '';
+  String filterRole = 'Tất cả';
+  String filterStatus = 'Tất cả';
+
+  final List<String> roleOptions = [
+    'Tất cả',
+    'admin',
+    'director',
+    'team_leader',
+    'section_head',
+    'office_staff',
+    'worker',
+  ];
+  final List<String> statusOptions = ['Tất cả', 'Đang hoạt động', 'Đã khóa'];
+
+  @override
+  Widget build(BuildContext context) {
     final employeeAsync = ref.watch(employeeListProvider);
     ref.watch(departmentListProvider);
 
@@ -911,13 +1410,12 @@ class TabQuanLyNhanSu extends ConsumerWidget {
           "Quản Lý Nhân Sự",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 1,
+        backgroundColor: Colors.blue.shade800,
+        foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: "Tải lại danh sách",
             onPressed: () {
               ref.invalidate(employeeListProvider);
               ref.invalidate(departmentListProvider);
@@ -925,29 +1423,138 @@ class TabQuanLyNhanSu extends ConsumerWidget {
           ),
         ],
       ),
-      body: employeeAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) =>
-            Center(child: Text("Lỗi tải danh sách nhân viên: $err")),
-        data: (employees) {
-          if (employees.isEmpty) {
-            return const Center(child: Text("Chưa có nhân viên nào."));
-          }
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth > 768) {
-                return _buildWebView(context, ref, employees);
-              }
-              return _buildMobileView(context, ref, employees);
-            },
-          );
-        },
+      body: Column(
+        children: [
+
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.all(12.0),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+
+                SizedBox(
+                  width: 250,
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: "Tìm tên hoặc Mã NV...",
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    ),
+                    onChanged: (val) =>
+                        setState(() => searchQuery = val.toLowerCase()),
+                  ),
+                ),
+
+                _buildFilterDropdown(
+                  "Chức vụ:",
+                  filterRole,
+                  roleOptions,
+                  (val) => setState(() => filterRole = val!),
+                ),
+
+                _buildFilterDropdown(
+                  "Trạng thái:",
+                  filterStatus,
+                  statusOptions,
+                  (val) => setState(() => filterStatus = val!),
+                ),
+              ],
+            ),
+          ),
+
+
+          Expanded(
+            child: employeeAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) =>
+                  Center(child: Text("Lỗi tải danh sách: $err")),
+              data: (allEmployees) {
+
+                final employees = allEmployees.where((emp) {
+
+                  bool matchSearch =
+                      emp.fullName.toLowerCase().contains(searchQuery) ||
+                      emp.employeeCode.toLowerCase().contains(searchQuery);
+
+                  bool matchRole =
+                      filterRole == 'Tất cả' || emp.role == filterRole;
+
+                  bool matchStatus = true;
+                  if (filterStatus == 'Đang hoạt động')
+                    matchStatus = emp.isActive;
+                  if (filterStatus == 'Đã khóa') matchStatus = !emp.isActive;
+
+                  return matchSearch && matchRole && matchStatus;
+                }).toList();
+
+                if (employees.isEmpty)
+                  return const Center(
+                    child: Text("Không tìm thấy nhân viên nào phù hợp."),
+                  );
+
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth > 768) {
+                      return _buildWebView(context, ref, employees);
+                    }
+                    return _buildMobileView(context, ref, employees);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddDialog(context, ref),
         icon: const Icon(Icons.person_add),
         label: const Text("Thêm NV"),
       ),
+    );
+  }
+
+
+  Widget _buildFilterDropdown(
+    String label,
+    String value,
+    List<String> items,
+    Function(String?) onChanged,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              items: items
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1273,6 +1880,7 @@ class TabQuanLyNhanSu extends ConsumerWidget {
     // Đã sửa lỗi undefined bằng cách gọi thẳng profile.email và profile.phoneNumber
     final emailCtrl = TextEditingController(text: profile.email ?? '');
     final phoneCtrl = TextEditingController(text: profile.phoneNumber ?? '');
+    final hierarchyAsync = ref.watch(roleHierarchyProvider);
 
     const validRoles = [
       'worker',
@@ -1288,6 +1896,7 @@ class TabQuanLyNhanSu extends ConsumerWidget {
 
     bool isActive = profile.isActive;
     String? selectedDepartmentId = profile.departmentId;
+    String? selectedDivisionId = profile.divisionId;
     String? selectedManagerId = profile.managerId;
 
     showDialog(
@@ -1332,6 +1941,29 @@ class TabQuanLyNhanSu extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
 
+                    ref
+                        .watch(divisionListProvider)
+                        .when(
+                          loading: () => const CircularProgressIndicator(),
+                          error: (err, stack) => Text("Lỗi: $err"),
+                          data: (divisions) => DropdownButtonFormField<String>(
+                            value: selectedDivisionId,
+                            decoration: const InputDecoration(
+                              labelText: "Bộ phận (Không bắt buộc)",
+                            ),
+                            items: divisions
+                                .map(
+                                  (div) => DropdownMenuItem(
+                                    value: div['id'].toString(),
+                                    child: Text(div['name'].toString()),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (val) =>
+                                setState(() => selectedDivisionId = val),
+                          ),
+                        ),
+                    const SizedBox(height: 12),
                     departmentsAsync.when(
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
@@ -1391,36 +2023,70 @@ class TabQuanLyNhanSu extends ConsumerWidget {
                       onChanged: (val) => setState(() => selectedRole = val!),
                     ),
                     const SizedBox(height: 12),
-                    employeesAsync.when(
+                    hierarchyAsync.when(
                       loading: () => const SizedBox.shrink(),
-                      error: (e, s) => const Text("Lỗi tải danh sách quản lý"),
-                      data: (employees) {
-                        final managers = employees
-                            .where(
-                              (e) => [
-                                'team_leader',
-                                'section_head',
-                                'director',
-                                'admin',
-                              ].contains(e.role),
-                            )
-                            .toList();
-                        return DropdownButtonFormField<String>(
-                          value: selectedManagerId,
-                          hint: const Text("Chọn quản lý trực tiếp"),
-                          decoration: const InputDecoration(
-                            labelText: "Báo cáo cho",
-                          ),
-                          items: managers
-                              .map(
-                                (manager) => DropdownMenuItem(
-                                  value: manager.id,
-                                  child: Text(manager.fullName),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) =>
-                              setState(() => selectedManagerId = val),
+                      error: (e, s) => const Text("Lỗi tải phân cấp"),
+                      data: (hierarchyList) {
+                        return employeesAsync.when(
+                          loading: () => const SizedBox.shrink(),
+                          error: (e, s) => const Text("Lỗi tải NV"),
+                          data: (employees) {
+                            final allowedManagerRoles = hierarchyList
+                                .where((h) => h['role'] == selectedRole)
+                                .map((h) => h['managed_by_role'] as String)
+                                .toList();
+
+
+
+
+
+                            final validManagers = employees.where((e) {
+                              if (e.id == profile.id) return false;
+                              if (!allowedManagerRoles.contains(e.role))
+                                return false;
+
+                              if (e.role == 'team_leader' ||
+                                  e.role == 'section_head') {
+                                bool matchDept =
+                                    selectedDepartmentId == null ||
+                                    e.departmentId == selectedDepartmentId;
+                                bool matchDiv =
+                                    selectedDivisionId == null ||
+                                    e.divisionId == selectedDivisionId;
+                                return matchDept && matchDiv;
+                              }
+                              return true;
+                            }).toList();
+
+
+                            if (selectedManagerId != null &&
+                                !validManagers.any(
+                                  (m) => m.id == selectedManagerId,
+                                )) {
+                              WidgetsBinding.instance.addPostFrameCallback(
+                                (_) => setState(() => selectedManagerId = null),
+                              );
+                            }
+
+                            return DropdownButtonFormField<String>(
+                              value: selectedManagerId,
+                              decoration: const InputDecoration(
+                                labelText: "Người quản lý trực tiếp",
+                              ),
+                              items: validManagers
+                                  .map(
+                                    (manager) => DropdownMenuItem(
+                                      value: manager.id,
+                                      child: Text(
+                                        "${manager.fullName} (${manager.role})",
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (val) =>
+                                  setState(() => selectedManagerId = val),
+                            );
+                          },
                         );
                       },
                     ),
@@ -1452,6 +2118,7 @@ class TabQuanLyNhanSu extends ConsumerWidget {
                         role: selectedRole,
                         isActive: isActive,
                         departmentId: selectedDepartmentId,
+                        divisionId: selectedDivisionId,
                         managerId: selectedManagerId,
                         email: emailCtrl.text.trim(),
                         phoneNumber: phoneCtrl.text.trim(),
@@ -1815,6 +2482,7 @@ class AttendanceController extends AsyncNotifier<List<AttendanceRowModel>> {
 
 <file path="lib/features/attendance/controllers/leave_controller.dart">
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../core/services/supabase_provider.dart';
 import 'package:ung_dung_nm/features/auth/controllers/auth_controller.dart';
 
@@ -1855,6 +2523,35 @@ final pendingLeaveRequestsProvider = FutureProvider<List<Map<String, dynamic>>>(
   },
 );
 
+final processedLeaveRequestsProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final currentUserProfile = await ref.watch(currentProfileProvider.future);
+  if (currentUserProfile == null) return [];
+
+  var query = supabase
+      .from('leave_requests')
+      .select(
+        '*, profiles:user_id!inner(full_name, employee_code, department_id, division_id)',
+      )
+      .inFilter('status', ['approved', 'rejected']);
+
+
+  if (currentUserProfile.role != 'admin' &&
+      currentUserProfile.role != 'director') {
+    if (currentUserProfile.departmentId != null) {
+      query = query.eq(
+        'profiles.department_id',
+        currentUserProfile.departmentId!,
+      );
+    }
+  }
+
+  final response = await query.order('created_at', ascending: false);
+  return List<Map<String, dynamic>>.from(response);
+});
+
 
 final leaveActionProvider = Provider((ref) => LeaveActionController(ref));
 
@@ -1868,51 +2565,24 @@ class LeaveActionController {
     required DateTime startTime,
     required DateTime endTime,
     required String reason,
+    required String placeOfLeave,
+    required String approverId,
     required String leaveType,
   }) async {
     try {
       final supabase = ref.read(supabaseProvider);
 
 
-      final Map<String, dynamic> profileRes = await supabase
-          .from('profiles')
-          .select('manager_id, role')
-          .eq('id', userId)
-          .single();
-
-
-      final String? userManagerId = profileRes['manager_id'];
-      final String userRole = profileRes['role'];
-
-      String? nextApproverId;
       String initialStatus = 'pending_leader';
 
-
-      if (['team_leader', 'section_head', 'office_staff'].contains(userRole)) {
-        final directorRes = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('role', 'director')
-            .limit(1)
-            .maybeSingle();
-
-        if (directorRes != null) {
-          nextApproverId = directorRes['id'];
-          initialStatus = 'pending_manager';
-        } else {
-          throw Exception(
-            "Không tìm thấy Giám đốc trong hệ thống để duyệt đơn. Vui lòng liên hệ Admin.",
-          );
-        }
-      }
-
-      else {
-        nextApproverId = userManagerId;
-        if (nextApproverId == null) {
-          throw Exception(
-            "Bạn chưa được gán Quản lý trực tiếp. Vui lòng liên hệ Admin để cấu hình.",
-          );
-        }
+      final approverProfile = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', approverId)
+          .single();
+      if (approverProfile['role'] == 'director' ||
+          approverProfile['role'] == 'admin') {
+        initialStatus = 'pending_manager';
       }
 
       await supabase.from('leave_requests').insert({
@@ -1920,9 +2590,10 @@ class LeaveActionController {
         'start_time': startTime.toIso8601String(),
         'end_time': endTime.toIso8601String(),
         'reason': reason,
+        'place_of_leave': placeOfLeave,
         'leave_type': leaveType,
         'status': initialStatus,
-        'current_approver_id': nextApproverId,
+        'current_approver_id': approverId,
         'approval_history': [],
       });
 
@@ -1979,14 +2650,17 @@ class LeaveActionController {
           nextApproverId = directorRes['id'];
           finalStatus = 'pending_manager';
         } else {
-
           finalStatus = 'approved';
           nextApproverId = null;
 
 
+
+          final startTimeDate = DateTime.parse(request['start_time']);
+          final dateStr = DateFormat('yyyy-MM-dd').format(startTimeDate);
+
           await supabase.from('daily_timesheets').upsert({
             'user_id': request['user_id'],
-            'date': request['date'],
+            'date': dateStr,
             'status': request['leave_type'],
             'shift_type': 'Không chấm',
             'notes': 'Đã duyệt nghỉ',
@@ -2086,6 +2760,7 @@ class ProfileModel with _$ProfileModel {
     @JsonKey(name: 'full_name') required String fullName,
     required String role,
     @JsonKey(name: 'department_id') String? departmentId,
+    @JsonKey(name: 'division_id') String? divisionId,
     @JsonKey(name: 'manager_id') String? managerId,
     String? email,
     @JsonKey(name: 'phone_number') String? phoneNumber,
@@ -2224,83 +2899,320 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:ung_dung_nm/features/attendance/controllers/leave_controller.dart';
 
-class LeaveApprovalPage extends ConsumerWidget {
+
+const List<String> LEAVE_TYPES = [
+  'Tất cả',
+  'Nghỉ phép',
+  'Nghỉ ốm',
+  'Xếp loại nhân viên',
+  'Đi trễ / Về sớm',
+];
+
+class LeaveApprovalPage extends ConsumerStatefulWidget {
   const LeaveApprovalPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final pendingRequestsAsync = ref.watch(pendingLeaveRequestsProvider);
+  ConsumerState<LeaveApprovalPage> createState() => _LeaveApprovalPageState();
+}
 
-    return Scaffold(
-      appBar: AppBar(title: const Text("Duyệt Đơn Xin Nghỉ")),
-      body: pendingRequestsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, st) => Center(child: Text("Lỗi: $err")),
-        data: (requests) {
-          if (requests.isEmpty) {
-            return const Center(
-              child: Text("Không có đơn nào đang chờ duyệt."),
-            );
-          }
-          return ListView.builder(
-            itemCount: requests.length,
-            itemBuilder: (context, index) {
-              final req = requests[index];
-              final profile = req['profiles'];
-              final date = DateTime.parse(req['date']);
+class _LeaveApprovalPageState extends ConsumerState<LeaveApprovalPage> {
+  String selectedFilter = 'Tất cả';
 
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "${profile['full_name']} (Mã: ${profile['employee_code']})",
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            "Quản Lý Đơn Từ",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: Colors.blue.shade800,
+          foregroundColor: Colors.white,
+          bottom: const TabBar(
+            labelColor: Colors.orangeAccent,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: Colors.orangeAccent,
+            tabs: [
+              Tab(icon: Icon(Icons.pending_actions), text: "Chờ Duyệt"),
+              Tab(icon: Icon(Icons.history), text: "Lịch Sử Đã Duyệt"),
+            ],
+          ),
+          actions: [
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: selectedFilter,
+                    dropdownColor: Colors.white,
+                    icon: const Icon(Icons.filter_list, color: Colors.blue),
+                    items: LEAVE_TYPES
+                        .map(
+                          (type) => DropdownMenuItem(
+                            value: type,
+                            child: Text(
+                              type,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) => setState(() => selectedFilter = val!),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        body: TabBarView(
+          children: [
+            _buildTabContent(
+              ref.watch(pendingLeaveRequestsProvider),
+              isHistory: false,
+            ),
+            _buildTabContent(
+              ref.watch(processedLeaveRequestsProvider),
+              isHistory: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  Widget _buildTabContent(
+    AsyncValue<List<Map<String, dynamic>>> asyncData, {
+    required bool isHistory,
+  }) {
+    return asyncData.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, st) => Center(child: Text("Lỗi: $err")),
+      data: (allRequests) {
+
+        final requests = selectedFilter == 'Tất cả'
+            ? allRequests
+            : allRequests
+                  .where((req) => req['leave_type'] == selectedFilter)
+                  .toList();
+
+        if (requests.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.inbox, size: 64, color: Colors.grey.shade400),
+                const SizedBox(height: 16),
+                Text(
+                  "Không có đơn từ nào (${selectedFilter}).",
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(8),
+          itemCount: requests.length,
+          itemBuilder: (context, index) {
+            final req = requests[index];
+            final profile = req['profiles'];
+            final startTime = DateTime.parse(req['start_time']);
+            final endTime = DateTime.parse(req['end_time']);
+
+            final startDateStr = DateFormat('dd/MM/yyyy').format(startTime);
+            final endDateStr = DateFormat('dd/MM/yyyy').format(endTime);
+            final startTimeStr = DateFormat('HH:mm').format(startTime);
+            final endTimeStr = DateFormat('HH:mm').format(endTime);
+
+            String timeDisplay = startDateStr == endDateStr
+                ? "Ngày $startDateStr ($startTimeStr - $endTimeStr)"
+                : "Từ $startTimeStr $startDateStr đến $endTimeStr $endDateStr";
+
+            return Card(
+              elevation: 2,
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "${profile['full_name']} (Mã: ${profile['employee_code']})",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+
+                        if (isHistory)
+                          Chip(
+                            label: Text(
+                              req['status'] == 'approved'
+                                  ? 'Đã duyệt'
+                                  : 'Từ chối',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            backgroundColor: req['status'] == 'approved'
+                                ? Colors.green
+                                : Colors.red,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                      ],
+                    ),
+                    const Divider(),
+                    _buildInfoRow(
+                      Icons.access_time,
+                      "Thời gian: ",
+                      timeDisplay,
+                      Colors.blue.shade700,
+                    ),
+                    _buildInfoRow(
+                      Icons.category,
+                      "Loại đơn: ",
+                      req['leave_type'],
+                      Colors.black87,
+                    ),
+                    if (req['place_of_leave'] != null &&
+                        req['place_of_leave'].toString().isNotEmpty)
+                      _buildInfoRow(
+                        Icons.place,
+                        "Nơi nghỉ: ",
+                        req['place_of_leave'],
+                        Colors.black87,
                       ),
-                      const Divider(),
-                      Text(
-                        "Ngày nghỉ: ${DateFormat('dd/MM/yyyy').format(date)}",
-                      ),
-                      Text("Loại đơn: ${req['leave_type']}"),
-                      Text("Lý do: ${req['reason']}"),
-                      const SizedBox(height: 12),
+                    _buildInfoRow(
+                      Icons.message,
+                      "Lý do: ",
+                      req['reason'],
+                      Colors.black87,
+                    ),
+
+
+                    if (!isHistory) ...[
+                      const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          TextButton(
-                            child: const Text(
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.cancel, color: Colors.red),
+                            label: const Text(
                               "Từ chối",
                               style: TextStyle(color: Colors.red),
                             ),
-                            onPressed: () async {
-
-                              await ref
-                                  .read(leaveActionProvider)
-                                  .updateRequestStatus(req['id'], 'rejected');
-                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.red),
+                            ),
+                            onPressed: () => ref
+                                .read(leaveActionProvider)
+                                .updateRequestStatus(req['id'], 'rejected'),
                           ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            child: const Text("Duyệt"),
-                            onPressed: () async {
-
-                              await ref
-                                  .read(leaveActionProvider)
-                                  .updateRequestStatus(req['id'], 'approved');
-                            },
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.check_circle),
+                            label: const Text("Duyệt Đơn"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () => ref
+                                .read(leaveActionProvider)
+                                .updateRequestStatus(req['id'], 'approved'),
                           ),
                         ],
                       ),
                     ],
-                  ),
+                  ],
                 ),
-              );
-            },
-          );
-        },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow(
+    IconData icon,
+    String label,
+    String value,
+    Color valueColor,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 8),
+          Text(label, style: TextStyle(color: Colors.grey.shade700)),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(fontWeight: FontWeight.w500, color: valueColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+</file>
+
+<file path="lib/features/attendance/views/manager_attendance_page.dart">
+import 'package:flutter/material.dart';
+import 'package:ung_dung_nm/features/attendance/views/tab_cham_cong_ngay.dart';
+import 'package:ung_dung_nm/features/attendance/views/tab_bang_cong_thang.dart';
+
+class ManagerAttendancePage extends StatelessWidget {
+  final String profileId;
+  const ManagerAttendancePage({super.key, required this.profileId});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Quản lý Chấm Công"),
+          backgroundColor: Colors.blue.shade800,
+          bottom: const TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: Colors.white,
+            tabs: [
+              Tab(icon: Icon(Icons.playlist_add_check), text: "Chấm Công Ngày"),
+              Tab(icon: Icon(Icons.grid_on), text: "Bảng Tháng"),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            TabChamCongNgay(currentUserId: profileId),
+            const TabBangCongThang(),
+          ],
+        ),
       ),
     );
   }
@@ -3210,7 +4122,9 @@ class _AttendanceRowCardState extends ConsumerState<AttendanceRowCard> {
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:ung_dung_nm/features/admin/controllers/employee_controller.dart';
 import 'package:ung_dung_nm/features/attendance/controllers/leave_controller.dart';
+import 'package:ung_dung_nm/features/auth/controllers/auth_controller.dart';
 import '../../controllers/worker_controller.dart';
 
 class TabCongCaNhan extends ConsumerWidget {
@@ -3322,57 +4236,217 @@ class TabCongCaNhan extends ConsumerWidget {
       ),
 
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
+        onPressed: () async {
+
+          final currentUserProfile = await ref.read(
+            currentProfileProvider.future,
+          );
+
+          if (!context.mounted) return;
           showDialog(
             context: context,
             builder: (c) {
               final reasonCtrl = TextEditingController();
-              DateTime selectedDate = DateTime.now();
-              TimeOfDay startTime = const TimeOfDay(hour: 8, minute: 0);
-              TimeOfDay endTime = const TimeOfDay(hour: 17, minute: 0);
-              String leaveType = 'Nghỉ phép';
+              final placeCtrl = TextEditingController();
+
+              DateTime startDate = DateTime.now();
+              DateTime endDate = DateTime.now();
+              String startHour = '07';
+              String startMin = '00';
+              String endHour = '16';
+              String endMin = '00';
+              String? selectedApproverId = currentUserProfile?.managerId;
+
+
+              final hours = List.generate(
+                24,
+                (index) => index.toString().padLeft(2, '0'),
+              );
+              final minutes = ['00', '15', '30', '45'];
 
               return StatefulBuilder(
                 builder: (context, setState) => AlertDialog(
-                  title: const Text("Đơn Xin Nghỉ Phép"),
+                  title: const Text(
+                    "Đơn Xin Nghỉ Phép",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   content: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
+                    child: SizedBox(
+                      width: 500,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
 
-                        ListTile(
-                          title: const Text("Từ giờ"),
-                          subtitle: Text(startTime.format(context)),
-                          trailing: const Icon(Icons.access_time),
-                          onTap: () async {
-                            final pickedTime = await showTimePicker(
-                              context: context,
-                              initialTime: startTime,
-                            );
-                            if (pickedTime != null)
-                              setState(() => startTime = pickedTime);
-                          },
-                        ),
-                        ListTile(
-                          title: const Text("Đến giờ"),
-                          subtitle: Text(endTime.format(context)),
-                          trailing: const Icon(Icons.access_time),
-                          onTap: () async {
-                            final pickedTime = await showTimePicker(
-                              context: context,
-                              initialTime: endTime,
-                            );
-                            if (pickedTime != null)
-                              setState(() => endTime = pickedTime);
-                          },
-                        ),
-                        TextField(
-                          controller: reasonCtrl,
-                          decoration: const InputDecoration(
-                            labelText: "Lý do nghỉ (bắt buộc)",
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: _buildDatePicker(
+                                  context,
+                                  "Ngày bắt đầu",
+                                  startDate,
+                                  (d) => setState(() => startDate = d),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 1,
+                                child: _buildDropdown(
+                                  "Giờ",
+                                  startHour,
+                                  hours,
+                                  (v) => setState(() => startHour = v!),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 1,
+                                child: _buildDropdown(
+                                  "Phút",
+                                  startMin,
+                                  minutes,
+                                  (v) => setState(() => startMin = v!),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: _buildDatePicker(
+                                  context,
+                                  "Ngày kết thúc",
+                                  endDate,
+                                  (d) => setState(() => endDate = d),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 1,
+                                child: _buildDropdown(
+                                  "Giờ",
+                                  endHour,
+                                  hours,
+                                  (v) => setState(() => endHour = v!),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 1,
+                                child: _buildDropdown(
+                                  "Phút",
+                                  endMin,
+                                  minutes,
+                                  (v) => setState(() => endMin = v!),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+
+                          const Text(
+                            "Lý do nghỉ",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          TextField(
+                            controller: reasonCtrl,
+                            maxLines: 3,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+
+                          const Text(
+                            "Nơi nghỉ",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          TextField(
+                            controller: placeCtrl,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+
+                          const Text(
+                            "Quản lý trực tiếp:",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          ref
+                              .watch(employeeListProvider)
+                              .when(
+                                loading: () =>
+                                    const CircularProgressIndicator(),
+                                error: (e, s) => const Text("Lỗi"),
+                                data: (employees) {
+
+                                  final managers = employees
+                                      .where(
+                                        (e) => [
+                                          'team_leader',
+                                          'section_head',
+                                          'director',
+                                          'admin',
+                                        ].contains(e.role),
+                                      )
+                                      .toList();
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<String>(
+                                        isExpanded: true,
+                                        value: selectedApproverId,
+                                        hint: const Text(
+                                          "-- Chọn người quản lý --",
+                                        ),
+                                        items: managers
+                                            .map(
+                                              (m) => DropdownMenuItem(
+                                                value: m.id,
+                                                child: Text(
+                                                  "${m.fullName} (${m.role})",
+                                                ),
+                                              ),
+                                            )
+                                            .toList(),
+                                        onChanged: (v) => setState(
+                                          () => selectedApproverId = v,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                        ],
+                      ),
                     ),
                   ),
                   actions: [
@@ -3381,11 +4455,18 @@ class TabCongCaNhan extends ConsumerWidget {
                       child: const Text("Hủy"),
                     ),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade800,
+                        foregroundColor: Colors.white,
+                      ),
                       onPressed: () async {
-                        if (reasonCtrl.text.isEmpty) {
+                        if (reasonCtrl.text.isEmpty ||
+                            selectedApproverId == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text("Vui lòng nhập lý do nghỉ."),
+                              content: Text(
+                                "Vui lòng nhập lý do và chọn người quản lý.",
+                              ),
                             ),
                           );
                           return;
@@ -3393,30 +4474,30 @@ class TabCongCaNhan extends ConsumerWidget {
 
 
                         final startDateTime = DateTime(
-                          selectedDate.year,
-                          selectedDate.month,
-                          selectedDate.day,
-                          startTime.hour,
-                          startTime.minute,
+                          startDate.year,
+                          startDate.month,
+                          startDate.day,
+                          int.parse(startHour),
+                          int.parse(startMin),
                         );
                         final endDateTime = DateTime(
-                          selectedDate.year,
-                          selectedDate.month,
-                          selectedDate.day,
-                          endTime.hour,
-                          endTime.minute,
+                          endDate.year,
+                          endDate.month,
+                          endDate.day,
+                          int.parse(endHour),
+                          int.parse(endMin),
                         );
-
 
                         final success = await ref
                             .read(leaveActionProvider)
                             .submitLeaveRequest(
-                              userId:
-                                  currentUserId,
+                              userId: currentUserId,
                               startTime: startDateTime,
                               endTime: endDateTime,
                               reason: reasonCtrl.text,
-                              leaveType: leaveType,
+                              placeOfLeave: placeCtrl.text,
+                              approverId: selectedApproverId!,
+                              leaveType: 'Nghỉ phép',
                             );
 
                         if (context.mounted) {
@@ -3441,6 +4522,84 @@ class TabCongCaNhan extends ConsumerWidget {
         icon: const Icon(Icons.edit_document),
         label: const Text("Xin Nghỉ"),
       ),
+    );
+  }
+
+  Widget _buildDatePicker(
+    BuildContext context,
+    String label,
+    DateTime date,
+    Function(DateTime) onPicked,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+        const SizedBox(height: 4),
+        InkWell(
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: date,
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+            );
+            if (picked != null) onPicked(picked);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade400),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(DateFormat('MM/dd/yyyy').format(date)),
+                const Icon(Icons.calendar_today, size: 18),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdown(
+    String label,
+    String value,
+    List<String> items,
+    Function(String?) onChanged,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade400),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              value: value,
+              items: items
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -3909,18 +5068,207 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 }
 </file>
 
+<file path="lib/features/home/views/home_dashboard_page.dart">
+import 'package:flutter/material.dart';
+
+class FeatureMenuItem {
+  final String title;
+  final IconData icon;
+  final Widget? destination;
+  final bool isComingSoon;
+  final Color iconColor;
+
+  const FeatureMenuItem({
+    required this.title,
+    required this.icon,
+    this.destination,
+    this.isComingSoon = false,
+    this.iconColor = Colors.blue,
+  });
+}
+
+class HomeDashboardPage extends StatelessWidget {
+  final String userName;
+  final List<FeatureMenuItem> menuItems;
+  final VoidCallback onLogout;
+
+  const HomeDashboardPage({
+    super.key,
+    required this.userName,
+    required this.menuItems,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade100,
+      appBar: AppBar(
+        title: Text(
+          "Xin chào, $userName",
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        backgroundColor: Colors.blue.shade800,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: "Đăng xuất",
+            onPressed: onLogout,
+          ),
+        ],
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 1000,
+          ),
+          child: GridView.builder(
+            padding: const EdgeInsets.all(20.0),
+
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 220,
+              crossAxisSpacing: 16.0,
+              mainAxisSpacing: 16.0,
+              childAspectRatio: 1.0,
+            ),
+            itemCount: menuItems.length,
+            itemBuilder: (context, index) {
+              return _buildMenuItemCard(context, menuItems[index]);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItemCard(BuildContext context, FeatureMenuItem item) {
+    return Card(
+      elevation: 3,
+      shadowColor: Colors.black12,
+      clipBehavior: Clip
+          .antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () {
+          if (item.isComingSoon || item.destination == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Tính năng này sẽ được phát triển sớm!'),
+              ),
+            );
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => item.destination!),
+            );
+          }
+        },
+        child: Stack(
+
+          children: [
+
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearFromTopToBottom(
+                  item.iconColor,
+                ),
+              ),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        item.icon,
+                        size: 54,
+                        color: item.iconColor.withOpacity(0.8),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        item.title,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            if (item.isComingSoon)
+              Positioned(
+                top: 12,
+                right: -25,
+                child: Transform.rotate(
+                  angle: 0.785398,
+                  child: Container(
+                    color: Colors.orange.shade400,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 4,
+                    ),
+                    child: const Text(
+                      'Sắp có',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  LinearGradient LinearFromTopToBottom(Color baseColor) {
+    return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Colors.white, baseColor.withOpacity(0.05)],
+    );
+  }
+}
+</file>
+
 <file path="lib/features/home/views/main_navigation_page.dart">
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ung_dung_nm/features/admin/views/admin_dashboard_page.dart';
+import 'package:ung_dung_nm/core/services/supabase_provider.dart';
+
+import 'home_dashboard_page.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../attendance/views/tab_cham_cong_ngay.dart';
-import '../../attendance/views/tab_bang_cong_thang.dart';
 import '../../attendance/views/worker/tab_cong_ca_nhan.dart';
-import 'package:ung_dung_nm/features/attendance/views/leave_approval_page.dart';
+import '../../attendance/views/leave_approval_page.dart';
+import '../../admin/views/tab_quan_ly_nhan_su.dart';
+import '../../admin/views/department_management_page.dart';
+import '../../attendance/views/manager_attendance_page.dart';
 
-
-
+final rolePermissionsProvider = FutureProvider.family<List<dynamic>, String>((
+  ref,
+  role,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final response = await supabase
+      .from('role_permissions')
+      .select('allowed_features')
+      .eq('role', role)
+      .single();
+  return response['allowed_features'] as List<dynamic>;
+});
 
 class MainNavigationPage extends ConsumerWidget {
   const MainNavigationPage({super.key});
@@ -3959,113 +5307,112 @@ class MainNavigationPage extends ConsumerWidget {
     return profileAsync.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (err, stack) => Scaffold(
-        body: Center(child: Text("Lỗi tải thông tin người dùng: $err")),
-      ),
+      error: (err, stack) =>
+          Scaffold(body: Center(child: Text("Lỗi tải thông tin: $err"))),
       data: (profile) {
-        if (profile == null) {
+        if (profile == null)
           return const Scaffold(
-            body: Center(child: Text("Không tìm thấy dữ liệu người dùng.")),
+            body: Center(child: Text("Không tìm thấy dữ liệu.")),
+          );
+
+
+        final allFeaturesMap = {
+          "nhan_su": FeatureMenuItem(
+            title: 'Quản lý Nhân sự',
+            icon: Icons.people_alt,
+            destination: const TabQuanLyNhanSu(),
+            iconColor: Colors.blue.shade700,
+          ),
+          "phong_ban": FeatureMenuItem(
+            title: 'Cơ Cấu & Cấu Hình',
+            icon: Icons.business,
+            destination: const DepartmentManagementPage(),
+            iconColor: Colors.indigo,
+          ),
+          "cham_cong_tram": FeatureMenuItem(
+            title: 'Chấm Công Tổ/Trạm',
+            icon: Icons.playlist_add_check_circle,
+            destination: ManagerAttendancePage(profileId: profile.id),
+            iconColor: Colors.teal,
+          ),
+          "duyet_don": FeatureMenuItem(
+            title: 'Duyệt Đơn Từ',
+            icon: Icons.edit_document,
+            destination: const LeaveApprovalPage(),
+            iconColor: Colors.orange.shade700,
+          ),
+          "cong_ca_nhan": FeatureMenuItem(
+            title: 'Bảng Công & Xin Nghỉ',
+            icon: Icons.calendar_month,
+            destination: TabCongCaNhan(currentUserId: profile.id),
+            iconColor: Colors.green.shade600,
+          ),
+          "bao_cao": const FeatureMenuItem(
+            title: 'Báo cáo & Thống kê',
+            icon: Icons.bar_chart,
+            isComingSoon: true,
+            iconColor: Colors.purple,
+          ),
+          "vat_tu": const FeatureMenuItem(
+            title: 'Quản lý Vật tư',
+            icon: Icons.inventory_2,
+            isComingSoon: true,
+            iconColor: Colors.brown,
+          ),
+          "tai_san": const FeatureMenuItem(
+            title: 'Quản lý Tài sản',
+            icon: Icons.devices,
+            isComingSoon: true,
+            iconColor: Colors.blueGrey,
+          ),
+          "san_xuat": const FeatureMenuItem(
+            title: 'Nhật ký Sản xuất',
+            icon: Icons.precision_manufacturing,
+            isComingSoon: true,
+            iconColor: Colors.redAccent,
+          ),
+          "giao_viec": const FeatureMenuItem(
+            title: 'Giao Việc',
+            icon: Icons.task_alt,
+            isComingSoon: true,
+            iconColor: Colors.lightGreen,
+          ),
+        };
+
+
+        if (profile.role == 'admin') {
+          return HomeDashboardPage(
+            userName: profile.fullName,
+            menuItems: allFeaturesMap.values.toList(),
+            onLogout: () => _showLogoutDialog(context, ref),
           );
         }
 
 
-        switch (profile.role) {
-          case 'admin':
+        final permissionsAsync = ref.watch(
+          rolePermissionsProvider(profile.role),
+        );
 
-            return const AdminDashboardPage();
-
-          case 'worker':
-
-            return Scaffold(
-              appBar: AppBar(
-                title: Text("Xin chào, ${profile.fullName}"),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.logout),
-                    onPressed: () => _showLogoutDialog(context, ref),
-                  ),
-                ],
-              ),
-              body: TabCongCaNhan(currentUserId: profile.id),
+        return permissionsAsync.when(
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+          error: (err, stack) =>
+              Scaffold(body: Center(child: Text("Lỗi tải quyền: $err"))),
+          data: (allowedFeatures) {
+            List<FeatureMenuItem> userFeatures = [];
+            for (String featureKey in allowedFeatures) {
+              if (allFeaturesMap.containsKey(featureKey)) {
+                userFeatures.add(allFeaturesMap[featureKey]!);
+              }
+            }
+            return HomeDashboardPage(
+              userName: profile.fullName,
+              menuItems: userFeatures,
+              onLogout: () => _showLogoutDialog(context, ref),
             );
-
-          case 'manager':
-          default:
-
-            return ManagerTabView(profileId: profile.id);
-        }
+          },
+        );
       },
-    );
-  }
-}
-
-
-class ManagerTabView extends ConsumerStatefulWidget {
-  final String profileId;
-  const ManagerTabView({super.key, required this.profileId});
-
-  @override
-  ConsumerState<ManagerTabView> createState() => _ManagerTabViewState();
-}
-
-class _ManagerTabViewState extends ConsumerState<ManagerTabView> {
-  int _currentIndex = 0;
-
-  late final List<Widget> _tabs;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabs = [
-      TabChamCongNgay(currentUserId: widget.profileId),
-      const TabBangCongThang(),
-      const LeaveApprovalPage(),
-    ];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Hệ Thống Nhà Máy",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.blue.shade800,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-
-            },
-          ),
-        ],
-      ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _tabs,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        selectedItemColor: Colors.blue.shade800,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.playlist_add_check),
-            label: "Chấm Công",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.grid_on),
-            label: "Bảng Tháng",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.edit_calendar),
-            label: "Duyệt Phép",
-          ),
-        ],
-      ),
     );
   }
 }
@@ -4312,31 +5659,296 @@ flutter:
 </file>
 
 <file path="README.md">
-# ung_dung_nm
+1. README.md
+Markdown# Factory HR & Attendance
 
-A new Flutter project.
+Modern Flutter + Supabase application for factory workforce management  
+(focusing on employee management, attendance, leave approval, department structure, role-based access)
+
+[![Flutter](https://img.shields.io/badge/Flutter-3.24+-blue.svg)](https://flutter.dev)
+[![Supabase](https://img.shields.io/badge/Supabase-2.0+-green.svg)](https://supabase.com)
+[![Riverpod](https://img.shields.io/badge/Riverpod-2.5+-purple.svg)](https://riverpod.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+## Features (implemented so far)
+
+- Email + Password authentication (with active/inactive status check)
+- Role-based dashboard & menu visibility
+- Admin features:
+  - Manage divisions (bộ phận)
+  - Manage departments (phòng ban)
+  - Manage employees (CRUD + activate/deactivate + permanent delete via Edge Function)
+  - Role permissions configuration
+  - Role hierarchy (who reports to whom)
+- Attendance & Leave:
+  - Personal timesheet view (worker)
+  - Manager attendance view
+  - Leave request & approval flow
+- Responsive layout (mobile + tablet/web friendly views)
+
+## Tech Stack
+
+- Flutter 3.24+
+- Riverpod 2.5+ (state management)
+- Supabase Flutter SDK
+- Supabase Edge Functions (create/delete employee with admin rights)
+- flutter_dotenv (environment variables)
+- Material 3 design
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+1. Clone the repository
+   ```bash
+   git clone https://github.com/yourusername/factory-hr-attendance.git
+   cd factory-hr-attendance
 
-A few resources to get you started if this is your first Flutter project:
+Install dependenciesBashflutter pub get
+Create .env file in root (or rename ungdung.env):textSUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+Run the appBashflutter run
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Folder Structure (main parts)
+textlib/
+├── core/                     # global services, exceptions, providers
+├── features/
+│   ├── auth/                 # login, register, auth state
+│   ├── admin/                # department, division, employee, role config
+│   ├── attendance/           # timesheet, leave, manager view
+│   └── home/                 # main dashboard + role-based menu
+└── main.dart
+Supabase Setup Notes
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Tables: profiles, divisions, departments, role_permissions, role_hierarchy
+Edge Functions: create_employee, delete_employee
+RLS should be enabled (especially on profiles)
+
+Next milestones (rough plan)
+
+Production / manufacturing log
+Inventory / material management
+Report & statistic dashboard
+Offline support (basic caching)
+Multi-language (VN/EN)
+Push notifications for leave approval
+
+License
+MIT License
+text### 2. ARCHITECTURE.md
+
+```markdown
+# Architecture Overview
+
+## Design Principles
+
+- Feature-first folder structure
+- Clean separation: controllers (Riverpod), repositories, views
+- Heavy use of Riverpod providers for data fetching & business logic
+- Supabase as single source of truth (PostgreSQL + Auth + Edge Functions)
+
+## Folder Structure
+lib/
+├── core/
+│   ├── exceptions/
+│   └── services/
+├── features/
+│   ├── auth/
+│   │   ├── controllers/
+│   │   ├── repositories/
+│   │   └── views/
+│   ├── admin/
+│   │   ├── controllers/
+│   │   └── views/
+│   ├── attendance/
+│   │   ├── controllers/
+│   │   ├── models/
+│   │   ├── repositories/
+│   │   └── views/
+│   └── home/
+└── main.dart
+text## State Management
+
+- **Riverpod 2.x** — used everywhere
+  - `FutureProvider` / `StreamProvider` for data fetching
+  - `StateNotifierProvider` / `Provider` for actions
+  - `ref.invalidate()` + `ref.watch()` pattern
+
+## Data Layer
+
+- Direct Supabase client usage in most places
+- Edge Functions used for critical admin operations:
+  - `create_employee` → create auth user + profile
+  - `delete_employee` → delete auth user
+
+## Security
+
+- Supabase Auth + custom `is_active` flag in `profiles`
+- Role-based UI rendering (via `role_permissions` table)
+- Edge Functions run with service_role key (admin rights)
+
+## Current Limitations
+
+- No offline support yet
+- No input validation in many forms
+- Minimal error handling & user feedback
+- No unit/widget tests
+- No proper loading / error states in some screens
+
+## Planned Improvements
+
+- Repository pattern consistency
+- Form validation + state management for forms
+- Better error boundary & snackbar system
+- RLS policy documentation
+- Feature flags / module enable/disable
+3. TODO.md
+Markdown# TODO - Factory HR & Attendance
+
+## High Priority (critical fixes / security)
+
+- [ ] Add proper RLS policies on all tables (especially profiles, attendance)
+- [ ] Input validation + error messages on all forms
+- [ ] Prevent self-deletion / admin lockout in employee delete flow
+- [ ] Fix delete_employee edge function — currently doesn't delete profile row
+
+## Must-have before production
+
+- [ ] Leave request submission form (currently incomplete in code)
+- [ ] Manager can approve/reject leave requests
+- [ ] Timesheet / attendance record creation (daily check-in)
+- [ ] Search & filter improvement in employee list
+- [ ] Loading & error states everywhere
+
+## Medium Priority (good to have)
+
+- [ ] Vietnamese localization (strings)
+- [ ] Dark mode support
+- [ ] Responsive layout fixes for very small screens
+- [ ] Profile edit (self-service for phone, avatar, etc.)
+- [ ] Password change / reset flow
+- [ ] Activity log / audit trail (who changed what)
+
+## Nice-to-have / Future modules
+
+- [ ] Production log / nhật ký sản xuất
+- [ ] Inventory / vật tư management
+- [ ] Asset / tài sản management
+- [ ] Report dashboard (KPI, attendance stats, leave balance)
+- [ ] Export Excel/PDF reports
+- [ ] Push notifications (leave approved/rejected)
+- [ ] Offline caching (Hive or similar)
+
+Last updated: 2026-03
+4. CONTEXT.md
+Markdown# Project Context
+
+## Business Goal
+
+Digital transformation for small-medium Vietnamese factories:
+
+- Replace paper timesheets & leave requests
+- Centralize employee & department information
+- Give managers visibility & approval power
+- Reduce admin workload on HR tasks
+- Prepare foundation for full ERP (production, inventory, reports)
+
+## Target Users
+
+1. Admin / HR Manager
+   - Manage structure (divisions, departments)
+   - CRUD employees
+   - Configure roles & permissions
+
+2. Department/Team Manager
+   - View team attendance
+   - Approve/reject leave requests
+
+3. Office Staff / Worker
+   - View personal timesheet
+   - Submit leave requests
+
+## Current Scope (MVP)
+
+- Authentication & role-based access
+- Organization structure (divisions + departments)
+- Employee management (basic CRUD + status)
+- Role & permission configuration
+- Basic leave request view (incomplete)
+
+## Non-functional Requirements (target)
+
+- Support ~200–500 users
+- Mobile-first (factory workers mostly use phones)
+- Vietnamese language primary
+- Data must be reasonably secure (RLS + edge function isolation)
+- Fast CRUD operations (< 1–2s)
+
+## Success Criteria (MVP)
+
+- Workers can see their own attendance & submit leave
+- Managers can approve leave
+- Admin can add/remove employees safely
+- No critical security holes (self-escalation, data leak)
+
+Current progress: ~45–55% of MVP
+5. PROGRESS.md
+Markdown# Development Progress Log
+
+**Project name**: Factory HR & Attendance  
+**Last updated**: March 2026
+
+## Completed
+
+- Supabase setup + auth flow (email/password)
+- Active/inactive user check on login
+- Role-based dashboard menu
+- Division & Department CRUD
+- Employee list + search/filter + edit + activate/deactivate
+- Role permissions (feature toggle per role)
+- Role hierarchy (reports-to configuration)
+- Edge Functions: create_employee, delete_employee (partial)
+- Basic responsive layout (DataTable on web/tablet, Cards on mobile)
+
+## In Progress / Partially done
+
+- Leave request form & approval screen
+- Manager attendance view
+- Personal timesheet view
+
+## Not started yet
+
+- Actual attendance recording (check-in/out)
+- Leave balance calculation
+- Notification system
+- Reports & statistics
+- Production / inventory modules
+
+## Known Issues / Technical Debt
+
+- delete_employee function doesn't delete profile row
+- No form validation in most places
+- Incomplete leave flow
+- Missing RLS documentation & verification
+- No tests
+- Error handling is minimal
+
+## Next 2–4 weeks target
+
+1. Complete leave request + approval flow
+2. Implement daily attendance check-in
+3. Add basic RLS policies
+4. Improve UX (loading states, better messages)
+5. Vietnamese translation of UI strings
+
+Feel free to create issues / PRs for any of the above items.
 </file>
 
 <file path="repomix.config.json">
 {
   "output": {
-    "filePath": "flutter-context.txt",
-    "style": "xml", 
-    "removeComments": true
+    "filePath": "factory-app.xml",
+    "style": "xml",
+    "removeComments": true,
+    "showLineNumbers": false
   },
   "ignore": {
     "customPatterns": [
@@ -4352,42 +5964,17 @@ samples, guidance on mobile development, and a full API reference.
       "**/*.freezed.dart",
       "assets/**",
       "pubspec.lock",
-      "test/**"
+      "test/**",
+      "node_modules/**",
+      "**/.env*",
+      "supabase/.temp/**",
+      "**/*.png",
+      "**/*.jpg",
+      "**/*.svg",
+      "**/*.ico"
     ]
   }
 }
-</file>
-
-<file path="supabase/.temp/cli-latest">
-v2.78.1
-</file>
-
-<file path="supabase/.temp/gotrue-version">
-v2.187.0
-</file>
-
-<file path="supabase/.temp/pooler-url">
-postgresql://postgres.puaazbsdzuvecogcshey@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres
-</file>
-
-<file path="supabase/.temp/postgres-version">
-17.6.1.084
-</file>
-
-<file path="supabase/.temp/project-ref">
-puaazbsdzuvecogcshey
-</file>
-
-<file path="supabase/.temp/rest-version">
-v14.4
-</file>
-
-<file path="supabase/.temp/storage-migration">
-fix-optimized-search-function
-</file>
-
-<file path="supabase/.temp/storage-version">
-v1.37.7
 </file>
 
 <file path="supabase/config.toml">
@@ -4947,12 +6534,6 @@ serve(async (req) => {
     })
   }
 })
-</file>
-
-<file path="ungdung.env">
-# File: .env
-SUPABASE_URL=https://puaazbsdzuvecogcshey.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1YWF6YnNkenV2ZWNvZ2NzaGV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NjE4NzQsImV4cCI6MjA4ODIzNzg3NH0.ygG-FlDJPcEhUFfzhJcpiA_6Fi8RsRiRr0jyU4d56Zc
 </file>
 
 </files>

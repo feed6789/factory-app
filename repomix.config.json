@@ -1,8 +1,9 @@
 {
   "output": {
-    "filePath": "flutter-context.txt",
-    "style": "xml", 
-    "removeComments": true
+    "filePath": "factory-app.xml",
+    "style": "xml",
+    "removeComments": true,
+    "showLineNumbers": false
   },
   "ignore": {
     "customPatterns": [
@@ -18,7 +19,14 @@
       "**/*.freezed.dart",
       "assets/**",
       "pubspec.lock",
-      "test/**"
+      "test/**",
+      "node_modules/**",
+      "**/.env*",
+      "supabase/.temp/**",
+      "**/*.png",
+      "**/*.jpg",
+      "**/*.svg",
+      "**/*.ico"
     ]
   }
 }
