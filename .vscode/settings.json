@@ -1,0 +1,15 @@
+{
+  // Bật Deno cho project này
+  "deno.enable": true,
+
+  // Bật tính năng kiểm tra lỗi của Deno
+  "deno.lint": true,
+
+  // Bật các tính năng chưa ổn định (thường cần thiết)
+  "deno.unstable": true,
+
+  // Chỉ định Deno làm trình định dạng mặc định cho file TypeScript
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  }
+}

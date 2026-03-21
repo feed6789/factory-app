@@ -1,0 +1,24 @@
+{
+  "output": {
+    "filePath": "flutter-context.txt",
+    "style": "xml", 
+    "removeComments": true
+  },
+  "ignore": {
+    "customPatterns": [
+      "android/**",
+      "ios/**",
+      "web/**",
+      "linux/**",
+      "macos/**",
+      "windows/**",
+      "build/**",
+      ".dart_tool/**",
+      "**/*.g.dart",
+      "**/*.freezed.dart",
+      "assets/**",
+      "pubspec.lock",
+      "test/**"
+    ]
+  }
+}
