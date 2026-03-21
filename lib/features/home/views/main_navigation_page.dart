@@ -9,8 +9,9 @@ import '../../attendance/views/leave_approval_page.dart';
 import '../../admin/views/tab_quan_ly_nhan_su.dart';
 import '../../admin/views/department_management_page.dart';
 import '../../attendance/views/manager_attendance_page.dart';
+import '../../reports/views/production_report_page.dart'; // <-- ĐÃ THÊM IMPORT TRANG BÁO CÁO
 
-// Fetch quyền của role cụ thể (chỉ định dùng maybeSingle để tránh lỗi)
+// Fetch quyền của role cụ thể
 final rolePermissionsProviderUser =
     FutureProvider.family<List<dynamic>, String>((ref, role) async {
       final supabase = ref.read(supabaseProvider);
@@ -24,7 +25,6 @@ final rolePermissionsProviderUser =
     });
 
 // Hàm phụ trợ kiểm tra quyền
-// Trả về true nếu trong mảng quyền có bất cứ mã quyền nào bắt đầu bằng groupKey
 bool hasAnyPermissionInGroup(List<dynamic> allowedFeatures, String groupKey) {
   return allowedFeatures.any(
     (feature) => feature.toString().startsWith(groupKey),
@@ -102,20 +102,24 @@ class MainNavigationPage extends ConsumerWidget {
             destination: const LeaveApprovalPage(),
             iconColor: Colors.orange.shade700,
           ),
-          // Bảng công cá nhân luôn hiển thị cho mọi user
           "cong_ca_nhan": FeatureMenuItem(
             title: 'Bảng Công Cá Nhân',
             icon: Icons.calendar_month,
             destination: TabCongCaNhan(currentUserId: profile.id),
             iconColor: Colors.green.shade600,
           ),
-          // Các tính năng sắp có
-          "bao_cao": FeatureMenuItem(
+          // ==========================================
+          // ĐÃ SỬA: BỎ isComingSoon VÀ THÊM destination
+          // ==========================================
+          "bao_cao": const FeatureMenuItem(
             title: 'Báo cáo & Thống kê',
             icon: Icons.bar_chart,
-            destination: const ProductionReportPage(), // <-- Trang mới sẽ tạo
+            destination:
+                ProductionReportPage(), // <-- Điều hướng đến trang Báo cáo
             iconColor: Colors.purple,
           ),
+
+          // Các tính năng sắp có
           "vat_tu": const FeatureMenuItem(
             title: 'Quản lý Vật tư',
             icon: Icons.inventory_2,
@@ -136,7 +140,7 @@ class MainNavigationPage extends ConsumerWidget {
           ),
         };
 
-        // 1. NẾU LÀ ADMIN -> Hiển thị toàn bộ tính năng, không cần check database quyền
+        // 1. NẾU LÀ ADMIN -> Hiển thị toàn bộ tính năng
         if (profile.role == 'admin') {
           return HomeDashboardPage(
             userName: profile.fullName,
@@ -158,24 +162,24 @@ class MainNavigationPage extends ConsumerWidget {
           data: (allowedFeatures) {
             List<FeatureMenuItem> userFeatures = [];
 
-            // Kiểm tra: Nếu user có ít nhất 1 quyền con bắt đầu bằng chữ 'nhan_su', thì hiện Tab Quản lý nhân sự
             if (hasAnyPermissionInGroup(allowedFeatures, 'nhan_su')) {
               userFeatures.add(allFeaturesMap['nhan_su']!);
             }
-
-            // Kiểm tra quyền Cơ cấu tổ chức
             if (hasAnyPermissionInGroup(allowedFeatures, 'phong_ban')) {
               userFeatures.add(allFeaturesMap['phong_ban']!);
             }
-
-            // Kiểm tra quyền Chấm công
             if (hasAnyPermissionInGroup(allowedFeatures, 'cham_cong')) {
               userFeatures.add(allFeaturesMap['cham_cong']!);
             }
-
-            // Kiểm tra quyền Duyệt đơn
             if (hasAnyPermissionInGroup(allowedFeatures, 'duyet_don')) {
               userFeatures.add(allFeaturesMap['duyet_don']!);
+            }
+
+            // ==========================================
+            // ĐÃ THÊM: Kiểm tra quyền Báo cáo cho User thường
+            // ==========================================
+            if (hasAnyPermissionInGroup(allowedFeatures, 'bao_cao')) {
+              userFeatures.add(allFeaturesMap['bao_cao']!);
             }
 
             // Luôn thêm Bảng công cá nhân

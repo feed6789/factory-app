@@ -10,10 +10,6 @@ class ProductionReportPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Logic kiểm tra quyền để hiển thị tab "Cấu hình"
-    // final user = ref.watch(currentProfileProvider).valueOrNull;
-    // final canConfigure = user?.role == 'admin' || user is Trưởng bộ phận điện;
-
     return DefaultTabController(
       length: 3, // Nhập liệu, Thống kê, Cấu hình
       child: Scaffold(
@@ -30,11 +26,7 @@ class ProductionReportPage extends StatelessWidget {
           ),
         ),
         body: TabBarView(
-          children: [
-            DataEntryTab(), // Sẽ tạo ở dưới
-            StatisticsTab(), // Sẽ tạo ở dưới
-            CabinetManagementTab(), // Sẽ tạo ở dưới
-          ],
+          children: [DataEntryTab(), StatisticsTab(), CabinetManagementTab()],
         ),
       ),
     );

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:ung_dung_nm/core/services/supabase_provider.dart';
+import 'package:ung_dung_nm/features/reports/models/electrical_cabinet_model.dart';
+import 'package:ung_dung_nm/features/reports/models/electricity_reading_model.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../home/views/main_navigation_page.dart'; // Import để dùng rolePermissionsProviderUser
 import '../controllers/production_report_controller.dart';
@@ -268,5 +271,94 @@ class CabinetManagementTab extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
     );
+  }
+}
+
+final electricalCabinetsProvider = FutureProvider<List<ElectricalCabinet>>((
+  ref,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final response = await supabase
+      .from('electrical_cabinets')
+      .select()
+      .eq('is_active', true)
+      .order('name');
+
+  return response.map((json) => ElectricalCabinet.fromJson(json)).toList();
+});
+
+// 2. Provider lấy số liệu điện trong 1 tháng (để vẽ biểu đồ)
+final monthlyElectricityProvider =
+    FutureProvider.family<List<ElectricityReading>, DateTime>((
+      ref,
+      month,
+    ) async {
+      final supabase = ref.read(supabaseProvider);
+
+      // Lấy ngày đầu tháng và ngày cuối tháng
+      final startOfMonth = DateTime(month.year, month.month, 1);
+      final endOfMonth = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
+
+      final response = await supabase
+          .from('electricity_readings')
+          .select()
+          .gte('recorded_at', startOfMonth.toIso8601String())
+          .lte('recorded_at', endOfMonth.toIso8601String())
+          .order('recorded_at');
+
+      return response.map((json) => ElectricityReading.fromJson(json)).toList();
+    });
+
+// 3. Provider xử lý các thao tác Thêm/Sửa/Xóa (Action)
+final productionReportActionProvider = Provider(
+  (ref) => ProductionReportActionController(ref),
+);
+
+class ProductionReportActionController {
+  final Ref ref;
+  ProductionReportActionController(this.ref);
+
+  // Hàm lưu số liệu điện hàng ngày
+  Future<bool> upsertElectricityReading(
+    String cabinetId,
+    double value,
+    DateTime date,
+  ) async {
+    try {
+      final supabase = ref.read(supabaseProvider);
+      final userId = supabase.auth.currentUser!.id;
+      final dateStr = DateFormat('yyyy-MM-dd').format(date);
+
+      // Upsert: Nếu tủ đó trong ngày đó đã nhập rồi thì nó sẽ update, chưa có thì insert
+      await supabase.from('electricity_readings').upsert({
+        'cabinet_id': cabinetId,
+        'recorded_at': dateStr,
+        'reading_value': value,
+        'recorded_by': userId,
+      }, onConflict: 'cabinet_id, recorded_at');
+
+      // Làm mới lại biểu đồ
+      ref.invalidate(monthlyElectricityProvider);
+      return true;
+    } catch (e) {
+      print("Lỗi nhập số điện: $e");
+      return false;
+    }
+  }
+
+  // Hàm thêm Tủ điện mới (dùng cho Tab Cấu hình)
+  Future<bool> addCabinet(String name, String? location) async {
+    try {
+      await ref.read(supabaseProvider).from('electrical_cabinets').insert({
+        'name': name,
+        'location': location,
+        'is_active': true,
+      });
+      ref.invalidate(electricalCabinetsProvider);
+      return true;
+    } catch (e) {
+      print("Lỗi thêm tủ điện: $e");
+      return false;
+    }
   }
 }
