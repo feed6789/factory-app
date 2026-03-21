@@ -30,7 +30,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  csv: ^6.0.0             # Để đọc và tạo file CSV
+  file_picker: ^8.0.0    # Để người dùng chọn file từ máy tính
+  universal_html: ^2.2.4 # Để xử lý việc tải file trên nền tảng web
+  fl_chart: ^0.68.0
   # Supabase thay cho Firebase
   supabase_flutter: ^2.12.0
 

@@ -1,5 +1,3 @@
-// File: lib/features/home/views/main_navigation_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ung_dung_nm/core/services/supabase_provider.dart';
@@ -12,18 +10,26 @@ import '../../admin/views/tab_quan_ly_nhan_su.dart';
 import '../../admin/views/department_management_page.dart';
 import '../../attendance/views/manager_attendance_page.dart';
 
-final rolePermissionsProvider = FutureProvider.family<List<dynamic>, String>((
-  ref,
-  role,
-) async {
-  final supabase = ref.read(supabaseProvider);
-  final response = await supabase
-      .from('role_permissions')
-      .select('allowed_features')
-      .eq('role', role)
-      .single();
-  return response['allowed_features'] as List<dynamic>;
-});
+// Fetch quyền của role cụ thể (chỉ định dùng maybeSingle để tránh lỗi)
+final rolePermissionsProviderUser =
+    FutureProvider.family<List<dynamic>, String>((ref, role) async {
+      final supabase = ref.read(supabaseProvider);
+      final response = await supabase
+          .from('role_permissions')
+          .select('allowed_features')
+          .eq('role', role)
+          .maybeSingle();
+      if (response == null) return [];
+      return response['allowed_features'] as List<dynamic>;
+    });
+
+// Hàm phụ trợ kiểm tra quyền
+// Trả về true nếu trong mảng quyền có bất cứ mã quyền nào bắt đầu bằng groupKey
+bool hasAnyPermissionInGroup(List<dynamic> allowedFeatures, String groupKey) {
+  return allowedFeatures.any(
+    (feature) => feature.toString().startsWith(groupKey),
+  );
+}
 
 class MainNavigationPage extends ConsumerWidget {
   const MainNavigationPage({super.key});
@@ -70,7 +76,7 @@ class MainNavigationPage extends ConsumerWidget {
             body: Center(child: Text("Không tìm thấy dữ liệu.")),
           );
 
-        // 1. ĐỊNH NGHĨA TẤT CẢ TÍNH NĂNG CỦA APP
+        // Định nghĩa tất cả các Menu Lớn ngoài Dashboard
         final allFeaturesMap = {
           "nhan_su": FeatureMenuItem(
             title: 'Quản lý Nhân sự',
@@ -84,8 +90,8 @@ class MainNavigationPage extends ConsumerWidget {
             destination: const DepartmentManagementPage(),
             iconColor: Colors.indigo,
           ),
-          "cham_cong_tram": FeatureMenuItem(
-            title: 'Chấm Công Tổ/Trạm',
+          "cham_cong": FeatureMenuItem(
+            title: 'Chấm Công & Đánh Giá',
             icon: Icons.playlist_add_check_circle,
             destination: ManagerAttendancePage(profileId: profile.id),
             iconColor: Colors.teal,
@@ -96,16 +102,18 @@ class MainNavigationPage extends ConsumerWidget {
             destination: const LeaveApprovalPage(),
             iconColor: Colors.orange.shade700,
           ),
+          // Bảng công cá nhân luôn hiển thị cho mọi user
           "cong_ca_nhan": FeatureMenuItem(
-            title: 'Bảng Công & Xin Nghỉ',
+            title: 'Bảng Công Cá Nhân',
             icon: Icons.calendar_month,
             destination: TabCongCaNhan(currentUserId: profile.id),
             iconColor: Colors.green.shade600,
           ),
-          "bao_cao": const FeatureMenuItem(
+          // Các tính năng sắp có
+          "bao_cao": FeatureMenuItem(
             title: 'Báo cáo & Thống kê',
             icon: Icons.bar_chart,
-            isComingSoon: true,
+            destination: const ProductionReportPage(), // <-- Trang mới sẽ tạo
             iconColor: Colors.purple,
           ),
           "vat_tu": const FeatureMenuItem(
@@ -126,15 +134,9 @@ class MainNavigationPage extends ConsumerWidget {
             isComingSoon: true,
             iconColor: Colors.redAccent,
           ),
-          "giao_viec": const FeatureMenuItem(
-            title: 'Giao Việc',
-            icon: Icons.task_alt,
-            isComingSoon: true,
-            iconColor: Colors.lightGreen,
-          ),
         };
 
-        // 2. XỬ LÝ RIÊNG CHO ADMIN: Thấy 100% tính năng, không cần check DB
+        // 1. NẾU LÀ ADMIN -> Hiển thị toàn bộ tính năng, không cần check database quyền
         if (profile.role == 'admin') {
           return HomeDashboardPage(
             userName: profile.fullName,
@@ -143,9 +145,9 @@ class MainNavigationPage extends ConsumerWidget {
           );
         }
 
-        // 3. XỬ LÝ CHO CÁC ROLE KHÁC: Gọi DB để lọc tính năng
+        // 2. NẾU LÀ USER THƯỜNG -> Kéo danh sách quyền từ Database về
         final permissionsAsync = ref.watch(
-          rolePermissionsProvider(profile.role),
+          rolePermissionsProviderUser(profile.role),
         );
 
         return permissionsAsync.when(
@@ -155,11 +157,30 @@ class MainNavigationPage extends ConsumerWidget {
               Scaffold(body: Center(child: Text("Lỗi tải quyền: $err"))),
           data: (allowedFeatures) {
             List<FeatureMenuItem> userFeatures = [];
-            for (String featureKey in allowedFeatures) {
-              if (allFeaturesMap.containsKey(featureKey)) {
-                userFeatures.add(allFeaturesMap[featureKey]!);
-              }
+
+            // Kiểm tra: Nếu user có ít nhất 1 quyền con bắt đầu bằng chữ 'nhan_su', thì hiện Tab Quản lý nhân sự
+            if (hasAnyPermissionInGroup(allowedFeatures, 'nhan_su')) {
+              userFeatures.add(allFeaturesMap['nhan_su']!);
             }
+
+            // Kiểm tra quyền Cơ cấu tổ chức
+            if (hasAnyPermissionInGroup(allowedFeatures, 'phong_ban')) {
+              userFeatures.add(allFeaturesMap['phong_ban']!);
+            }
+
+            // Kiểm tra quyền Chấm công
+            if (hasAnyPermissionInGroup(allowedFeatures, 'cham_cong')) {
+              userFeatures.add(allFeaturesMap['cham_cong']!);
+            }
+
+            // Kiểm tra quyền Duyệt đơn
+            if (hasAnyPermissionInGroup(allowedFeatures, 'duyet_don')) {
+              userFeatures.add(allFeaturesMap['duyet_don']!);
+            }
+
+            // Luôn thêm Bảng công cá nhân
+            userFeatures.add(allFeaturesMap['cong_ca_nhan']!);
+
             return HomeDashboardPage(
               userName: profile.fullName,
               menuItems: userFeatures,

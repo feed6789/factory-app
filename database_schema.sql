@@ -1,0 +1,204 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.assets (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  qr_code character varying UNIQUE,
+  name character varying NOT NULL,
+  department_id uuid,
+  status character varying DEFAULT 'active'::character varying,
+  CONSTRAINT assets_pkey PRIMARY KEY (id),
+  CONSTRAINT assets_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
+);
+CREATE TABLE public.attendance_logs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  log_type USER-DEFINED NOT NULL,
+  log_time timestamp with time zone DEFAULT now(),
+  method character varying,
+  location_data jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT attendance_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT attendance_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.daily_timesheets (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  date date NOT NULL,
+  shift_type character varying DEFAULT 'Ca Ngày'::character varying,
+  status character varying DEFAULT 'Có mặt'::character varying,
+  overtime_start time without time zone,
+  overtime_end time without time zone,
+  notes text,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT daily_timesheets_pkey PRIMARY KEY (id),
+  CONSTRAINT daily_timesheets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.departments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  division_id uuid,
+  CONSTRAINT departments_pkey PRIMARY KEY (id),
+  CONSTRAINT departments_division_id_fkey FOREIGN KEY (division_id) REFERENCES public.divisions(id)
+);
+CREATE TABLE public.divisions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT divisions_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.internal_communications (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  author_id uuid NOT NULL,
+  title character varying NOT NULL,
+  content text,
+  comm_type character varying,
+  target_roles jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT internal_communications_pkey PRIMARY KEY (id),
+  CONSTRAINT internal_communications_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.inventory_items (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  qr_code character varying NOT NULL UNIQUE,
+  name character varying NOT NULL,
+  min_stock_level integer DEFAULT 0,
+  current_stock integer DEFAULT 0,
+  unit character varying,
+  CONSTRAINT inventory_items_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.leave_requests (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  leave_type character varying NOT NULL,
+  start_time timestamp with time zone NOT NULL,
+  end_time timestamp with time zone NOT NULL,
+  reason text,
+  current_approver_id uuid,
+  approval_history jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  status USER-DEFINED DEFAULT 'pending_leader'::approval_status,
+  place_of_leave text,
+  CONSTRAINT leave_requests_pkey PRIMARY KEY (id),
+  CONSTRAINT leave_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT leave_requests_current_approver_id_fkey FOREIGN KEY (current_approver_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.maintenance_logs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  asset_id uuid NOT NULL,
+  technician_id uuid NOT NULL,
+  maintenance_type character varying,
+  details text,
+  cost numeric DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT maintenance_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT maintenance_logs_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES public.assets(id),
+  CONSTRAINT maintenance_logs_technician_id_fkey FOREIGN KEY (technician_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.material_requests (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  requester_id uuid NOT NULL,
+  items jsonb NOT NULL,
+  status USER-DEFINED DEFAULT 'pending_leader'::approval_status,
+  budget_approved boolean DEFAULT false,
+  approval_history jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT material_requests_pkey PRIMARY KEY (id),
+  CONSTRAINT material_requests_requester_id_fkey FOREIGN KEY (requester_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.payslips (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  month integer NOT NULL,
+  year integer NOT NULL,
+  salary_data jsonb NOT NULL,
+  is_viewed boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT payslips_pkey PRIMARY KEY (id),
+  CONSTRAINT payslips_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.production_logs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  shift_date date NOT NULL DEFAULT CURRENT_DATE,
+  product_code character varying NOT NULL,
+  quantity_ok integer DEFAULT 0,
+  quantity_ng integer DEFAULT 0,
+  electricity_kwh numeric,
+  oee_metrics jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT production_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT production_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  employee_code character varying NOT NULL UNIQUE,
+  full_name character varying NOT NULL,
+  role USER-DEFINED DEFAULT 'worker'::user_role,
+  department_id uuid,
+  manager_id uuid,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  email text,
+  phone_number text,
+  division_id uuid,
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
+  CONSTRAINT profiles_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id),
+  CONSTRAINT profiles_manager_id_fkey FOREIGN KEY (manager_id) REFERENCES public.profiles(id),
+  CONSTRAINT profiles_division_id_fkey FOREIGN KEY (division_id) REFERENCES public.divisions(id)
+);
+CREATE TABLE public.quality_issues (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  reporter_id uuid NOT NULL,
+  machine_code character varying,
+  issue_type character varying,
+  downtime_minutes integer DEFAULT 0,
+  images jsonb DEFAULT '[]'::jsonb,
+  root_cause text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT quality_issues_pkey PRIMARY KEY (id),
+  CONSTRAINT quality_issues_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.role_hierarchy (
+  role USER-DEFINED NOT NULL,
+  managed_by_role USER-DEFINED NOT NULL
+);
+CREATE TABLE public.role_permissions (
+  role USER-DEFINED NOT NULL,
+  allowed_features jsonb NOT NULL DEFAULT '[]'::jsonb,
+  CONSTRAINT role_permissions_pkey PRIMARY KEY (role)
+);
+CREATE TABLE public.tasks (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  assigner_id uuid NOT NULL,
+  assignee_id uuid,
+  team_id uuid,
+  title character varying NOT NULL,
+  description text,
+  deadline timestamp with time zone,
+  status USER-DEFINED DEFAULT 'todo'::task_status,
+  progress_images jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT tasks_pkey PRIMARY KEY (id),
+  CONSTRAINT tasks_assigner_id_fkey FOREIGN KEY (assigner_id) REFERENCES public.profiles(id),
+  CONSTRAINT tasks_assignee_id_fkey FOREIGN KEY (assignee_id) REFERENCES public.profiles(id),
+  CONSTRAINT tasks_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.departments(id)
+);
+CREATE TABLE public.tool_borrow_logs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  item_id uuid NOT NULL,
+  borrowed_at timestamp with time zone DEFAULT now(),
+  expected_return timestamp with time zone,
+  returned_at timestamp with time zone,
+  status character varying DEFAULT 'borrowed'::character varying,
+  CONSTRAINT tool_borrow_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT tool_borrow_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT tool_borrow_logs_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.inventory_items(id)
+);

@@ -1,9 +1,15 @@
 // File: lib/features/admin/views/tab_quan_ly_nhan_su.dart
 // *** PHIÊN BẢN HOÀN CHỈNH VỚI GIAO DIỆN RESPONSIVE ***
 
+import 'dart:convert';
+
+import 'package:csv/csv.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ung_dung_nm/features/admin/controllers/department_controller.dart';
+import 'package:ung_dung_nm/features/auth/controllers/auth_controller.dart';
+import 'package:universal_html/html.dart' as html;
 import '../controllers/employee_controller.dart';
 import '../../attendance/models/profile_model.dart';
 
@@ -31,10 +37,43 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
   ];
   final List<String> statusOptions = ['Tất cả', 'Đang hoạt động', 'Đã khóa'];
 
+  void _downloadTemplate(WidgetRef ref) {
+    final headers = [
+      'employee_code',
+      'full_name',
+      'email',
+      'phone_number',
+      'role',
+      'is_active',
+    ];
+    final exampleRow = [
+      'NV000',
+      'Nguyen Van A',
+      'a@example.com',
+      '0909123456',
+      'worker',
+      'true',
+    ];
+    String csv = const ListToCsvConverter().convert([headers, exampleRow]);
+
+    if (kIsWeb) {
+      final bytes = utf8.encode(csv);
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", "mau_import_nhan_vien.csv")
+        ..click();
+      html.Url.revokeObjectUrl(url);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final employeeAsync = ref.watch(employeeListProvider);
     ref.watch(departmentListProvider);
+
+    final currentUserProfile = ref.watch(currentProfileProvider).valueOrNull;
+    final bool isCurrentUserAdmin = currentUserProfile?.role == 'admin';
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -47,6 +86,39 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.file_upload),
+            tooltip: "Nhập từ CSV",
+            onPressed: () async {
+              // Hiển thị loading
+              showDialog(
+                context: context,
+                builder: (c) =>
+                    const Center(child: CircularProgressIndicator()),
+                barrierDismissible: false,
+              );
+              final resultMsg = await ref
+                  .read(employeeActionProvider)
+                  .importEmployeesFromCsv();
+              Navigator.pop(context); // Tắt loading
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(resultMsg)));
+            },
+          ),
+          // Nút Xuất file sẽ cần danh sách nhân viên, nên ta đặt nó trong .when()
+          employeeAsync.maybeWhen(
+            data: (employees) => IconButton(
+              icon: const Icon(Icons.file_download),
+              tooltip: "Xuất ra CSV",
+              onPressed: () {
+                ref
+                    .read(employeeActionProvider)
+                    .exportEmployeesToCsv(employees);
+              },
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
@@ -100,7 +172,20 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
               ],
             ),
           ),
-
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12.0,
+              vertical: 4.0,
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                icon: const Icon(Icons.description, size: 16),
+                label: const Text("Tải file mẫu (template)"),
+                onPressed: () => _downloadTemplate(ref),
+              ),
+            ),
+          ),
           // DANH SÁCH NHÂN VIÊN
           Expanded(
             child: employeeAsync.when(
@@ -108,16 +193,18 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
               error: (err, stack) =>
                   Center(child: Text("Lỗi tải danh sách: $err")),
               data: (allEmployees) {
-                // ÁP DỤNG LOGIC LỌC DỮ LIỆU
+                // ĐẶT Ở ĐÂY: Sửa lại logic lọc nhân viên
                 final employees = allEmployees.where((emp) {
-                  // Lọc tìm kiếm
+                  // KHÔNG cho phép cấp dưới thấy và thao tác với Admin
+                  if (!isCurrentUserAdmin && emp.role == 'admin') return false;
+
                   bool matchSearch =
                       emp.fullName.toLowerCase().contains(searchQuery) ||
                       emp.employeeCode.toLowerCase().contains(searchQuery);
-                  // Lọc chức vụ
+
                   bool matchRole =
                       filterRole == 'Tất cả' || emp.role == filterRole;
-                  // Lọc trạng thái
+
                   bool matchStatus = true;
                   if (filterStatus == 'Đang hoạt động')
                     matchStatus = emp.isActive;
@@ -128,7 +215,7 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
 
                 if (employees.isEmpty)
                   return const Center(
-                    child: Text("Không tìm thấy nhân viên nào phù hợp."),
+                    child: Text("Không tìm thấy nhân viên nào."),
                   );
 
                 return LayoutBuilder(
@@ -505,28 +592,15 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
   // Hiển thị Dialog (Hộp thoại) Sửa thông tin
   void _showEditDialog(
     BuildContext context,
-    WidgetRef ref,
+    WidgetRef parentRef, // Dùng parentRef thay cho ref để tránh nhầm lẫn
     ProfileModel profile,
   ) {
     final nameCtrl = TextEditingController(text: profile.fullName);
     final codeCtrl = TextEditingController(text: profile.employeeCode);
-    // Đã sửa lỗi undefined bằng cách gọi thẳng profile.email và profile.phoneNumber
     final emailCtrl = TextEditingController(text: profile.email ?? '');
     final phoneCtrl = TextEditingController(text: profile.phoneNumber ?? '');
-    final hierarchyAsync = ref.watch(roleHierarchyProvider);
 
-    const validRoles = [
-      'worker',
-      'team_leader',
-      'section_head',
-      'office_staff',
-      'director',
-      'admin',
-    ];
-    String selectedRole = validRoles.contains(profile.role)
-        ? profile.role
-        : 'worker';
-
+    String selectedRole = profile.role;
     bool isActive = profile.isActive;
     String? selectedDepartmentId = profile.departmentId;
     String? selectedDivisionId = profile.divisionId;
@@ -536,47 +610,62 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          final departmentsAsync = ref.watch(departmentListProvider);
-          final employeesAsync = ref.watch(employeeListProvider);
-          return AlertDialog(
-            title: const Text("Sửa thông tin & Phân cấp"),
-            content: SingleChildScrollView(
-              child: SizedBox(
-                width: 400,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nameCtrl,
-                      decoration: const InputDecoration(labelText: "Họ và tên"),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: codeCtrl,
-                      decoration: const InputDecoration(labelText: "Mã NV"),
-                    ),
-                    const SizedBox(height: 12),
-                    // THÊM 2 Ô NHẬP LIỆU MỚI
-                    TextField(
-                      controller: emailCtrl,
-                      decoration: const InputDecoration(
-                        labelText: "Email liên lạc",
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: phoneCtrl,
-                      decoration: const InputDecoration(
-                        labelText: "Số điện thoại",
-                      ),
-                      keyboardType: TextInputType.phone,
-                    ),
-                    const SizedBox(height: 12),
-                    // 1. DROPDOWN CHỌN BỘ PHẬN (MỚI)
-                    ref
-                        .watch(divisionListProvider)
-                        .when(
+          // Bọc nội dung bằng Consumer để sử dụng ref.watch an toàn trong Dialog
+          return Consumer(
+            builder: (context, ref, child) {
+              // 1. Lấy thông tin admin
+              final currentUserProfile = ref
+                  .watch(currentProfileProvider)
+                  .valueOrNull;
+              final bool isCurrentUserAdmin =
+                  currentUserProfile?.role == 'admin';
+
+              // 2. Lấy danh sách từ các Provider
+              final divisionsAsync = ref.watch(divisionListProvider);
+              final departmentsAsync = ref.watch(departmentListProvider);
+              final rolesAsync = ref.watch(roleListProvider);
+              final hierarchyAsync = ref.watch(roleHierarchyProvider);
+              final employeesAsync = ref.watch(employeeListProvider);
+
+              return AlertDialog(
+                title: const Text("Sửa thông tin & Phân cấp"),
+                content: SingleChildScrollView(
+                  child: SizedBox(
+                    width: 400,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: nameCtrl,
+                          decoration: const InputDecoration(
+                            labelText: "Họ và tên",
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: codeCtrl,
+                          decoration: const InputDecoration(labelText: "Mã NV"),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: emailCtrl,
+                          decoration: const InputDecoration(
+                            labelText: "Email liên lạc",
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: phoneCtrl,
+                          decoration: const InputDecoration(
+                            labelText: "Số điện thoại",
+                          ),
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Dropdown Bộ Phận
+                        divisionsAsync.when(
                           loading: () => const CircularProgressIndicator(),
                           error: (err, stack) => Text("Lỗi: $err"),
                           data: (divisions) => DropdownButtonFormField<String>(
@@ -596,317 +685,375 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
                                 setState(() => selectedDivisionId = val),
                           ),
                         ),
-                    const SizedBox(height: 12),
-                    departmentsAsync.when(
-                      loading: () =>
-                          const Center(child: CircularProgressIndicator()),
-                      error: (err, stack) => Text("Lỗi tải phòng ban: $err"),
-                      data: (departments) {
-                        return DropdownButtonFormField<String>(
-                          value: selectedDepartmentId,
-                          hint: const Text("Chọn phòng ban"),
-                          decoration: const InputDecoration(
-                            labelText: "Phòng Ban",
-                          ),
-                          items: departments
-                              .map(
-                                (dept) => DropdownMenuItem(
-                                  value: dept['id'].toString(),
-                                  child: Text(dept['name'].toString()),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) =>
-                              setState(() => selectedDepartmentId = val),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      value: selectedRole,
-                      decoration: const InputDecoration(
-                        labelText: "Vai trò trong tổ chức",
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'worker',
-                          child: Text("Nhân viên"),
-                        ),
-                        DropdownMenuItem(
-                          value: 'team_leader',
-                          child: Text("Tổ trưởng"),
-                        ),
-                        DropdownMenuItem(
-                          value: 'section_head',
-                          child: Text("Trưởng công đoạn"),
-                        ),
-                        DropdownMenuItem(
-                          value: 'office_staff',
-                          child: Text("NV Văn phòng"),
-                        ),
-                        DropdownMenuItem(
-                          value: 'director',
-                          child: Text("Ban Giám đốc"),
-                        ),
-                        DropdownMenuItem(
-                          value: 'admin',
-                          child: Text("Admin Hệ thống"),
-                        ),
-                      ],
-                      onChanged: (val) => setState(() => selectedRole = val!),
-                    ),
-                    const SizedBox(height: 12),
-                    hierarchyAsync.when(
-                      loading: () => const SizedBox.shrink(),
-                      error: (e, s) => const Text("Lỗi tải phân cấp"),
-                      data: (hierarchyList) {
-                        return employeesAsync.when(
-                          loading: () => const SizedBox.shrink(),
-                          error: (e, s) => const Text("Lỗi tải NV"),
-                          data: (employees) {
-                            final allowedManagerRoles = hierarchyList
-                                .where((h) => h['role'] == selectedRole)
-                                .map((h) => h['managed_by_role'] as String)
-                                .toList();
+                        const SizedBox(height: 12),
 
-                            // LOGIC LỌC:
-                            // - Cùng Role hợp lệ
-                            // - Không phải chính mình
-                            // - Nếu là quản lý cấp trung (team_leader, section_head), phải cùng bộ phận HOẶC phòng ban
-                            final validManagers = employees.where((e) {
-                              if (e.id == profile.id) return false;
-                              if (!allowedManagerRoles.contains(e.role))
-                                return false;
-
-                              if (e.role == 'team_leader' ||
-                                  e.role == 'section_head') {
-                                bool matchDept =
-                                    selectedDepartmentId == null ||
-                                    e.departmentId == selectedDepartmentId;
-                                bool matchDiv =
-                                    selectedDivisionId == null ||
-                                    e.divisionId == selectedDivisionId;
-                                return matchDept && matchDiv;
-                              }
-                              return true; // director/admin không bị giới hạn bộ phận
-                            }).toList();
-
-                            // Reset nếu manager đang chọn không còn hợp lệ
-                            if (selectedManagerId != null &&
-                                !validManagers.any(
-                                  (m) => m.id == selectedManagerId,
-                                )) {
-                              WidgetsBinding.instance.addPostFrameCallback(
-                                (_) => setState(() => selectedManagerId = null),
-                              );
-                            }
-
+                        // Dropdown Phòng Ban
+                        departmentsAsync.when(
+                          loading: () => const CircularProgressIndicator(),
+                          error: (err, stack) =>
+                              Text("Lỗi tải phòng ban: $err"),
+                          data: (departments) {
                             return DropdownButtonFormField<String>(
-                              value: selectedManagerId,
+                              value: selectedDepartmentId,
+                              hint: const Text("Chọn phòng ban"),
                               decoration: const InputDecoration(
-                                labelText: "Người quản lý trực tiếp",
+                                labelText: "Phòng Ban",
                               ),
-                              items: validManagers
+                              items: departments
                                   .map(
-                                    (manager) => DropdownMenuItem(
-                                      value: manager.id,
-                                      child: Text(
-                                        "${manager.fullName} (${manager.role})",
-                                      ),
+                                    (dept) => DropdownMenuItem(
+                                      value: dept['id'].toString(),
+                                      child: Text(dept['name'].toString()),
                                     ),
                                   )
                                   .toList(),
                               onChanged: (val) =>
-                                  setState(() => selectedManagerId = val),
+                                  setState(() => selectedDepartmentId = val),
                             );
                           },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    SwitchListTile(
-                      title: const Text("Trạng thái hoạt động"),
-                      value: isActive,
-                      activeColor: Colors.green,
-                      onChanged: (val) => setState(() => isActive = val),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Hủy"),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final success = await ref
-                      .read(employeeActionProvider)
-                      .updateProfile(
-                        id: profile.id,
-                        fullName: nameCtrl.text.trim(),
-                        empCode: codeCtrl.text.trim(),
-                        role: selectedRole,
-                        isActive: isActive,
-                        departmentId: selectedDepartmentId,
-                        divisionId: selectedDivisionId,
-                        managerId: selectedManagerId,
-                        email: emailCtrl.text.trim(), // Lưu email
-                        phoneNumber: phoneCtrl.text.trim(), // Lưu SĐT
-                      );
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          success ? "Cập nhật thành công!" : "Lỗi cập nhật",
                         ),
-                      ),
-                    );
-                  }
-                },
-                child: const Text("LƯU"),
-              ),
-            ],
+                        const SizedBox(height: 12),
+
+                        // ============================================
+                        // Dropdown Vai trò (Đã cập nhật code động)
+                        // ============================================
+                        rolesAsync.when(
+                          loading: () => const CircularProgressIndicator(),
+                          error: (err, stack) => const Text("Lỗi tải chức vụ"),
+                          data: (roles) {
+                            // Nếu không phải admin, loại bỏ 'admin' khỏi danh sách
+                            final validRoles = roles
+                                .where(
+                                  (r) =>
+                                      isCurrentUserAdmin ||
+                                      r['code'] != 'admin',
+                                )
+                                .toList();
+
+                            // Ngăn chặn lỗi khi selectedRole không nằm trong danh sách
+                            if (!validRoles.any(
+                              (r) => r['code'] == selectedRole,
+                            )) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                setState(() {
+                                  selectedRole = validRoles.isNotEmpty
+                                      ? validRoles.first['code']
+                                      : 'worker';
+                                });
+                              });
+                            }
+
+                            return DropdownButtonFormField<String>(
+                              value:
+                                  validRoles.any(
+                                    (r) => r['code'] == selectedRole,
+                                  )
+                                  ? selectedRole
+                                  : null,
+                              decoration: const InputDecoration(
+                                labelText: "Vai trò trong tổ chức",
+                              ),
+                              items: validRoles
+                                  .map(
+                                    (r) => DropdownMenuItem(
+                                      value: r['code'].toString(),
+                                      child: Text(r['name'].toString()),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (val) =>
+                                  setState(() => selectedRole = val!),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Dropdown Người quản lý
+                        hierarchyAsync.when(
+                          loading: () => const SizedBox.shrink(),
+                          error: (e, s) => const Text("Lỗi tải phân cấp"),
+                          data: (hierarchyList) {
+                            return employeesAsync.when(
+                              loading: () => const SizedBox.shrink(),
+                              error: (e, s) => const Text("Lỗi tải NV"),
+                              data: (employees) {
+                                final allowedManagerRoles = hierarchyList
+                                    .where((h) => h['role'] == selectedRole)
+                                    .map((h) => h['managed_by_role'] as String)
+                                    .toList();
+
+                                final validManagers = employees.where((e) {
+                                  if (e.id == profile.id) return false;
+                                  if (!allowedManagerRoles.contains(e.role))
+                                    return false;
+
+                                  if (e.role == 'team_leader' ||
+                                      e.role == 'section_head') {
+                                    bool matchDept =
+                                        selectedDepartmentId == null ||
+                                        e.departmentId == selectedDepartmentId;
+                                    bool matchDiv =
+                                        selectedDivisionId == null ||
+                                        e.divisionId == selectedDivisionId;
+                                    return matchDept && matchDiv;
+                                  }
+                                  return true;
+                                }).toList();
+
+                                if (selectedManagerId != null &&
+                                    !validManagers.any(
+                                      (m) => m.id == selectedManagerId,
+                                    )) {
+                                  WidgetsBinding.instance.addPostFrameCallback(
+                                    (_) => setState(
+                                      () => selectedManagerId = null,
+                                    ),
+                                  );
+                                }
+
+                                return DropdownButtonFormField<String>(
+                                  value: selectedManagerId,
+                                  decoration: const InputDecoration(
+                                    labelText: "Người quản lý trực tiếp",
+                                  ),
+                                  items: validManagers
+                                      .map(
+                                        (manager) => DropdownMenuItem(
+                                          value: manager.id,
+                                          child: Text(
+                                            "${manager.fullName} (${manager.role})",
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (val) =>
+                                      setState(() => selectedManagerId = val),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 8),
+
+                        SwitchListTile(
+                          title: const Text("Trạng thái hoạt động"),
+                          value: isActive,
+                          activeColor: Colors.green,
+                          onChanged: (val) => setState(() => isActive = val),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Hủy"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final success = await ref
+                          .read(employeeActionProvider)
+                          .updateProfile(
+                            id: profile.id,
+                            fullName: nameCtrl.text.trim(),
+                            empCode: codeCtrl.text.trim(),
+                            role: selectedRole,
+                            isActive: isActive,
+                            departmentId: selectedDepartmentId,
+                            divisionId: selectedDivisionId,
+                            managerId: selectedManagerId,
+                            email: emailCtrl.text.trim(),
+                            phoneNumber: phoneCtrl.text.trim(),
+                          );
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              success ? "Cập nhật thành công!" : "Lỗi cập nhật",
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text("LƯU"),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
     );
   }
 
-  void _showAddDialog(BuildContext context, WidgetRef ref) {
+  void _showAddDialog(BuildContext context, WidgetRef parentRef) {
     final nameCtrl = TextEditingController();
     final codeCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
     final passwordCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController(); // MỚI THÊM: Ô nhập SĐT
+    final phoneCtrl = TextEditingController();
     String selectedRole = 'worker';
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
-            title: const Text("Thêm Nhân Viên Mới"),
-            content: SingleChildScrollView(
-              child: SizedBox(
-                width: 400,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nameCtrl,
-                      decoration: const InputDecoration(labelText: "Họ và tên"),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: codeCtrl,
-                      decoration: const InputDecoration(labelText: "Mã NV"),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: emailCtrl,
-                      decoration: const InputDecoration(
-                        labelText: "Email đăng nhập",
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: passwordCtrl,
-                      decoration: const InputDecoration(
-                        labelText: "Mật khẩu (ít nhất 6 ký tự)",
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: phoneCtrl,
-                      decoration: const InputDecoration(
-                        labelText: "Số điện thoại",
-                      ),
-                      keyboardType: TextInputType.phone,
-                    ), // THÊM UI CHO SĐT
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      value: selectedRole,
-                      decoration: const InputDecoration(
-                        labelText: "Phân quyền (Role)",
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'worker',
-                          child: Text("Nhân viên"),
+          // Bọc bằng Consumer để lấy danh sách role an toàn
+          return Consumer(
+            builder: (context, ref, child) {
+              final rolesAsync = ref.watch(roleListProvider);
+              final currentUserProfile = ref
+                  .watch(currentProfileProvider)
+                  .valueOrNull;
+              final bool isCurrentUserAdmin =
+                  currentUserProfile?.role == 'admin';
+
+              return AlertDialog(
+                title: const Text("Thêm Nhân Viên Mới"),
+                content: SingleChildScrollView(
+                  child: SizedBox(
+                    width: 400,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: nameCtrl,
+                          decoration: const InputDecoration(
+                            labelText: "Họ và tên",
+                          ),
                         ),
-                        DropdownMenuItem(
-                          value: 'team_leader',
-                          child: Text("Tổ trưởng"),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: codeCtrl,
+                          decoration: const InputDecoration(labelText: "Mã NV"),
                         ),
-                        DropdownMenuItem(
-                          value: 'section_head',
-                          child: Text("Trưởng công đoạn"),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: emailCtrl,
+                          decoration: const InputDecoration(
+                            labelText: "Email đăng nhập",
+                          ),
                         ),
-                        DropdownMenuItem(
-                          value: 'office_staff',
-                          child: Text("NV Văn phòng"),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: passwordCtrl,
+                          decoration: const InputDecoration(
+                            labelText: "Mật khẩu (ít nhất 6 ký tự)",
+                          ),
                         ),
-                        DropdownMenuItem(
-                          value: 'director',
-                          child: Text("Ban Giám đốc"),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: phoneCtrl,
+                          decoration: const InputDecoration(
+                            labelText: "Số điện thoại",
+                          ),
+                          keyboardType: TextInputType.phone,
                         ),
-                        DropdownMenuItem(
-                          value: 'admin',
-                          child: Text("Admin Hệ thống"),
+                        const SizedBox(height: 12),
+
+                        // ============================================
+                        // Dropdown Vai trò động
+                        // ============================================
+                        rolesAsync.when(
+                          loading: () => const CircularProgressIndicator(),
+                          error: (err, stack) => const Text("Lỗi tải chức vụ"),
+                          data: (roles) {
+                            final validRoles = roles
+                                .where(
+                                  (r) =>
+                                      isCurrentUserAdmin ||
+                                      r['code'] != 'admin',
+                                )
+                                .toList();
+
+                            if (!validRoles.any(
+                              (r) => r['code'] == selectedRole,
+                            )) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                setState(() {
+                                  selectedRole = validRoles.isNotEmpty
+                                      ? validRoles.first['code']
+                                      : 'worker';
+                                });
+                              });
+                            }
+
+                            return DropdownButtonFormField<String>(
+                              value:
+                                  validRoles.any(
+                                    (r) => r['code'] == selectedRole,
+                                  )
+                                  ? selectedRole
+                                  : null,
+                              decoration: const InputDecoration(
+                                labelText: "Phân quyền (Role)",
+                              ),
+                              items: validRoles
+                                  .map(
+                                    (r) => DropdownMenuItem(
+                                      value: r['code'].toString(),
+                                      child: Text(r['name'].toString()),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (val) =>
+                                  setState(() => selectedRole = val!),
+                            );
+                          },
                         ),
                       ],
-                      onChanged: (val) => setState(() => selectedRole = val!),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Hủy"),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  if (nameCtrl.text.isEmpty ||
-                      codeCtrl.text.isEmpty ||
-                      emailCtrl.text.isEmpty ||
-                      passwordCtrl.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Vui lòng nhập đủ thông tin (trừ SĐT)"),
-                      ),
-                    );
-                    return;
-                  }
-                  final success = await ref
-                      .read(employeeActionProvider)
-                      .addEmployee(
-                        fullName: nameCtrl.text.trim(),
-                        empCode: codeCtrl.text.trim(),
-                        email: emailCtrl.text.trim(),
-                        password: passwordCtrl.text.trim(),
-                        role: selectedRole,
-                        phoneNumber: phoneCtrl.text.trim(), // Truyền SĐT
-                      );
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          success ? "Thêm thành công!" : "Thêm thất bại.",
-                        ),
-                      ),
-                    );
-                  }
-                },
-                child: const Text("TẠO MỚI"),
-              ),
-            ],
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Hủy"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (nameCtrl.text.isEmpty ||
+                          codeCtrl.text.isEmpty ||
+                          emailCtrl.text.isEmpty ||
+                          passwordCtrl.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Vui lòng nhập đủ thông tin (trừ SĐT)",
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                      final success = await ref
+                          .read(employeeActionProvider)
+                          .addEmployee(
+                            fullName: nameCtrl.text.trim(),
+                            empCode: codeCtrl.text.trim(),
+                            email: emailCtrl.text.trim(),
+                            password: passwordCtrl.text.trim(),
+                            role: selectedRole,
+                            phoneNumber: phoneCtrl.text.trim(),
+                          );
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              success ? "Thêm thành công!" : "Thêm thất bại.",
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text("TẠO MỚI"),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),

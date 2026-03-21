@@ -116,286 +116,22 @@ class TabCongCaNhan extends ConsumerWidget {
       // Thêm nút này vào phần Scaffold của TabCongCaNhan:
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          // Lấy thông tin user hiện tại để gán mặc định "Quản lý trực tiếp"
+          // Lấy profile của người dùng HIỆN TẠI trước khi mở dialog
           final currentUserProfile = await ref.read(
             currentProfileProvider.future,
           );
-
           if (!context.mounted) return;
+
+          // Mở Dialog để điền đơn
           showDialog(
             context: context,
-            builder: (c) {
-              final reasonCtrl = TextEditingController();
-              final placeCtrl = TextEditingController(); // Controller nơi nghỉ
-
-              DateTime startDate = DateTime.now();
-              DateTime endDate = DateTime.now();
-              String startHour = '07';
-              String startMin = '00';
-              String endHour = '16';
-              String endMin = '00';
-              String? selectedApproverId = currentUserProfile?.managerId;
-
-              // Các list để dropdown giờ phút
-              final hours = List.generate(
-                24,
-                (index) => index.toString().padLeft(2, '0'),
-              );
-              final minutes = ['00', '15', '30', '45'];
-
-              return StatefulBuilder(
-                builder: (context, setState) => AlertDialog(
-                  title: const Text(
-                    "Đơn Xin Nghỉ Phép",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  content: SingleChildScrollView(
-                    child: SizedBox(
-                      width: 500, // Căn rộng ra cho giống web
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // HÀNG 1: NGÀY BẮT ĐẦU + GIỜ + PHÚT
-                          Row(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: _buildDatePicker(
-                                  context,
-                                  "Ngày bắt đầu",
-                                  startDate,
-                                  (d) => setState(() => startDate = d),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                flex: 1,
-                                child: _buildDropdown(
-                                  "Giờ",
-                                  startHour,
-                                  hours,
-                                  (v) => setState(() => startHour = v!),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                flex: 1,
-                                child: _buildDropdown(
-                                  "Phút",
-                                  startMin,
-                                  minutes,
-                                  (v) => setState(() => startMin = v!),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          // HÀNG 2: NGÀY KẾT THÚC + GIỜ + PHÚT
-                          Row(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: _buildDatePicker(
-                                  context,
-                                  "Ngày kết thúc",
-                                  endDate,
-                                  (d) => setState(() => endDate = d),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                flex: 1,
-                                child: _buildDropdown(
-                                  "Giờ",
-                                  endHour,
-                                  hours,
-                                  (v) => setState(() => endHour = v!),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                flex: 1,
-                                child: _buildDropdown(
-                                  "Phút",
-                                  endMin,
-                                  minutes,
-                                  (v) => setState(() => endMin = v!),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
-                          // LÝ DO NGHỈ
-                          const Text(
-                            "Lý do nghỉ",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          TextField(
-                            controller: reasonCtrl,
-                            maxLines: 3, // Giống text area trong hình
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              isDense: true,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // NƠI NGHỈ
-                          const Text(
-                            "Nơi nghỉ",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          TextField(
-                            controller: placeCtrl,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              isDense: true,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // QUẢN LÝ TRỰC TIẾP
-                          const Text(
-                            "Quản lý trực tiếp:",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          ref
-                              .watch(employeeListProvider)
-                              .when(
-                                loading: () =>
-                                    const CircularProgressIndicator(),
-                                error: (e, s) => const Text("Lỗi"),
-                                data: (employees) {
-                                  // Lấy danh sách quản lý
-                                  final managers = employees
-                                      .where(
-                                        (e) => [
-                                          'team_leader',
-                                          'section_head',
-                                          'director',
-                                          'admin',
-                                        ].contains(e.role),
-                                      )
-                                      .toList();
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        isExpanded: true,
-                                        value: selectedApproverId,
-                                        hint: const Text(
-                                          "-- Chọn người quản lý --",
-                                        ),
-                                        items: managers
-                                            .map(
-                                              (m) => DropdownMenuItem(
-                                                value: m.id,
-                                                child: Text(
-                                                  "${m.fullName} (${m.role})",
-                                                ),
-                                              ),
-                                            )
-                                            .toList(),
-                                        onChanged: (v) => setState(
-                                          () => selectedApproverId = v,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(c),
-                      child: const Text("Hủy"),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade800,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () async {
-                        if (reasonCtrl.text.isEmpty ||
-                            selectedApproverId == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Vui lòng nhập lý do và chọn người quản lý.",
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-
-                        // Ghép chuỗi ngày giờ
-                        final startDateTime = DateTime(
-                          startDate.year,
-                          startDate.month,
-                          startDate.day,
-                          int.parse(startHour),
-                          int.parse(startMin),
-                        );
-                        final endDateTime = DateTime(
-                          endDate.year,
-                          endDate.month,
-                          endDate.day,
-                          int.parse(endHour),
-                          int.parse(endMin),
-                        );
-
-                        final success = await ref
-                            .read(leaveActionProvider)
-                            .submitLeaveRequest(
-                              userId: currentUserId,
-                              startTime: startDateTime,
-                              endTime: endDateTime,
-                              reason: reasonCtrl.text,
-                              placeOfLeave: placeCtrl.text, // Nơi nghỉ
-                              approverId: selectedApproverId!, // Quản lý
-                              leaveType: 'Nghỉ phép',
-                            );
-
-                        if (context.mounted) {
-                          Navigator.pop(c);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                success ? "Đã gửi đơn!" : "Gửi đơn thất bại.",
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                      child: const Text("GỬI ĐƠN"),
-                    ),
-                  ],
-                ),
-              );
-            },
+            barrierDismissible: false,
+            // Sử dụng một Dialog Widget riêng để quản lý state tốt hơn
+            builder: (c) => XinNghiPhepDialog(
+              currentUserId: currentUserId,
+              // Truyền managerId mặc định vào dialog
+              defaultManagerId: currentUserProfile?.managerId,
+            ),
           );
         },
         icon: const Icon(Icons.edit_document),
@@ -482,3 +218,374 @@ class TabCongCaNhan extends ConsumerWidget {
     );
   }
 }
+
+// ======================================================================
+// WIDGET DIALOG XIN NGHỈ PHÉP (PHIÊN BẢN HOÀN CHỈNH - ĐÃ BỔ SUNG HÀM)
+// ======================================================================
+class XinNghiPhepDialog extends ConsumerStatefulWidget {
+  final String currentUserId;
+  final String? defaultManagerId;
+
+  const XinNghiPhepDialog({
+    super.key,
+    required this.currentUserId,
+    this.defaultManagerId,
+  });
+
+  @override
+  ConsumerState<XinNghiPhepDialog> createState() => _XinNghiPhepDialogState();
+}
+
+class _XinNghiPhepDialogState extends ConsumerState<XinNghiPhepDialog> {
+  final _reasonCtrl = TextEditingController();
+  final _placeCtrl = TextEditingController();
+
+  DateTime _startDate = DateTime.now();
+  DateTime _endDate = DateTime.now();
+  String _startHour = '07';
+  String _startMin = '00';
+  String _endHour = '16';
+  String _endMin = '00';
+  String? _selectedApproverId;
+
+  final _hours = List.generate(24, (i) => i.toString().padLeft(2, '0'));
+  final _minutes = ['00', '15', '30', '45'];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedApproverId = widget.defaultManagerId;
+  }
+
+  @override
+  void dispose() {
+    _reasonCtrl.dispose();
+    _placeCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final employeesAsync = ref.watch(employeeListProvider);
+
+    return AlertDialog(
+      title: const Text(
+        "Đơn Xin Nghỉ Phép",
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      content: SingleChildScrollView(
+        child: SizedBox(
+          width: 500,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: _buildDatePicker(
+                      context,
+                      "Ngày bắt đầu",
+                      _startDate,
+                      (d) => setState(() => _startDate = d),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 1,
+                    child: _buildDropdown(
+                      "Giờ",
+                      _startHour,
+                      _hours,
+                      (v) => setState(() => _startHour = v!),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 1,
+                    child: _buildDropdown(
+                      "Phút",
+                      _startMin,
+                      _minutes,
+                      (v) => setState(() => _startMin = v!),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: _buildDatePicker(
+                      context,
+                      "Ngày kết thúc",
+                      _endDate,
+                      (d) => setState(() => _endDate = d),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 1,
+                    child: _buildDropdown(
+                      "Giờ",
+                      _endHour,
+                      _hours,
+                      (v) => setState(() => _endHour = v!),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 1,
+                    child: _buildDropdown(
+                      "Phút",
+                      _endMin,
+                      _minutes,
+                      (v) => setState(() => _endMin = v!),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildTextField("Lý do nghỉ", _reasonCtrl, maxLines: 3),
+              const SizedBox(height: 16),
+              _buildTextField("Nơi nghỉ", _placeCtrl),
+              const SizedBox(height: 16),
+              const Text(
+                "Quản lý trực tiếp:",
+                style: TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+              const SizedBox(height: 4),
+              employeesAsync.when(
+                loading: () => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                error: (e, s) => const Text(
+                  "Lỗi tải danh sách quản lý",
+                  style: TextStyle(color: Colors.red),
+                ),
+                data: (employees) {
+                  final managers = employees
+                      .where(
+                        (e) => [
+                          'team_leader',
+                          'section_head',
+                          'director',
+                          'admin',
+                        ].contains(e.role),
+                      )
+                      .toList();
+                  if (_selectedApproverId != null &&
+                      !managers.any((m) => m.id == _selectedApproverId)) {
+                    WidgetsBinding.instance.addPostFrameCallback(
+                      (_) => setState(() => _selectedApproverId = null),
+                    );
+                  }
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: _selectedApproverId,
+                        hint: const Text("-- Chọn người quản lý --"),
+                        items: managers
+                            .map(
+                              (m) => DropdownMenuItem(
+                                value: m.id,
+                                child: Text(
+                                  "${m.fullName} (${m.role})",
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) =>
+                            setState(() => _selectedApproverId = v),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Hủy"),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue.shade800,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () async {
+            if (_reasonCtrl.text.isEmpty || _selectedApproverId == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Vui lòng nhập lý do và chọn người quản lý."),
+                ),
+              );
+              return;
+            }
+            final startDateTime = DateTime(
+              _startDate.year,
+              _startDate.month,
+              _startDate.day,
+              int.parse(_startHour),
+              int.parse(_startMin),
+            );
+            final endDateTime = DateTime(
+              _endDate.year,
+              _endDate.month,
+              _endDate.day,
+              int.parse(_endHour),
+              int.parse(_endMin),
+            );
+            final success = await ref
+                .read(leaveActionProvider)
+                .submitLeaveRequest(
+                  userId: widget.currentUserId,
+                  startTime: startDateTime,
+                  endTime: endDateTime,
+                  reason: _reasonCtrl.text,
+                  placeOfLeave: _placeCtrl.text,
+                  approverId: _selectedApproverId!,
+                  leaveType: 'Nghỉ phép',
+                );
+            if (context.mounted) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(success ? "Đã gửi đơn!" : "Gửi đơn thất bại."),
+                ),
+              );
+            }
+          },
+          child: const Text("GỬI ĐƠN"),
+        ),
+      ],
+    );
+  }
+
+  // ========================================================
+  // CÁC HÀM PHỤ TRỢ BỊ THIẾU (ĐÃ BỔ SUNG VÀO ĐÂY)
+  // ========================================================
+
+  Widget _buildDatePicker(
+    BuildContext context,
+    String label,
+    DateTime date,
+    Function(DateTime) onPicked,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+        const SizedBox(height: 4),
+        InkWell(
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: date,
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+            );
+            if (picked != null) onPicked(picked);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade400),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  DateFormat('dd/MM/yyyy').format(date),
+                ), // Sửa định dạng ngày cho thân thiện
+                const Icon(Icons.calendar_today, size: 18),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdown(
+    String label,
+    String value,
+    List<String> items,
+    Function(String?) onChanged,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade400),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              value: value,
+              items: items
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+        const SizedBox(height: 4),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            isDense: true,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+  // Widget phụ trợ
+  
