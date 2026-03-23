@@ -9,7 +9,9 @@ import '../../attendance/views/leave_approval_page.dart';
 import '../../admin/views/tab_quan_ly_nhan_su.dart';
 import '../../admin/views/department_management_page.dart';
 import '../../attendance/views/manager_attendance_page.dart';
-import '../../reports/views/production_report_page.dart'; // <-- ĐÃ THÊM IMPORT TRANG BÁO CÁO
+import '../../reports/views/production_report_page.dart';
+import '../../attendance/views/feedback_submission_page.dart';
+import '../../attendance/views/feedback_main_page.dart';
 
 // Fetch quyền của role cụ thể
 final rolePermissionsProviderUser =
@@ -138,6 +140,20 @@ class MainNavigationPage extends ConsumerWidget {
             isComingSoon: true,
             iconColor: Colors.redAccent,
           ),
+          "giao_viec": const FeatureMenuItem(
+            title: 'Giao Việc',
+            icon: Icons.task_alt,
+            isComingSoon: true,
+            iconColor: Colors.lightGreen,
+          ),
+
+          "gop_y": const FeatureMenuItem(
+            title: 'Đóng góp Ý kiến',
+            icon: Icons.record_voice_over,
+            // Đổi destination trỏ về FeedbackMainPage thay vì FeedbackSubmissionPage
+            destination: FeedbackMainPage(),
+            iconColor: Colors.pinkAccent,
+          ),
         };
 
         // 1. NẾU LÀ ADMIN -> Hiển thị toàn bộ tính năng
@@ -182,8 +198,16 @@ class MainNavigationPage extends ConsumerWidget {
               userFeatures.add(allFeaturesMap['bao_cao']!);
             }
 
+            if (hasAnyPermissionInGroup(allowedFeatures, 'gop_y')) {
+              userFeatures.add(allFeaturesMap['gop_y']!);
+            }
+
             // Luôn thêm Bảng công cá nhân
             userFeatures.add(allFeaturesMap['cong_ca_nhan']!);
+
+            // userFeatures.add(allFeaturesMap['giao_viec']!);
+
+            // userFeatures.add(allFeaturesMap['gop_y']!);
 
             return HomeDashboardPage(
               userName: profile.fullName,

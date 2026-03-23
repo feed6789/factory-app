@@ -21,6 +21,17 @@ CREATE TABLE public.attendance_logs (
   CONSTRAINT attendance_logs_pkey PRIMARY KEY (id),
   CONSTRAINT attendance_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.compressed_air_readings (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  pressure_value numeric,
+  flow_rate_value numeric,
+  recorded_by uuid,
+  recorded_at date NOT NULL UNIQUE,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compressed_air_readings_pkey PRIMARY KEY (id),
+  CONSTRAINT compressed_air_readings_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id)
+);
 CREATE TABLE public.daily_timesheets (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   user_id uuid NOT NULL,
@@ -50,6 +61,38 @@ CREATE TABLE public.divisions (
   description text,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT divisions_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.electrical_cabinets (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  location text,
+  department_id uuid,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT electrical_cabinets_pkey PRIMARY KEY (id),
+  CONSTRAINT electrical_cabinets_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
+);
+CREATE TABLE public.electricity_readings (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  cabinet_id uuid NOT NULL,
+  reading_value numeric NOT NULL,
+  recorded_by uuid,
+  recorded_at date NOT NULL,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT electricity_readings_pkey PRIMARY KEY (id),
+  CONSTRAINT electricity_readings_cabinet_id_fkey FOREIGN KEY (cabinet_id) REFERENCES public.electrical_cabinets(id),
+  CONSTRAINT electricity_readings_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.employee_feedbacks (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  feedback_type character varying NOT NULL,
+  content text NOT NULL,
+  status character varying DEFAULT 'pending'::character varying,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT employee_feedbacks_pkey PRIMARY KEY (id),
+  CONSTRAINT employee_feedbacks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.internal_communications (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -110,6 +153,27 @@ CREATE TABLE public.material_requests (
   CONSTRAINT material_requests_pkey PRIMARY KEY (id),
   CONSTRAINT material_requests_requester_id_fkey FOREIGN KEY (requester_id) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.monthly_evaluations (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  manager_id uuid,
+  month_year character varying NOT NULL,
+  skill_rating character varying NOT NULL,
+  attitude_rating character varying NOT NULL,
+  working_days numeric DEFAULT 0,
+  leave_days numeric DEFAULT 0,
+  unpaid_leave_days numeric DEFAULT 0,
+  unexcused_days numeric DEFAULT 0,
+  violations text NOT NULL,
+  monthly_grade character varying NOT NULL,
+  proposed_action text NOT NULL,
+  status character varying DEFAULT 'draft'::character varying,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT monthly_evaluations_pkey PRIMARY KEY (id),
+  CONSTRAINT monthly_evaluations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT monthly_evaluations_manager_id_fkey FOREIGN KEY (manager_id) REFERENCES public.profiles(id)
+);
 CREATE TABLE public.payslips (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   user_id uuid NOT NULL,
@@ -138,7 +202,7 @@ CREATE TABLE public.profiles (
   id uuid NOT NULL,
   employee_code character varying NOT NULL UNIQUE,
   full_name character varying NOT NULL,
-  role USER-DEFINED DEFAULT 'worker'::user_role,
+  role text DEFAULT 'worker'::character varying,
   department_id uuid,
   manager_id uuid,
   is_active boolean DEFAULT true,
@@ -150,7 +214,8 @@ CREATE TABLE public.profiles (
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
   CONSTRAINT profiles_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id),
   CONSTRAINT profiles_manager_id_fkey FOREIGN KEY (manager_id) REFERENCES public.profiles(id),
-  CONSTRAINT profiles_division_id_fkey FOREIGN KEY (division_id) REFERENCES public.divisions(id)
+  CONSTRAINT profiles_division_id_fkey FOREIGN KEY (division_id) REFERENCES public.divisions(id),
+  CONSTRAINT profiles_role_fkey FOREIGN KEY (role) REFERENCES public.roles(code)
 );
 CREATE TABLE public.quality_issues (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -165,13 +230,22 @@ CREATE TABLE public.quality_issues (
   CONSTRAINT quality_issues_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.role_hierarchy (
-  role USER-DEFINED NOT NULL,
-  managed_by_role USER-DEFINED NOT NULL
+  role text NOT NULL,
+  managed_by_role text NOT NULL,
+  CONSTRAINT role_hierarchy_role_fkey FOREIGN KEY (role) REFERENCES public.roles(code),
+  CONSTRAINT role_hierarchy_managed_by_role_fkey FOREIGN KEY (managed_by_role) REFERENCES public.roles(code)
 );
 CREATE TABLE public.role_permissions (
-  role USER-DEFINED NOT NULL,
+  role text NOT NULL,
   allowed_features jsonb NOT NULL DEFAULT '[]'::jsonb,
   CONSTRAINT role_permissions_pkey PRIMARY KEY (role)
+);
+CREATE TABLE public.roles (
+  code character varying NOT NULL,
+  name character varying NOT NULL,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT roles_pkey PRIMARY KEY (code)
 );
 CREATE TABLE public.tasks (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),

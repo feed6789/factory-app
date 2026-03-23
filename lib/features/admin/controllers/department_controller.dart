@@ -11,6 +11,7 @@ final Map<String, String> GROUP_NAMES = {
   "cham_cong": "Chấm Công & Xếp Loại",
   "duyet_don": "Duyệt Đơn Từ",
   "bao_cao": "Báo cáo & Thống kê",
+  "gop_y": "Đóng Góp & Tiện Ích",
 };
 
 final Map<String, Map<String, String>> ALL_FEATURES_NESTED = {
@@ -41,6 +42,7 @@ final Map<String, Map<String, String>> ALL_FEATURES_NESTED = {
     "bao_cao_enter_data": "Nhập liệu báo cáo hàng ngày",
     "bao_cao_config_cabinet": "Cấu hình (Thêm/Sửa/Xóa Tủ điện)",
   },
+  "gop_y": {"gop_y": "Đóng góp Ý kiến"},
 };
 
 final divisionListProvider = FutureProvider<List<Map<String, dynamic>>>((

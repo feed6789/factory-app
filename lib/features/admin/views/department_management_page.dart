@@ -17,6 +17,7 @@ const Map<String, String> ALL_FEATURES = {
   "tai_san": "Quản lý Tài sản",
   "san_xuat": "Nhật ký Sản xuất",
   "giao_viec": "Giao Việc",
+  "gop_y": "Đóng góp Ý kiến",
 };
 const List<String> ROLES = [
   'admin',
