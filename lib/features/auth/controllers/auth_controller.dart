@@ -75,3 +75,38 @@ class AuthActionController extends StateNotifier<AsyncValue<void>> {
     }
   }
 }
+
+final profileActionProvider = Provider((ref) => ProfileActionController(ref));
+
+class ProfileActionController {
+  final Ref ref;
+  ProfileActionController(this.ref);
+
+  // Hàm cập nhật số điện thoại
+  Future<bool> updatePhone(String userId, String phone) async {
+    try {
+      final supabase = ref.read(supabaseProvider);
+      await supabase
+          .from('profiles')
+          .update({'phone_number': phone})
+          .eq('id', userId);
+      // Cập nhật lại state của app
+      ref.invalidate(currentProfileProvider);
+      return true;
+    } catch (e) {
+      print("Lỗi cập nhật sđt: $e");
+      return false;
+    }
+  }
+
+  // Hàm đổi mật khẩu
+  Future<String> changePassword(String newPassword) async {
+    try {
+      final supabase = ref.read(supabaseProvider);
+      await supabase.auth.updateUser(UserAttributes(password: newPassword));
+      return "OK";
+    } catch (e) {
+      return "Lỗi đổi mật khẩu: Không thể thực hiện. Vui lòng thử đăng xuất và đăng nhập lại.";
+    }
+  }
+}

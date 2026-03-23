@@ -19,9 +19,16 @@ class TabCongCaNhan extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
+      appBar: AppBar(
+        title: const Text(
+          "Bảng Công Cá Nhân",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.blue.shade800,
+        foregroundColor: Colors.white,
+      ),
       body: Column(
         children: [
-          // Tiêu đề tháng
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -31,7 +38,7 @@ class TabCongCaNhan extends ConsumerWidget {
                 const Icon(Icons.calendar_month, color: Colors.blue),
                 const SizedBox(width: 8),
                 Text(
-                  "Bảng công Tháng ${DateTime.now().month}/${DateTime.now().year}",
+                  "Tháng ${DateTime.now().month}/${DateTime.now().year}",
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

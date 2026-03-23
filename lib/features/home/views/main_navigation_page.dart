@@ -12,6 +12,8 @@ import '../../attendance/views/manager_attendance_page.dart';
 import '../../reports/views/production_report_page.dart';
 import '../../attendance/views/feedback_submission_page.dart';
 import '../../attendance/views/feedback_main_page.dart';
+// IMPORT THÊM TRANG QUẢN LÝ VẬT TƯ
+import '../../reports/views/inventory_main_page.dart';
 
 // Fetch quyền của role cụ thể
 final rolePermissionsProviderUser =
@@ -25,6 +27,22 @@ final rolePermissionsProviderUser =
       if (response == null) return [];
       return response['allowed_features'] as List<dynamic>;
     });
+
+// --- PROVIDER MỚI: Kiểm tra cờ thủ kho của từng cá nhân ---
+// Giúp không cần sửa ProfileModel và chạy lại build_runner
+final inventoryPermissionProvider = FutureProvider.family<bool, String>((
+  ref,
+  userId,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final response = await supabase
+      .from('profiles')
+      .select('can_manage_inventory')
+      .eq('id', userId)
+      .maybeSingle();
+  if (response == null) return false;
+  return response['can_manage_inventory'] == true;
+});
 
 // Hàm phụ trợ kiểm tra quyền
 bool hasAnyPermissionInGroup(List<dynamic> allowedFeatures, String groupKey) {
@@ -78,6 +96,13 @@ class MainNavigationPage extends ConsumerWidget {
             body: Center(child: Text("Không tìm thấy dữ liệu.")),
           );
 
+        // Đọc trạng thái xem user này có phải là Thủ kho (cá nhân) không
+        final canManageInventoryAsync = ref.watch(
+          inventoryPermissionProvider(profile.id),
+        );
+        final bool isInventoryManager =
+            canManageInventoryAsync.valueOrNull ?? false;
+
         // Định nghĩa tất cả các Menu Lớn ngoài Dashboard
         final allFeaturesMap = {
           "nhan_su": FeatureMenuItem(
@@ -110,24 +135,23 @@ class MainNavigationPage extends ConsumerWidget {
             destination: TabCongCaNhan(currentUserId: profile.id),
             iconColor: Colors.green.shade600,
           ),
-          // ==========================================
-          // ĐÃ SỬA: BỎ isComingSoon VÀ THÊM destination
-          // ==========================================
           "bao_cao": const FeatureMenuItem(
             title: 'Báo cáo & Thống kê',
             icon: Icons.bar_chart,
-            destination:
-                ProductionReportPage(), // <-- Điều hướng đến trang Báo cáo
+            destination: ProductionReportPage(),
             iconColor: Colors.purple,
           ),
 
-          // Các tính năng sắp có
+          // ==========================================
+          // ĐÃ SỬA: MỞ KHÓA TÍNH NĂNG VẬT TƯ
+          // ==========================================
           "vat_tu": const FeatureMenuItem(
             title: 'Quản lý Vật tư',
             icon: Icons.inventory_2,
-            isComingSoon: true,
+            destination: InventoryMainPage(), // Liên kết tới trang Vật Tư
             iconColor: Colors.brown,
           ),
+
           "tai_san": const FeatureMenuItem(
             title: 'Quản lý Tài sản',
             icon: Icons.devices,
@@ -146,15 +170,20 @@ class MainNavigationPage extends ConsumerWidget {
             isComingSoon: true,
             iconColor: Colors.lightGreen,
           ),
-
           "gop_y": const FeatureMenuItem(
             title: 'Đóng góp Ý kiến',
             icon: Icons.record_voice_over,
-            // Đổi destination trỏ về FeedbackMainPage thay vì FeedbackSubmissionPage
             destination: FeedbackMainPage(),
             iconColor: Colors.pinkAccent,
           ),
         };
+
+        // Điều kiện để được thấy Tab Quản Lý Vật Tư
+        final bool canAccessInventory =
+            profile.role == 'admin' ||
+            profile.role == 'director' ||
+            profile.role == 'section_head' ||
+            isInventoryManager;
 
         // 1. NẾU LÀ ADMIN -> Hiển thị toàn bộ tính năng
         if (profile.role == 'admin') {
@@ -190,24 +219,21 @@ class MainNavigationPage extends ConsumerWidget {
             if (hasAnyPermissionInGroup(allowedFeatures, 'duyet_don')) {
               userFeatures.add(allFeaturesMap['duyet_don']!);
             }
-
-            // ==========================================
-            // ĐÃ THÊM: Kiểm tra quyền Báo cáo cho User thường
-            // ==========================================
             if (hasAnyPermissionInGroup(allowedFeatures, 'bao_cao')) {
               userFeatures.add(allFeaturesMap['bao_cao']!);
             }
-
             if (hasAnyPermissionInGroup(allowedFeatures, 'gop_y')) {
               userFeatures.add(allFeaturesMap['gop_y']!);
             }
 
+            // KIỂM TRA QUYỀN VẬT TƯ Ở ĐÂY
+            if (canAccessInventory ||
+                hasAnyPermissionInGroup(allowedFeatures, 'vat_tu')) {
+              userFeatures.add(allFeaturesMap['vat_tu']!);
+            }
+
             // Luôn thêm Bảng công cá nhân
             userFeatures.add(allFeaturesMap['cong_ca_nhan']!);
-
-            // userFeatures.add(allFeaturesMap['giao_viec']!);
-
-            // userFeatures.add(allFeaturesMap['gop_y']!);
 
             return HomeDashboardPage(
               userName: profile.fullName,

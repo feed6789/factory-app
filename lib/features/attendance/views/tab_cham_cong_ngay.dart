@@ -4,24 +4,82 @@ import 'package:intl/intl.dart';
 
 import '../controllers/attendance_controller.dart';
 import 'widgets/attendance_row_card.dart';
+import '../../../core/services/sync_service.dart'; // IMPORT THÊM FILE NÀY
 
-// Đổi từ StatefulWidget sang ConsumerWidget
 class TabChamCongNgay extends ConsumerWidget {
-  final String currentUserId; // ID Supabase của Tổ trưởng đang đăng nhập
+  final String currentUserId;
 
   const TabChamCongNgay({super.key, required this.currentUserId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Lắng nghe ngày hiện tại
     final selectedDate = ref.watch(selectedDateProvider);
-
-    // Lắng nghe trạng thái dữ liệu (Loading, Lỗi, hoặc Đã có Data)
     final asyncData = ref.watch(attendanceControllerProvider);
+
+    // Lắng nghe số lượng bản ghi đang kẹt
+    final pendingCount = ref.watch(pendingSyncCountProvider);
 
     return Column(
       children: [
-        // --- HEADER: CHỌN NGÀY VÀ LÀM MỚI ---
+        // --- CẢNH BÁO ĐỒNG BỘ OFFLINE ---
+        if (pendingCount > 0)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: Colors.orange.shade100,
+            child: Row(
+              children: [
+                const Icon(Icons.wifi_off, color: Colors.orange, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "Đang có $pendingCount bản ghi chờ đồng bộ lên server.",
+                    style: TextStyle(
+                      color: Colors.orange.shade900,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.sync, size: 16),
+                  label: const Text("Đồng bộ ngay"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange.shade700,
+                    foregroundColor: Colors.white,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onPressed: () async {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Đang thử đồng bộ...")),
+                    );
+                    final success = await ref
+                        .read(syncServiceProvider)
+                        .syncPendingData();
+                    if (context.mounted) {
+                      if (success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("✅ Đã đồng bộ dữ liệu thành công!"),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "❌ Chưa có kết nối mạng. Vui lòng thử lại sau.",
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+
+        // ... (Phần UI chọn ngày giữ nguyên) ...
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
@@ -40,7 +98,6 @@ class TabChamCongNgay extends ConsumerWidget {
                       lastDate: DateTime(2030),
                     );
                     if (picked != null) {
-                      // Cập nhật ngày qua Controller
                       ref
                           .read(attendanceControllerProvider.notifier)
                           .changeDate(picked);
@@ -79,42 +136,24 @@ class TabChamCongNgay extends ConsumerWidget {
                   backgroundColor: Colors.grey.shade100,
                 ),
                 icon: const Icon(Icons.refresh, color: Colors.black87),
-                onPressed: () {
-                  // Làm mới dữ liệu
-                  ref.invalidate(attendanceControllerProvider);
-                },
+                onPressed: () => ref.invalidate(attendanceControllerProvider),
               ),
             ],
           ),
         ),
 
-        // --- BODY: HIỂN THỊ DANH SÁCH (SỨC MẠNH CỦA ASYNCVALUE) ---
+        // ... (Phần danh sách nhân viên giữ nguyên) ...
         Expanded(
-          // Câu lệnh .when() xử lý toàn bộ cờ isLoading cũ của bạn cực kỳ gọn gàng
           child: asyncData.when(
-            // 1. Khi đang lấy dữ liệu từ Supabase
             loading: () => const Center(child: CircularProgressIndicator()),
-
-            // 2. Khi Supabase trả về lỗi (mất mạng, sai quyền...)
-            error: (err, stack) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                  const SizedBox(height: 16),
-                  Text("Lỗi tải dữ liệu:\n$err", textAlign: TextAlign.center),
-                ],
-              ),
-            ),
-
-            // 3. Khi lấy dữ liệu thành công
+            error: (err, stack) =>
+                Center(child: Text("Lỗi tải dữ liệu:\n$err")),
             data: (danhSachNV) {
               if (danhSachNV.isEmpty) {
                 return const Center(
                   child: Text("Không có nhân viên nào trong bộ phận này."),
                 );
               }
-
               return ListView.builder(
                 itemCount: danhSachNV.length,
                 padding: const EdgeInsets.only(top: 8, bottom: 80),
@@ -126,7 +165,7 @@ class TabChamCongNgay extends ConsumerWidget {
           ),
         ),
 
-        // --- FOOTER: NÚT LƯU ---
+        // --- NÚT LƯU BẢNG CÔNG (ĐÃ CHỈNH SỬA LOGIC) ---
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
@@ -158,7 +197,6 @@ class TabChamCongNgay extends ConsumerWidget {
               ),
             ),
             onPressed: () async {
-              // Hiển thị vòng quay nhỏ mờ trên màn hình
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -166,19 +204,39 @@ class TabChamCongNgay extends ConsumerWidget {
                     const Center(child: CircularProgressIndicator()),
               );
 
-              // Gọi Controller để Lưu (Upsert) lên Supabase
-              await ref
+              // Thay vì void, ta nhận về trạng thái
+              final result = await ref
                   .read(attendanceControllerProvider.notifier)
                   .submitData(currentUserId);
 
-              // Tắt vòng quay
               if (context.mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("✅ Đã lưu dữ liệu lên hệ thống Nhà Máy!"),
-                  ),
-                );
+                Navigator.pop(context); // Đóng loading dialog
+
+                if (result == "online_success") {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("✅ Đã lưu dữ liệu lên hệ thống Nhà Máy!"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else if (result == "offline_saved") {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        "⚠️ Mất mạng! Đã lưu cục bộ vào máy. Hãy bấm Đồng bộ khi có mạng.",
+                      ),
+                      backgroundColor: Colors.orange,
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("❌ Lỗi khi lưu dữ liệu!"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
           ),

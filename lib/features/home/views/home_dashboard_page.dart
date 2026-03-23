@@ -1,6 +1,7 @@
 // File: lib/features/home/views/home_dashboard_page.dart
 
 import 'package:flutter/material.dart';
+import '../../auth/views/profile_page.dart';
 
 class FeatureMenuItem {
   final String title;
@@ -43,6 +44,18 @@ class HomeDashboardPage extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          // 1. THÊM NÚT PROFILE VÀO ĐÂY
+          IconButton(
+            icon: const Icon(Icons.account_circle, size: 28),
+            tooltip: "Thông tin cá nhân",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
+              );
+            },
+          ),
+          // 2. Nút Đăng xuất giữ nguyên
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: "Đăng xuất",

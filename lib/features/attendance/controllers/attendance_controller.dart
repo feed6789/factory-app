@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:ung_dung_nm/core/services/sync_service.dart';
 import 'package:ung_dung_nm/features/attendance/models/profile_model.dart';
 import 'package:ung_dung_nm/features/auth/controllers/auth_controller.dart';
 import '../models/attendance_row_model.dart';
@@ -133,28 +134,37 @@ class AttendanceController extends AsyncNotifier<List<AttendanceRowModel>> {
   }
 
   // Hàm Lưu (Bắn lên Supabase)
-  Future<void> submitData(String currentUserId) async {
+  Future<String> submitData(String currentUserId) async {
     final currentState = state.valueOrNull;
-    if (currentState == null) return;
+    if (currentState == null) return "Lỗi: Không có dữ liệu.";
 
     try {
       final repo = ref.read(attendanceRepositoryProvider);
+      final syncService = ref.read(syncServiceProvider);
 
-      // Lọc ra danh sách Timesheet từ UI
-      // Gắn thêm 'created_by' là người đang đăng nhập (Tổ trưởng)
-      final timesheetsToSave = currentState.map((row) {
-        // Có thể copy thêm thông tin người chấm nếu cần thiết kế sau
-        return row.timesheet;
-      }).toList();
+      final timesheetsToSave = currentState
+          .map((row) => row.timesheet)
+          .toList();
 
-      await repo.upsertTimesheets(timesheetsToSave);
-      ref.invalidate(monthlyAttendanceStreamProvider);
+      // KIỂM TRA MẠNG
+      final isOnline = await syncService.hasNetwork();
 
-      // Không cần load lại vì UI (Local state) đã cập nhật ở hàm updateLocalRow rồi,
-      // trải nghiệm sẽ cực mượt, không bị chớp giật màn hình.
+      if (isOnline) {
+        // CÓ MẠNG: Đẩy thẳng lên Supabase
+        await repo.upsertTimesheets(timesheetsToSave);
+        ref.invalidate(monthlyAttendanceStreamProvider);
+
+        // Đồng thời đẩy luôn các dữ liệu cũ bị kẹt (nếu có)
+        await syncService.syncPendingData();
+        return "online_success";
+      } else {
+        // MẤT MẠNG: Lưu tạm vào máy
+        await syncService.saveOfflineTimesheets(timesheetsToSave);
+        return "offline_saved";
+      }
     } catch (e, stack) {
-      // Nếu lưu thất bại, ném lỗi ra để UI (ví dụ SnackBar) bắt được
       state = AsyncError(e, stack);
+      return "error";
     }
   }
 }
