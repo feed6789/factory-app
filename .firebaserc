@@ -1,5 +1,16 @@
 {
   "projects": {
-    "default": "ung-dung-nm"
-  }
+    "default": "nmsoi1",
+    "production": "nmsoi1"
+  },
+  "targets": {
+    "nmsoi1": {
+      "hosting": {
+        "production": [
+          "nmsoi1"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

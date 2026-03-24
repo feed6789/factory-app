@@ -119,15 +119,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const RegisterPage()),
-                      );
-                    },
-                    child: const Text("Chưa có tài khoản? Đăng ký ngay"),
-                  ),
+                  // TextButton(
+                  //   onPressed: () {
+                  //     Navigator.push(
+                  //       context,
+                  //       MaterialPageRoute(builder: (_) => const RegisterPage()),
+                  //     );
+                  //   },
+                  //   child: const Text("Chưa có tài khoản? Đăng ký ngay"),
+                  // ),
                 ],
               ),
             ),

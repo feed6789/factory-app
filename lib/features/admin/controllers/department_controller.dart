@@ -12,6 +12,7 @@ final Map<String, String> GROUP_NAMES = {
   "duyet_don": "Duyệt Đơn Từ",
   "bao_cao": "Báo cáo & Thống kê",
   "gop_y": "Đóng Góp & Tiện Ích",
+  "de_xuat": "Đề Xuất Vật Tư Phụ Tùng",
 };
 
 final Map<String, Map<String, String>> ALL_FEATURES_NESTED = {
@@ -43,6 +44,11 @@ final Map<String, Map<String, String>> ALL_FEATURES_NESTED = {
     "bao_cao_config_cabinet": "Cấu hình (Thêm/Sửa/Xóa Tủ điện)",
   },
   "gop_y": {"gop_y": "Đóng góp Ý kiến"},
+  "de_xuat": {
+    "de_xuat_tao": "Tạo phiếu đề xuất",
+    "de_xuat_duyet": "Duyệt phiếu đề xuất",
+    "de_xuat_danh_muc": "Quản lý danh mục VTPT",
+  },
 };
 
 final divisionListProvider = FutureProvider<List<Map<String, dynamic>>>((

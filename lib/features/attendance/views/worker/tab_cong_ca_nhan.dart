@@ -5,6 +5,7 @@ import 'package:ung_dung_nm/features/admin/controllers/employee_controller.dart'
 import 'package:ung_dung_nm/features/attendance/controllers/leave_controller.dart';
 import 'package:ung_dung_nm/features/auth/controllers/auth_controller.dart';
 import '../../controllers/worker_controller.dart';
+import '../../../admin/controllers/department_controller.dart';
 
 class TabCongCaNhan extends ConsumerWidget {
   final String currentUserId;
@@ -372,52 +373,87 @@ class _XinNghiPhepDialogState extends ConsumerState<XinNghiPhepDialog> {
                   ),
                 ),
                 error: (e, s) => const Text(
-                  "Lỗi tải danh sách quản lý",
+                  "Lỗi tải danh sách",
                   style: TextStyle(color: Colors.red),
                 ),
                 data: (employees) {
-                  final managers = employees
-                      .where(
-                        (e) => [
-                          'team_leader',
-                          'section_head',
-                          'director',
-                          'admin',
-                        ].contains(e.role),
-                      )
-                      .toList();
-                  if (_selectedApproverId != null &&
-                      !managers.any((m) => m.id == _selectedApproverId)) {
-                    WidgetsBinding.instance.addPostFrameCallback(
-                      (_) => setState(() => _selectedApproverId = null),
-                    );
-                  }
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: _selectedApproverId,
-                        hint: const Text("-- Chọn người quản lý --"),
-                        items: managers
-                            .map(
-                              (m) => DropdownMenuItem(
-                                value: m.id,
-                                child: Text(
-                                  "${m.fullName} (${m.role})",
-                                  overflow: TextOverflow.ellipsis,
+                  // ĐỌC CẤP BẬC TỪ DATABASE ĐỂ LỌC
+                  return Consumer(
+                    builder: (context, ref, child) {
+                      final hierarchyAsync = ref.watch(roleHierarchyProvider);
+                      final currentUserAsync = ref.watch(
+                        currentProfileProvider,
+                      );
+
+                      return hierarchyAsync.when(
+                        loading: () => const CircularProgressIndicator(),
+                        error: (e, s) => const Text("Lỗi phân cấp"),
+                        data: (hierarchy) {
+                          final currentUserRole =
+                              currentUserAsync.valueOrNull?.role ?? 'worker';
+                          final currentUserDept =
+                              currentUserAsync.valueOrNull?.departmentId;
+
+                          // Chỉ lấy những ROLE được phép quản lý role hiện tại
+                          final allowedManagerRoles = hierarchy
+                              .where((h) => h['role'] == currentUserRole)
+                              .map((h) => h['managed_by_role'])
+                              .toList();
+
+                          // Lọc danh sách nhân viên: Phải khớp Role và Khớp phòng ban
+                          final managers = employees.where((e) {
+                            bool isAllowedRole = allowedManagerRoles.contains(
+                              e.role,
+                            );
+                            bool isSameDept =
+                                e.departmentId == currentUserDept ||
+                                e.role == 'director' ||
+                                e.role ==
+                                    'admin'; // Giám đốc có thể ko thuộc phòng ban cụ thể
+                            return isAllowedRole && isSameDept;
+                          }).toList();
+
+                          if (_selectedApproverId != null &&
+                              !managers.any(
+                                (m) => m.id == _selectedApproverId,
+                              )) {
+                            WidgetsBinding.instance.addPostFrameCallback(
+                              (_) => setState(() => _selectedApproverId = null),
+                            );
+                          }
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                value: _selectedApproverId,
+                                hint: const Text(
+                                  "-- Chọn người quản lý (Theo cấp bậc) --",
                                 ),
+                                items: managers
+                                    .map(
+                                      (m) => DropdownMenuItem(
+                                        value: m.id,
+                                        child: Text(
+                                          "${m.fullName} (${m.role})",
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (v) =>
+                                    setState(() => _selectedApproverId = v),
                               ),
-                            )
-                            .toList(),
-                        onChanged: (v) =>
-                            setState(() => _selectedApproverId = v),
-                      ),
-                    ),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   );
                 },
               ),

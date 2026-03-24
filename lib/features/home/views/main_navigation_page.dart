@@ -12,8 +12,8 @@ import '../../attendance/views/manager_attendance_page.dart';
 import '../../reports/views/production_report_page.dart';
 import '../../attendance/views/feedback_submission_page.dart';
 import '../../attendance/views/feedback_main_page.dart';
-// IMPORT THÊM TRANG QUẢN LÝ VẬT TƯ
 import '../../reports/views/inventory_main_page.dart';
+import '../../reports/views/material_request_page.dart';
 
 // Fetch quyền của role cụ thể
 final rolePermissionsProviderUser =
@@ -151,6 +151,12 @@ class MainNavigationPage extends ConsumerWidget {
             destination: InventoryMainPage(), // Liên kết tới trang Vật Tư
             iconColor: Colors.brown,
           ),
+          "de_xuat_vt": const FeatureMenuItem(
+            title: 'Đề Xuất Vật Tư',
+            icon: Icons.assignment_add,
+            destination: MaterialRequestPage(),
+            iconColor: Colors.teal,
+          ),
 
           "tai_san": const FeatureMenuItem(
             title: 'Quản lý Tài sản',
@@ -222,9 +228,6 @@ class MainNavigationPage extends ConsumerWidget {
             if (hasAnyPermissionInGroup(allowedFeatures, 'bao_cao')) {
               userFeatures.add(allFeaturesMap['bao_cao']!);
             }
-            if (hasAnyPermissionInGroup(allowedFeatures, 'gop_y')) {
-              userFeatures.add(allFeaturesMap['gop_y']!);
-            }
 
             // KIỂM TRA QUYỀN VẬT TƯ Ở ĐÂY
             if (canAccessInventory ||
@@ -232,8 +235,15 @@ class MainNavigationPage extends ConsumerWidget {
               userFeatures.add(allFeaturesMap['vat_tu']!);
             }
 
+            if (hasAnyPermissionInGroup(allowedFeatures, 'de_xuat')) {
+              userFeatures.add(
+                allFeaturesMap['de_xuat_vt']!,
+              ); // Map tên de_xuat_vt bạn đã tạo ở bước trước
+            }
+
             // Luôn thêm Bảng công cá nhân
             userFeatures.add(allFeaturesMap['cong_ca_nhan']!);
+            userFeatures.add(allFeaturesMap['gop_y']!);
 
             return HomeDashboardPage(
               userName: profile.fullName,

@@ -142,6 +142,7 @@ class LeaveActionController {
       currentHistory.add({
         'approver_id': currentUserProfile.id,
         'approver_name': currentUserProfile.fullName,
+        'approver_role': currentUserProfile.role,
         'status': newStatus, // 'approved' or 'rejected'
         'timestamp': DateTime.now().toIso8601String(),
       });

@@ -600,6 +600,10 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
     final emailCtrl = TextEditingController(text: profile.email ?? '');
     final phoneCtrl = TextEditingController(text: profile.phoneNumber ?? '');
 
+    final newPasswordCtrl = TextEditingController();
+    bool obscureNewPass = true;
+    final originalEmail = profile.email ?? '';
+
     String selectedRole = profile.role;
     bool isActive = profile.isActive;
     String? selectedDepartmentId = profile.departmentId;
@@ -634,6 +638,8 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
                     width: 400,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start, // Căn trái cho đẹp
                       children: [
                         TextField(
                           controller: nameCtrl,
@@ -647,14 +653,51 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
                           decoration: const InputDecoration(labelText: "Mã NV"),
                         ),
                         const SizedBox(height: 12),
+
+                        // CẢNH BÁO CHO EMAIL
                         TextField(
                           controller: emailCtrl,
                           decoration: const InputDecoration(
-                            labelText: "Email liên lạc",
+                            labelText: "Email đăng nhập",
+                            helperText:
+                                "Sửa ô này sẽ đổi luôn tài khoản đăng nhập của NV",
+                            helperStyle: TextStyle(color: Colors.orange),
                           ),
                           keyboardType: TextInputType.emailAddress,
                         ),
                         const SizedBox(height: 12),
+
+                        // THÊM Ô ĐỔI MẬT KHẨU CHO ADMIN
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.red.shade200),
+                          ),
+                          child: TextField(
+                            controller: newPasswordCtrl,
+                            obscureText: obscureNewPass,
+                            decoration: InputDecoration(
+                              labelText:
+                                  "Cấp lại Mật khẩu (Để trống nếu giữ nguyên)",
+                              labelStyle: const TextStyle(color: Colors.red),
+                              border: InputBorder.none,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  obscureNewPass
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () => setState(
+                                  () => obscureNewPass = !obscureNewPass,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
                         TextField(
                           controller: phoneCtrl,
                           decoration: const InputDecoration(
@@ -834,7 +877,6 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
                           },
                         ),
                         const SizedBox(height: 8),
-
                         SwitchListTile(
                           title: const Text("Trạng thái hoạt động"),
                           value: isActive,
@@ -853,7 +895,21 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      final success = await ref
+                      // 1. Kiểm tra mật khẩu (nếu có nhập thì phải >= 6 ký tự)
+                      if (newPasswordCtrl.text.isNotEmpty &&
+                          newPasswordCtrl.text.length < 6) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Mật khẩu cấp lại phải có ít nhất 6 ký tự",
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      // 2. Cập nhật thông tin Hồ sơ (Profile)
+                      final profileSuccess = await ref
                           .read(employeeActionProvider)
                           .updateProfile(
                             id: profile.id,
@@ -864,18 +920,50 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
                             departmentId: selectedDepartmentId,
                             divisionId: selectedDivisionId,
                             managerId: selectedManagerId,
-                            email: emailCtrl.text.trim(),
+                            email: emailCtrl.text
+                                .trim(), // Lưu email mới vào profile
                             phoneNumber: phoneCtrl.text.trim(),
                           );
+
+                      // 3. Cập nhật thông tin Đăng nhập (Auth) nếu có thay đổi Email hoặc Password
+                      bool authSuccess = true;
+                      final currentEmail = emailCtrl.text.trim();
+                      if (currentEmail != originalEmail ||
+                          newPasswordCtrl.text.isNotEmpty) {
+                        authSuccess = await ref
+                            .read(employeeActionProvider)
+                            .updateCredentials(
+                              profile.id,
+                              currentEmail != originalEmail
+                                  ? currentEmail
+                                  : null,
+                              newPasswordCtrl.text.isNotEmpty
+                                  ? newPasswordCtrl.text
+                                  : null,
+                            );
+                      }
+
                       if (context.mounted) {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              success ? "Cập nhật thành công!" : "Lỗi cập nhật",
+                        if (profileSuccess && authSuccess) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "✅ Cập nhật thông tin & tài khoản thành công!",
+                              ),
+                              backgroundColor: Colors.green,
                             ),
-                          ),
-                        );
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "⚠️ Cập nhật hồ sơ thành công, nhưng lỗi cập nhật tài khoản Auth.",
+                              ),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        }
                       }
                     },
                     child: const Text("LƯU"),

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:ung_dung_nm/features/attendance/controllers/leave_controller.dart';
+import 'package:printing/printing.dart';
+import 'leave_pdf_generator.dart';
 
 // Danh sách các loại đơn để lọc
 const List<String> LEAVE_TYPES = [
@@ -214,6 +216,56 @@ class _LeaveApprovalPageState extends ConsumerState<LeaveApprovalPage> {
                       req['reason'],
                       Colors.black87,
                     ),
+
+                    if (isHistory && req['status'] == 'approved') ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          OutlinedButton.icon(
+                            icon: const Icon(
+                              Icons.picture_as_pdf,
+                              color: Colors.red,
+                            ),
+                            label: const Text(
+                              "Tải / In PDF",
+                              style: TextStyle(color: Colors.red),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.red),
+                            ),
+                            onPressed: () async {
+                              // Gọi hàm tạo PDF
+                              final pdfBytes =
+                                  await LeavePdfGenerator.generateLeavePdf(req);
+
+                              // Mở màn hình Preview PDF (Cho phép tải xuống, in qua máy in Wifi/Bluetooth)
+                              if (context.mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Scaffold(
+                                      appBar: AppBar(
+                                        title: const Text("Xem trước File PDF"),
+                                      ),
+                                      body: PdfPreview(
+                                        build: (format) => pdfBytes,
+                                        allowSharing:
+                                            true, // Nút Share gửi qua Zalo/Email
+                                        allowPrinting:
+                                            true, // Nút Print in trực tiếp
+                                        pdfFileName:
+                                            "Giay_Nghi_Phep_${req['profiles']['full_name']}.pdf",
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
 
                     // NẾU LÀ CHỜ DUYỆT -> HIỂN THỊ NÚT BẤM
                     if (!isHistory) ...[

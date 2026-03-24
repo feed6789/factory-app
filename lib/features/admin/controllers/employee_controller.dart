@@ -103,6 +103,29 @@ class EmployeeActionController {
     }
   }
 
+  Future<bool> updateCredentials(
+    String userId,
+    String? newEmail,
+    String? newPassword,
+  ) async {
+    try {
+      final supabase = ref.read(supabaseProvider);
+
+      await supabase.functions.invoke(
+        'update_credentials',
+        body: {
+          'user_id': userId,
+          'new_email': newEmail,
+          'new_password': newPassword,
+        },
+      );
+      return true;
+    } catch (e) {
+      print("Lỗi cập nhật Auth: $e");
+      return false;
+    }
+  }
+
   // Hàm này đã đúng, giữ nguyên
   Future<bool> setEmployeeActiveStatus(String id, bool isActive) async {
     try {
