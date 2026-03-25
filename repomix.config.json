@@ -3,30 +3,54 @@
     "filePath": "factory-app.xml",
     "style": "xml",
     "removeComments": true,
-    "showLineNumbers": false
+    "showLineNumbers": false,
+    "headerText": "=== FACTORY APP - HRM & ATTENDANCE SYSTEM ===\nFlutter + Riverpod + Supabase\n\nTính năng chính:\n• Quản lý Nhân sự & Phân quyền động (Role + Permissions)\n• Chấm công ngày / Bảng công tháng / Đánh giá xếp loại\n• Duyệt đơn nghỉ phép\n• Đóng góp ý kiến (Feedback)\n• Đề xuất vật tư & Quản lý kho\n• Hệ thống phân cấp quản lý (Role Hierarchy)\n\nCode được tổ chức theo Feature-First + Clean Architecture."
   },
   "ignore": {
+    "useDefaultPatterns": true,
     "customPatterns": [
-      "android/**",
-      "ios/**",
+      ".firebase/**",
+      ".metadata",
+      "devtools_options.yaml",
+      "analysis_options.yaml",
+      ".firebaserc",
+      "firebase.json",
+
+      "public/**",
       "web/**",
       "linux/**",
       "macos/**",
       "windows/**",
+      "android/**",
+      "ios/**",
+
       "build/**",
       ".dart_tool/**",
       "**/*.g.dart",
       "**/*.freezed.dart",
+
       "assets/**",
+      "**/*.png",
+      "**/*.jpg",
+      "**/*.jpeg",
+      "**/*.svg",
+      "**/*.ico",
+
       "pubspec.lock",
       "test/**",
       "node_modules/**",
       "**/.env*",
       "supabase/.temp/**",
-      "**/*.png",
-      "**/*.jpg",
-      "**/*.svg",
-      "**/*.ico"
+
+      "supabase/functions/**",          
+      "README.md",
+      "CHANGELOG.md",
+
+      "lib/features/attendance/views/leave_pdf_generator.dart",
+      "lib/features/reports/views/inventory_main_page.dart"
     ]
-  }
+  },
+  "include": [],
+  "removeEmptyLines": true,
+  "compress": false
 }

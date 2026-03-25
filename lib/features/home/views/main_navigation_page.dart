@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ung_dung_nm/core/services/supabase_provider.dart';
+import 'package:ung_dung_nm/features/reports/views/inventory_main_page.dart';
+import 'package:ung_dung_nm/features/reports/views/material_request_page.dart';
 
 import 'home_dashboard_page.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -12,8 +14,6 @@ import '../../attendance/views/manager_attendance_page.dart';
 import '../../reports/views/production_report_page.dart';
 import '../../attendance/views/feedback_submission_page.dart';
 import '../../attendance/views/feedback_main_page.dart';
-import '../../reports/views/inventory_main_page.dart';
-import '../../reports/views/material_request_page.dart';
 
 // Fetch quyền của role cụ thể
 final rolePermissionsProviderUser =

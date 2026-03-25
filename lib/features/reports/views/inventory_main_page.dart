@@ -3,14 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/services/supabase_provider.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../home/views/main_navigation_page.dart';
 
 // --- PROVIDERS ---
-final materialsProvider = FutureProvider((ref) async {
-  final res = await ref
-      .read(supabaseProvider)
-      .from('factory_materials')
-      .select()
-      .order('created_at');
+final materialsProvider = FutureProvider.family<List<dynamic>, String?>((
+  ref,
+  departmentId,
+) async {
+  var query = ref.read(supabaseProvider).from('factory_materials').select();
+  if (departmentId != null) {
+    query = query.or('department_id.eq.$departmentId,department_id.is.null');
+  }
+  final res = await query.order('name');
   return res;
 });
 
@@ -22,14 +26,24 @@ final machinesProvider = FutureProvider((ref) async {
   return res;
 });
 
-final transactionsProvider = FutureProvider((ref) async {
-  final res = await ref
+final transactionsProvider = FutureProvider.family<List<dynamic>, String?>((
+  ref,
+  departmentId,
+) async {
+  var query = ref
       .read(supabaseProvider)
       .from('material_transactions')
       .select(
-        '*, factory_materials(name, category), profiles(full_name), factory_machines(name)',
-      )
-      .order('created_at', ascending: false);
+        '*, factory_materials!inner(name, category, department_id), profiles(full_name), factory_machines(name)',
+      );
+
+  if (departmentId != null) {
+    query = query.or(
+      'factory_materials.department_id.eq.$departmentId,factory_materials.department_id.is.null',
+    );
+  }
+
+  final res = await query.order('created_at', ascending: false);
   return res;
 });
 
@@ -47,9 +61,6 @@ class InventoryMainPage extends ConsumerWidget {
           backgroundColor: Colors.brown.shade700,
           foregroundColor: Colors.white,
           bottom: const TabBar(
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
             tabs: [
               Tab(icon: Icon(Icons.table_chart), text: "Bảng Vật Tư"),
               Tab(icon: Icon(Icons.history), text: "Lịch Sử Nhập/Xuất"),
@@ -75,7 +86,13 @@ class MaterialTableTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final materialsAsync = ref.watch(materialsProvider);
+    final profile = ref.watch(currentProfileProvider).valueOrNull;
+    final departmentId =
+        (profile?.role == 'admin' || profile?.role == 'director')
+        ? null
+        : profile?.departmentId;
+
+    final materialsAsync = ref.watch(materialsProvider(departmentId));
 
     return materialsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -406,7 +423,12 @@ class TransactionHistoryTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final transAsync = ref.watch(transactionsProvider);
+    final profile = ref.watch(currentProfileProvider).valueOrNull;
+    final departmentId =
+        (profile?.role == 'admin' || profile?.role == 'director')
+        ? null
+        : profile?.departmentId;
+    final transAsync = ref.watch(transactionsProvider(departmentId));
 
     return transAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -745,77 +767,91 @@ class SettingsInventoryTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(currentProfileProvider).valueOrNull;
+    if (profile == null) return const SizedBox();
+
+    final isGlobalAdmin = profile.role == 'admin';
+    final permissions =
+        ref.watch(rolePermissionsProviderUser(profile.role)).valueOrNull ?? [];
+
+    // KIỂM TRA QUYỀN TRƯỚC KHI HIỂN THỊ
+    final canManagePermissions =
+        isGlobalAdmin || permissions.contains('vat_tu_cap_quyen');
+    final canConfigGeneral =
+        isGlobalAdmin || permissions.contains('vat_tu_cau_hinh_chung');
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text(
-          "Thiết lập Dữ liệu Nền",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
+        if (canConfigGeneral) ...[
+          const Text(
+            "Thiết lập Dữ liệu Nền",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
 
-        ListTile(
-          tileColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: Colors.grey.shade300),
+          ListTile(
+            tileColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: BorderSide(color: Colors.grey.shade300),
+            ),
+            leading: const Icon(Icons.category, color: Colors.brown, size: 30),
+            title: const Text(
+              "Tạo Mới Danh Mục Vật Tư",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: const Text("Tên, Loại, Đơn vị tính, Số lượng đầu kỳ"),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            // BẬT TÍNH NĂNG Ở ĐÂY
+            onTap: () => _showAddMaterialDialog(context, ref),
           ),
-          leading: const Icon(Icons.category, color: Colors.brown, size: 30),
-          title: const Text(
-            "Tạo Mới Danh Mục Vật Tư",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: const Text("Tên, Loại, Đơn vị tính, Số lượng đầu kỳ"),
-          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-          // BẬT TÍNH NĂNG Ở ĐÂY
-          onTap: () => _showAddMaterialDialog(context, ref),
-        ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 12),
 
-        ListTile(
-          tileColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: Colors.grey.shade300),
+          ListTile(
+            tileColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: BorderSide(color: Colors.grey.shade300),
+            ),
+            leading: const Icon(
+              Icons.precision_manufacturing,
+              color: Colors.orange,
+              size: 30,
+            ),
+            title: const Text(
+              "Danh Sách Máy Móc",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: const Text("Khai báo các máy móc để chọn khi xuất kho"),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            // BẬT TÍNH NĂNG Ở ĐÂY
+            onTap: () => _showAddMachineDialog(context, ref),
           ),
-          leading: const Icon(
-            Icons.precision_manufacturing,
-            color: Colors.orange,
-            size: 30,
+          const SizedBox(height: 12),
+        ],
+        if (canManagePermissions)
+          ListTile(
+            tileColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: BorderSide(color: Colors.grey.shade300),
+            ),
+            leading: const Icon(
+              Icons.manage_accounts,
+              color: Colors.blue,
+              size: 30,
+            ),
+            title: const Text(
+              "Cấp Quyền Quản Lý Kho",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: const Text(
+              "Chọn nhân viên (ví dụ Thủ Kho) được quyền quản lý bảng này",
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            // BẬT TÍNH NĂNG Ở ĐÂY
+            onTap: () => _showManageInventoryAccessDialog(context, ref),
           ),
-          title: const Text(
-            "Danh Sách Máy Móc",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: const Text("Khai báo các máy móc để chọn khi xuất kho"),
-          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-          // BẬT TÍNH NĂNG Ở ĐÂY
-          onTap: () => _showAddMachineDialog(context, ref),
-        ),
-        const SizedBox(height: 12),
-
-        ListTile(
-          tileColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: Colors.grey.shade300),
-          ),
-          leading: const Icon(
-            Icons.manage_accounts,
-            color: Colors.blue,
-            size: 30,
-          ),
-          title: const Text(
-            "Cấp Quyền Quản Lý Kho",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: const Text(
-            "Chọn nhân viên (ví dụ Thủ Kho) được quyền quản lý bảng này",
-          ),
-          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-          // BẬT TÍNH NĂNG Ở ĐÂY
-          onTap: () => _showManageInventoryAccessDialog(context, ref),
-        ),
       ],
     );
   }

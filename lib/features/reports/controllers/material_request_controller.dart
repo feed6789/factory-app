@@ -40,6 +40,30 @@ final materialRequestActionProvider = Provider(
   (ref) => MaterialRequestActionController(ref),
 );
 
+final approvedRequestsProvider =
+    FutureProvider.family<
+      List<dynamic>,
+      ({DateTime? startDate, DateTime? endDate})
+    >((ref, filters) async {
+      var query = ref
+          .read(supabaseProvider)
+          .from('material_requests')
+          .select('*, profiles:requester_id(full_name), departments(name)')
+          .inFilter('status', ['approved', 'rejected']);
+
+      if (filters.startDate != null) {
+        query = query.gte('created_at', filters.startDate!.toIso8601String());
+      }
+      if (filters.endDate != null) {
+        // Thêm 1 ngày để bao gồm cả ngày kết thúc
+        final endDate = filters.endDate!.add(const Duration(days: 1));
+        query = query.lte('created_at', endDate.toIso8601String());
+      }
+
+      final res = await query.order('created_at', ascending: false);
+      return res;
+    });
+
 class MaterialRequestActionController {
   final Ref ref;
   MaterialRequestActionController(this.ref);
@@ -140,6 +164,23 @@ class MaterialRequestActionController {
           .eq('id', requestId);
 
       ref.invalidate(pendingMaterialRequestsProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteRequest(String requestId) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('material_requests')
+          .delete()
+          .eq('id', requestId);
+      // Invalidate tất cả các provider liên quan để UI tự cập nhật
+      ref.invalidate(myMaterialRequestsProvider);
+      ref.invalidate(pendingMaterialRequestsProvider);
+      ref.invalidate(approvedRequestsProvider);
       return true;
     } catch (e) {
       return false;

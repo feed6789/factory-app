@@ -1,4 +1,51 @@
-# Add patterns to ignore here, one per line
-# Example:
-# *.log
-# tmp/
+# ================== CACHE & METADATA ==================
+.firebase/
+.metadata
+.devtools_options.yaml
+.analysis_options.yaml
+.firebaserc
+firebase.json
+
+# ================== WEB & BUILD ==================
+public/
+web/
+build/
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+coverage/
+
+# ================== Supabase Edge Functions (Deno) ==================
+supabase/functions/
+
+# ================== Binary & Assets ==================
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.ico
+*.pdf
+assets/
+
+# ================== Generated & Lock files ==================
+pubspec.lock
+**/*.g.dart
+**/*.freezed.dart
+**/*.mocks.dart
+
+# ================== Test & Example ==================
+test/
+example/
+
+# ================== Documentation & Misc ==================
+README.md
+CHANGELOG.md
+LICENSE
+
+# ================== Files quá dài & ít quan trọng cho AI context ==================
+lib/features/attendance/views/leave_pdf_generator.dart
+lib/features/reports/views/inventory_main_page.dart
+
+# ================== Optional (bỏ nếu muốn nhẹ hơn nữa) ==================
+# lib/features/reports/   # chỉ giữ nếu bạn đang làm mạnh phần báo cáo

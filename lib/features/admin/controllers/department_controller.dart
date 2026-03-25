@@ -11,8 +11,9 @@ final Map<String, String> GROUP_NAMES = {
   "cham_cong": "Chấm Công & Xếp Loại",
   "duyet_don": "Duyệt Đơn Từ",
   "bao_cao": "Báo cáo & Thống kê",
-  "gop_y": "Đóng Góp & Tiện Ích",
   "de_xuat": "Đề Xuất Vật Tư Phụ Tùng",
+  "vat_tu": "Quản Lý Kho Vật Tư", // Thêm nhóm Quản lý Kho
+  "gop_y": "Đóng Góp & Tiện Ích",
 };
 
 final Map<String, Map<String, String>> ALL_FEATURES_NESTED = {
@@ -45,9 +46,18 @@ final Map<String, Map<String, String>> ALL_FEATURES_NESTED = {
   },
   "gop_y": {"gop_y": "Đóng góp Ý kiến"},
   "de_xuat": {
-    "de_xuat_tao": "Tạo phiếu đề xuất",
-    "de_xuat_duyet": "Duyệt phiếu đề xuất",
-    "de_xuat_danh_muc": "Quản lý danh mục VTPT",
+    "de_xuat_tao": "Tạo phiếu & Xem phiếu cá nhân",
+    "de_xuat_duyet": "Duyệt phiếu đề xuất (Cấp Giám đốc)",
+    "de_xuat_lich_su": "Xem lịch sử tất cả phiếu đã duyệt",
+    "de_xuat_xoa": "Xóa phiếu đã duyệt/từ chối",
+    "de_xuat_danh_muc": "Quản lý danh mục VTPT (Thêm/Sửa/Xóa)",
+  },
+
+  "vat_tu": {
+    "vat_tu_xem": "Xem bảng vật tư & lịch sử",
+    "vat_tu_nhap_xuat": "Thực hiện Nhập/Xuất kho",
+    "vat_tu_cau_hinh_chung": "Cấu hình Vật tư & Máy móc chung",
+    "vat_tu_cap_quyen": "Cấp quyền Quản lý kho cho NV khác (HR/Admin)",
   },
 };
 

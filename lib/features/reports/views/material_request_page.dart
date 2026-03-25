@@ -20,7 +20,6 @@ class MaterialRequestPage extends ConsumerWidget {
       data: (profile) {
         if (profile == null) return const SizedBox();
 
-        // Nếu là admin thì auto full quyền, nếu không thì lấy danh sách quyền từ DB
         final isGlobalAdmin = profile.role == 'admin';
         final permissionsAsync = ref.watch(
           rolePermissionsProviderUser(profile.role),
@@ -31,11 +30,12 @@ class MaterialRequestPage extends ConsumerWidget {
               const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (e, s) => Scaffold(body: Center(child: Text("Lỗi quyền: $e"))),
           data: (allowedFeatures) {
-            // CHIA QUYỀN HIỂN THỊ TABS
             final canCreate =
                 isGlobalAdmin || allowedFeatures.contains('de_xuat_tao');
             final canApprove =
                 isGlobalAdmin || allowedFeatures.contains('de_xuat_duyet');
+            final canViewHistory =
+                isGlobalAdmin || allowedFeatures.contains('de_xuat_lich_su');
             final canManageCatalog =
                 isGlobalAdmin || allowedFeatures.contains('de_xuat_danh_muc');
 
@@ -43,20 +43,29 @@ class MaterialRequestPage extends ConsumerWidget {
             List<Widget> tabViews = [];
 
             if (canCreate) {
-              tabs.addAll(const [
-                Tab(icon: Icon(Icons.add_shopping_cart), text: "Tạo Đề Xuất"),
-                Tab(icon: Icon(Icons.history), text: "Phiếu Của Tôi"),
-              ]);
-              tabViews.addAll([
-                CreateRequestTab(userProfile: profile),
-                MyRequestsTab(userId: profile.id),
-              ]);
+              tabs.add(
+                const Tab(
+                  icon: Icon(Icons.add_shopping_cart),
+                  text: "Tạo Đề Xuất",
+                ),
+              );
+              tabViews.add(CreateRequestTab(userProfile: profile));
+              tabs.add(
+                const Tab(icon: Icon(Icons.history), text: "Phiếu Của Tôi"),
+              );
+              tabViews.add(MyRequestsTab(userId: profile.id));
             }
             if (canApprove) {
               tabs.add(
                 const Tab(icon: Icon(Icons.fact_check), text: "Duyệt Phiếu"),
               );
               tabViews.add(const ApproveRequestsTab());
+            }
+            if (canViewHistory) {
+              tabs.add(
+                const Tab(icon: Icon(Icons.archive), text: "Lịch Sử Duyệt"),
+              );
+              tabViews.add(ApprovedHistoryTab());
             }
             if (canManageCatalog) {
               tabs.add(
@@ -706,6 +715,194 @@ class CatalogSettingsTab extends ConsumerWidget {
         label: const Text("Thêm Mã VTPT"),
         onPressed: () => _showAddOrEditDialog(context, ref),
       ),
+    );
+  }
+}
+
+class ApprovedHistoryTab extends ConsumerStatefulWidget {
+  @override
+  _ApprovedHistoryTabState createState() => _ApprovedHistoryTabState();
+}
+
+class _ApprovedHistoryTabState extends ConsumerState<ApprovedHistoryTab> {
+  DateTime? _startDate;
+  DateTime? _endDate;
+
+  @override
+  Widget build(BuildContext context) {
+    // Lắng nghe provider mới đã có filter
+    final asyncData = ref.watch(
+      approvedRequestsProvider((startDate: _startDate, endDate: _endDate)),
+    );
+    final profile = ref.watch(currentProfileProvider).valueOrNull;
+    final isGlobalAdmin = profile?.role == 'admin';
+    final allowedFeatures =
+        ref
+            .watch(rolePermissionsProviderUser(profile?.role ?? ''))
+            .valueOrNull ??
+        [];
+    final canDelete = isGlobalAdmin || allowedFeatures.contains('de_xuat_xoa');
+
+    return Column(
+      children: [
+        // DÀN UI BỘ LỌC
+        Container(
+          padding: const EdgeInsets.all(8),
+          color: Colors.grey.shade200,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              TextButton.icon(
+                icon: const Icon(Icons.date_range),
+                label: Text(
+                  _startDate == null
+                      ? "Từ ngày"
+                      : DateFormat('dd/MM/yy').format(_startDate!),
+                ),
+                onPressed: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _startDate ?? DateTime.now(),
+                    firstDate: DateTime(2022),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) setState(() => _startDate = picked);
+                },
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.date_range),
+                label: Text(
+                  _endDate == null
+                      ? "Đến ngày"
+                      : DateFormat('dd/MM/yy').format(_endDate!),
+                ),
+                onPressed: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _endDate ?? DateTime.now(),
+                    firstDate: DateTime(2022),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) setState(() => _endDate = picked);
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.clear_all),
+                tooltip: "Xóa bộ lọc",
+                onPressed: () => setState(() {
+                  _startDate = null;
+                  _endDate = null;
+                  ref.invalidate(approvedRequestsProvider);
+                }),
+              ),
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: asyncData.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, s) => Center(child: Text("Lỗi: $e")),
+            data: (requests) {
+              if (requests.isEmpty)
+                return const Center(child: Text("Không có dữ liệu phù hợp."));
+              return ListView.builder(
+                itemCount: requests.length,
+                itemBuilder: (c, i) {
+                  final req = requests[i] as Map<String, dynamic>;
+                  final isApprove = req['status'] == 'approved';
+
+                  return ExpansionTile(
+                    leading: Icon(
+                      isApprove ? Icons.check_circle : Icons.cancel,
+                      color: isApprove ? Colors.green : Colors.red,
+                    ),
+                    title: Text(
+                      "Phiếu: ${req['request_number']} - Người xin: ${req['profiles']['full_name']}",
+                    ),
+                    subtitle: Text(isApprove ? 'Đã duyệt' : 'Từ chối'),
+                    trailing: canDelete
+                        ? IconButton(
+                            icon: const Icon(
+                              Icons.delete_forever,
+                              color: Colors.grey,
+                            ),
+                            tooltip: "Xóa vĩnh viễn phiếu này",
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (c) => AlertDialog(
+                                  title: const Text("Xác nhận xóa"),
+                                  content: const Text(
+                                    "Xóa vĩnh viễn phiếu này?",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(c, false),
+                                      child: const Text("Hủy"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(c, true),
+                                      child: const Text(
+                                        "Xóa",
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                await ref
+                                    .read(materialRequestActionProvider)
+                                    .deleteRequest(req['id']);
+                              }
+                            },
+                          )
+                        : null,
+                    children: [
+                      Container(
+                        color: Colors.grey.shade50,
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (req['manager_notes'] != null)
+                              Text(
+                                "Ghi chú QL: ${req['manager_notes']}",
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            const Divider(),
+                            ...(req['items'] as List)
+                                .map(
+                                  (item) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("• ${item['name']}"),
+                                        Text(
+                                          "Xin: ${item['request_qty']} -> Duyệt: ${item['approved_qty']} ${item['unit']}",
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
