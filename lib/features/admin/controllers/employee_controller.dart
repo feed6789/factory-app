@@ -141,6 +141,20 @@ class EmployeeActionController {
     }
   }
 
+  Future<bool> approveEmployee(String id) async {
+    try {
+      final supabase = ref.read(supabaseProvider);
+      await supabase
+          .from('profiles')
+          .update({'is_active': true, 'approval_status': 'approved'})
+          .eq('id', id);
+      ref.invalidate(employeeListProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<bool> deleteEmployee(String id) async {
     try {
       final supabase = ref.read(supabaseProvider);

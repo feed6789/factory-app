@@ -1,29 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:ung_dung_nm/features/admin/controllers/department_controller.dart';
 import '../../models/attendance_row_model.dart';
 import '../../controllers/attendance_controller.dart';
-
-// Các hằng số danh sách như code cũ của bạn
-const List<String> dsTrangThai = [
-  'Có mặt',
-  'Nghỉ phép',
-  'Nghỉ ốm',
-  'Nghỉ không phép',
-  'Ngày nghỉ',
-];
-const List<String> dsCaLam = [
-  'Ca Ngày',
-  'Sáng',
-  'Chiều',
-  'Đêm',
-  'Sáng Đêm',
-  'Sáng Chiều',
-  'Ngày Đêm',
-  'Ngày Chiều',
-  'Nửa Ngày',
-  'Không chấm',
-];
 
 class AttendanceRowCard extends ConsumerStatefulWidget {
   final AttendanceRowModel rowData;
@@ -72,7 +52,6 @@ class _AttendanceRowCardState extends ConsumerState<AttendanceRowCard> {
   }
 
   // --- HÀM CẬP NHẬT LÊN RIVERPOD NGAY LẬP TỨC ---
-  // Thay vì gọi setState thủ công, ta báo cho Riverpod Controller biết
   void _updateStateLocal({
     String? caLamMoi,
     String? trangThaiMoi,
@@ -130,7 +109,7 @@ class _AttendanceRowCardState extends ConsumerState<AttendanceRowCard> {
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: Colors.grey.shade300),
       ),
-      elevation: 0, // Bỏ bóng đổ để nhìn phẳng và công nghiệp hơn
+      elevation: 0,
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         collapsedBackgroundColor: timesheet.status == 'Có mặt'
@@ -156,91 +135,129 @@ class _AttendanceRowCardState extends ConsumerState<AttendanceRowCard> {
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 8.0),
-          child: Row(
-            children: [
-              // DROPDOWN CA LÀM
-              Expanded(
-                flex: 1,
-                child: Container(
-                  height: 38,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(4),
-                    color: Colors.white,
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: dsCaLam.contains(timesheet.shiftType)
-                          ? timesheet.shiftType
-                          : 'Ca Ngày',
-                      isExpanded: true,
-                      style: const TextStyle(fontSize: 13, color: Colors.black),
-                      items: dsCaLam
-                          .map(
-                            (e) => DropdownMenuItem(value: e, child: Text(e)),
-                          )
-                          .toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          // Logic: Chọn ca (khác Không chấm) -> Tự động set trạng thái 'Có mặt'
-                          String newStatus = (val != 'Không chấm')
-                              ? 'Có mặt'
-                              : timesheet.status;
-                          _updateStateLocal(
-                            caLamMoi: val,
-                            trangThaiMoi: newStatus,
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
+          child: Consumer(
+            // Dùng Consumer để watch được Config Provider an toàn
+            builder: (context, ref, child) {
+              // 1. Lấy danh sách cấu hình động, ép kiểu về <Map<String, dynamic>>[] để tránh lỗi Type
+              final shiftConfigs =
+                  ref.watch(shiftConfigsProvider).valueOrNull ??
+                  <Map<String, dynamic>>[];
+              final statusConfigs =
+                  ref.watch(attendanceStatusConfigsProvider).valueOrNull ??
+                  <Map<String, dynamic>>[];
 
-              // DROPDOWN TRẠNG THÁI
-              Expanded(
-                flex: 1,
-                child: Container(
-                  height: 38,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(4),
-                    color: Colors.white,
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: dsTrangThai.contains(timesheet.status)
-                          ? timesheet.status
-                          : 'Có mặt',
-                      isExpanded: true,
-                      style: const TextStyle(fontSize: 13, color: Colors.black),
-                      items: dsTrangThai
-                          .map(
-                            (e) => DropdownMenuItem(value: e, child: Text(e)),
-                          )
-                          .toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          // Logic: Nếu nghỉ thì Ca là 'Không chấm'
-                          String newShift = (val != 'Có mặt')
-                              ? 'Không chấm'
-                              : (timesheet.shiftType == 'Không chấm'
-                                    ? 'Ca Ngày'
-                                    : timesheet.shiftType);
-                          _updateStateLocal(
-                            trangThaiMoi: val,
-                            caLamMoi: newShift,
-                          );
-                        }
-                      },
+              // 2. Chuyển thành List<String> lấy trường 'name'
+              List<String> listCaLam = shiftConfigs
+                  .map((e) => e['name'].toString())
+                  .toList();
+              List<String> listTrangThai = statusConfigs
+                  .map((e) => e['name'].toString())
+                  .toList();
+
+              // Nếu db trống, dự phòng mảng mặc định để App không crash
+              if (listCaLam.isEmpty) listCaLam = ['Ca Ngày', 'Không chấm'];
+              if (listTrangThai.isEmpty)
+                listTrangThai = ['Có mặt', 'Nghỉ phép'];
+
+              // 3. Đảm bảo giá trị hiện tại có tồn tại trong danh sách
+              final currentShift = listCaLam.contains(timesheet.shiftType)
+                  ? timesheet.shiftType
+                  : listCaLam.first;
+              final currentStatus = listTrangThai.contains(timesheet.status)
+                  ? timesheet.status
+                  : listTrangThai.first;
+
+              return Row(
+                children: [
+                  // DROPDOWN CA LÀM VIỆC ĐỘNG
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      height: 38,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(4),
+                        color: Colors.white,
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: currentShift,
+                          isExpanded: true,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black,
+                          ),
+                          items: listCaLam
+                              .map(
+                                (e) =>
+                                    DropdownMenuItem(value: e, child: Text(e)),
+                              )
+                              .toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              // Logic phụ: Nếu chọn Không chấm thì đổi trạng thái
+                              String newStatus = (val != 'Không chấm')
+                                  ? 'Có mặt'
+                                  : timesheet.status;
+                              _updateStateLocal(
+                                caLamMoi: val,
+                                trangThaiMoi: newStatus,
+                              );
+                            }
+                          },
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
+                  const SizedBox(width: 8),
+
+                  // DROPDOWN TRẠNG THÁI CÔNG ĐỘNG
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      height: 38,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(4),
+                        color: Colors.white,
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: currentStatus,
+                          isExpanded: true,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black,
+                          ),
+                          items: listTrangThai
+                              .map(
+                                (e) =>
+                                    DropdownMenuItem(value: e, child: Text(e)),
+                              )
+                              .toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              // Logic phụ: Nếu chọn trạng thái Nghỉ, tự chuyển Ca về Không chấm
+                              String newShift = (val != 'Có mặt')
+                                  ? 'Không chấm'
+                                  : (timesheet.shiftType == 'Không chấm'
+                                        ? listCaLam.first
+                                        : timesheet.shiftType);
+                              _updateStateLocal(
+                                trangThaiMoi: val,
+                                caLamMoi: newShift,
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
         children: [

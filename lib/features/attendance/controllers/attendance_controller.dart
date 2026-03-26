@@ -38,27 +38,20 @@ final departmentEmployeesProvider = FutureProvider<List<ProfileModel>>((
 
 // 3. Provider Stream Bảng Tháng (Bộ não của Tab 2)
 // Trả về một Map lồng nhau: Map<UserID, Map<Ngày, TimesheetModel>> để tra cứu cực nhanh O(1)
-final monthlyAttendanceStreamProvider =
-    StreamProvider<Map<String, Map<int, TimesheetModel>>>((ref) async* {
+final monthlyAttendanceProvider =
+    FutureProvider<Map<String, Map<int, TimesheetModel>>>((ref) async {
       final repo = ref.read(attendanceRepositoryProvider);
       final month = ref.watch(selectedMonthProvider);
 
-      // Lắng nghe stream từ Supabase
-      final stream = repo.streamTimesheetsByMonth(month);
+      // Gọi hàm Future thay vì Stream
+      final timesheets = await repo.getTimesheetsByMonth(month);
 
-      // Mỗi khi Supabase có thay đổi (ai đó vừa insert/update), đoạn code trong await for sẽ chạy lại
-      await for (final timesheets in stream) {
-        final map = <String, Map<int, TimesheetModel>>{};
-
-        for (final t in timesheets) {
-          final day = t.date.day; // Lấy ra ngày (1 -> 31)
-
-          // Nếu user_id chưa có trong map thì tạo map rỗng, sau đó nhét ngày vào
-          map.putIfAbsent(t.userId, () => {})[day] = t;
-        }
-
-        yield map; // Bắn dữ liệu mới ra cho UI cập nhật
+      final map = <String, Map<int, TimesheetModel>>{};
+      for (final t in timesheets) {
+        final day = t.date.day;
+        map.putIfAbsent(t.userId, () => {})[day] = t;
       }
+      return map;
     });
 
 class AttendanceController extends AsyncNotifier<List<AttendanceRowModel>> {
@@ -152,7 +145,7 @@ class AttendanceController extends AsyncNotifier<List<AttendanceRowModel>> {
       if (isOnline) {
         // CÓ MẠNG: Đẩy thẳng lên Supabase
         await repo.upsertTimesheets(timesheetsToSave);
-        ref.invalidate(monthlyAttendanceStreamProvider);
+        ref.invalidate(monthlyAttendanceProvider);
 
         // Đồng thời đẩy luôn các dữ liệu cũ bị kẹt (nếu có)
         await syncService.syncPendingData();

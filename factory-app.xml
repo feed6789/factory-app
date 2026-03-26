@@ -177,60 +177,6 @@ supabase/.temp/
 supabase/functions/.env
 </file>
 
-<file path=".repomixignore">
-# ================== CACHE & METADATA ==================
-.firebase/
-.metadata
-.devtools_options.yaml
-.analysis_options.yaml
-.firebaserc
-firebase.json
-
-# ================== WEB & BUILD ==================
-public/
-web/
-build/
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-coverage/
-
-# ================== Supabase Edge Functions (Deno) ==================
-supabase/functions/
-
-# ================== Binary & Assets ==================
-*.png
-*.jpg
-*.jpeg
-*.svg
-*.ico
-*.pdf
-assets/
-
-# ================== Generated & Lock files ==================
-pubspec.lock
-**/*.g.dart
-**/*.freezed.dart
-**/*.mocks.dart
-
-# ================== Test & Example ==================
-test/
-example/
-
-# ================== Documentation & Misc ==================
-README.md
-CHANGELOG.md
-LICENSE
-
-# ================== Files quá dài & ít quan trọng cho AI context ==================
-lib/features/attendance/views/leave_pdf_generator.dart
-lib/features/reports/views/inventory_main_page.dart
-
-# ================== Optional (bỏ nếu muốn nhẹ hơn nữa) ==================
-# lib/features/reports/   # chỉ giữ nếu bạn đang làm mạnh phần báo cáo
-</file>
-
 <file path="lib/core/exceptions/auth_exception_handler.dart">
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -3299,198 +3245,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 }
 </file>
 
-<file path="lib/features/reports/controllers/material_request_controller.dart">
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/supabase_provider.dart';
-
-
-final materialCatalogsProvider = FutureProvider((ref) async {
-  final res = await ref
-      .read(supabaseProvider)
-      .from('material_catalogs')
-      .select()
-      .eq('is_active', true)
-      .order('name');
-  return res;
-});
-
-
-final myMaterialRequestsProvider = FutureProvider.family<List<dynamic>, String>(
-  (ref, userId) async {
-    final res = await ref
-        .read(supabaseProvider)
-        .from('material_requests')
-        .select('*, departments(name)')
-        .eq('requester_id', userId)
-        .order('created_at', ascending: false);
-    return res;
-  },
-);
-
-
-final pendingMaterialRequestsProvider = FutureProvider((ref) async {
-  final res = await ref
-      .read(supabaseProvider)
-      .from('material_requests')
-      .select('*, profiles:requester_id(full_name), departments(name)')
-      .eq('status', 'pending_leader')
-      .order('created_at', ascending: false);
-  return res;
-});
-
-final materialRequestActionProvider = Provider(
-  (ref) => MaterialRequestActionController(ref),
-);
-
-final approvedRequestsProvider =
-    FutureProvider.family<
-      List<dynamic>,
-      ({DateTime? startDate, DateTime? endDate})
-    >((ref, filters) async {
-      var query = ref
-          .read(supabaseProvider)
-          .from('material_requests')
-          .select('*, profiles:requester_id(full_name), departments(name)')
-          .inFilter('status', ['approved', 'rejected']);
-
-      if (filters.startDate != null) {
-        query = query.gte('created_at', filters.startDate!.toIso8601String());
-      }
-      if (filters.endDate != null) {
-
-        final endDate = filters.endDate!.add(const Duration(days: 1));
-        query = query.lte('created_at', endDate.toIso8601String());
-      }
-
-      final res = await query.order('created_at', ascending: false);
-      return res;
-    });
-
-class MaterialRequestActionController {
-  final Ref ref;
-  MaterialRequestActionController(this.ref);
-
-
-  Future<bool> addCatalog(String name, String origin, String unit) async {
-    try {
-      await ref.read(supabaseProvider).from('material_catalogs').insert({
-        'name': name,
-        'origin': origin,
-        'unit': unit,
-      });
-      ref.invalidate(materialCatalogsProvider);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-
-  Future<bool> submitRequest(
-    String userId,
-    String deptId,
-    List<Map<String, dynamic>> items,
-  ) async {
-    try {
-
-      final tempNumber =
-          "DX-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}";
-
-      await ref.read(supabaseProvider).from('material_requests').insert({
-        'requester_id': userId,
-        'department_id': deptId,
-        'request_number': tempNumber,
-        'items': items,
-        'status': 'pending_leader',
-      });
-      ref.invalidate(myMaterialRequestsProvider(userId));
-      return true;
-    } catch (e) {
-      print(e);
-      return false;
-    }
-  }
-
-  Future<bool> updateCatalog(
-    String id,
-    String name,
-    String origin,
-    String unit,
-  ) async {
-    try {
-      await ref
-          .read(supabaseProvider)
-          .from('material_catalogs')
-          .update({'name': name, 'origin': origin, 'unit': unit})
-          .eq('id', id);
-      ref.invalidate(materialCatalogsProvider);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-
-  Future<String> deleteCatalog(String id) async {
-    try {
-      await ref
-          .read(supabaseProvider)
-          .from('material_catalogs')
-          .delete()
-          .eq('id', id);
-      ref.invalidate(materialCatalogsProvider);
-      return "OK";
-    } catch (e) {
-      return "Không thể xóa do vật tư này đã được dùng trong các phiếu đề xuất cũ.";
-    }
-  }
-
-
-  Future<bool> processRequest(
-    String requestId,
-    String status,
-    String officialNumber,
-    String notes,
-    List<dynamic> updatedItems,
-  ) async {
-    try {
-      await ref
-          .read(supabaseProvider)
-          .from('material_requests')
-          .update({
-            'status': status,
-            'request_number': officialNumber,
-            'manager_notes': notes,
-            'items': updatedItems,
-          })
-          .eq('id', requestId);
-
-      ref.invalidate(pendingMaterialRequestsProvider);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<bool> deleteRequest(String requestId) async {
-    try {
-      await ref
-          .read(supabaseProvider)
-          .from('material_requests')
-          .delete()
-          .eq('id', requestId);
-
-      ref.invalidate(myMaterialRequestsProvider);
-      ref.invalidate(pendingMaterialRequestsProvider);
-      ref.invalidate(approvedRequestsProvider);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-}
-</file>
-
 <file path="lib/features/reports/models/electrical_cabinet_model.dart">
 class ElectricalCabinet {
   final String id;
@@ -3536,917 +3290,6 @@ class ElectricityReading {
       cabinetId: json['cabinet_id'],
       readingValue: (json['reading_value'] as num).toDouble(),
       recordedAt: DateTime.parse(json['recorded_at']),
-    );
-  }
-}
-</file>
-
-<file path="lib/features/reports/views/material_request_page.dart">
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../../auth/controllers/auth_controller.dart';
-import '../controllers/material_request_controller.dart';
-
-import '../../home/views/main_navigation_page.dart';
-
-class MaterialRequestPage extends ConsumerWidget {
-  const MaterialRequestPage({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final profileAsync = ref.watch(currentProfileProvider);
-
-    return profileAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, s) => Scaffold(body: Center(child: Text("Lỗi: $e"))),
-      data: (profile) {
-        if (profile == null) return const SizedBox();
-
-        final isGlobalAdmin = profile.role == 'admin';
-        final permissionsAsync = ref.watch(
-          rolePermissionsProviderUser(profile.role),
-        );
-
-        return permissionsAsync.when(
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (e, s) => Scaffold(body: Center(child: Text("Lỗi quyền: $e"))),
-          data: (allowedFeatures) {
-            final canCreate =
-                isGlobalAdmin || allowedFeatures.contains('de_xuat_tao');
-            final canApprove =
-                isGlobalAdmin || allowedFeatures.contains('de_xuat_duyet');
-            final canViewHistory =
-                isGlobalAdmin || allowedFeatures.contains('de_xuat_lich_su');
-            final canManageCatalog =
-                isGlobalAdmin || allowedFeatures.contains('de_xuat_danh_muc');
-
-            List<Tab> tabs = [];
-            List<Widget> tabViews = [];
-
-            if (canCreate) {
-              tabs.add(
-                const Tab(
-                  icon: Icon(Icons.add_shopping_cart),
-                  text: "Tạo Đề Xuất",
-                ),
-              );
-              tabViews.add(CreateRequestTab(userProfile: profile));
-              tabs.add(
-                const Tab(icon: Icon(Icons.history), text: "Phiếu Của Tôi"),
-              );
-              tabViews.add(MyRequestsTab(userId: profile.id));
-            }
-            if (canApprove) {
-              tabs.add(
-                const Tab(icon: Icon(Icons.fact_check), text: "Duyệt Phiếu"),
-              );
-              tabViews.add(const ApproveRequestsTab());
-            }
-            if (canViewHistory) {
-              tabs.add(
-                const Tab(icon: Icon(Icons.archive), text: "Lịch Sử Duyệt"),
-              );
-              tabViews.add(ApprovedHistoryTab());
-            }
-            if (canManageCatalog) {
-              tabs.add(
-                const Tab(icon: Icon(Icons.category), text: "Danh Mục VTPT"),
-              );
-              tabViews.add(const CatalogSettingsTab());
-            }
-
-            if (tabs.isEmpty)
-              return const Scaffold(
-                body: Center(
-                  child: Text("Bạn không có quyền dùng tính năng này."),
-                ),
-              );
-
-            return DefaultTabController(
-              length: tabs.length,
-              child: Scaffold(
-                appBar: AppBar(
-                  title: const Text(
-                    "Đề Xuất Vật Tư",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  backgroundColor: Colors.teal.shade700,
-                  foregroundColor: Colors.white,
-                  bottom: TabBar(
-                    isScrollable: true,
-                    indicatorColor: Colors.white,
-                    labelColor: Colors.white,
-                    unselectedLabelColor: Colors.white70,
-                    tabs: tabs,
-                  ),
-                ),
-                body: TabBarView(children: tabViews),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-
-
-
-class CreateRequestTab extends ConsumerStatefulWidget {
-  final dynamic userProfile;
-  const CreateRequestTab({super.key, required this.userProfile});
-
-  @override
-  ConsumerState<CreateRequestTab> createState() => _CreateRequestTabState();
-}
-
-class _CreateRequestTabState extends ConsumerState<CreateRequestTab> {
-  List<Map<String, dynamic>> selectedItems = [];
-
-  void _showAddItemDialog() {
-    String? selectedCatalogId;
-    final qtyCtrl = TextEditingController();
-    final purposeCtrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (c) => StatefulBuilder(
-        builder: (context, setState) {
-          final catalogsAsync = ref.watch(materialCatalogsProvider);
-          return AlertDialog(
-            title: const Text("Thêm VTPT vào phiếu"),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  catalogsAsync.when(
-                    loading: () => const CircularProgressIndicator(),
-                    error: (e, s) => const Text("Lỗi tải danh mục"),
-                    data: (catalogs) => DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      value: selectedCatalogId,
-                      hint: const Text("Chọn vật tư..."),
-                      items: catalogs
-                          .map(
-                            (cat) => DropdownMenuItem(
-                              value: cat['id'].toString(),
-                              child: Text(
-                                "${(cat as Map<String, dynamic>)['name']} (${cat['origin']} - ${cat['unit']})",
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (val) =>
-                          setState(() => selectedCatalogId = val),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: qtyCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "Số lượng đề nghị",
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: purposeCtrl,
-                    decoration: const InputDecoration(
-                      labelText: "Mục đích sử dụng",
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(c),
-                child: const Text("Hủy"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (selectedCatalogId == null || qtyCtrl.text.isEmpty) return;
-                  final catalogs =
-                      ref.read(materialCatalogsProvider).valueOrNull ?? [];
-                  final selectedCat =
-                      catalogs.firstWhere(
-                            (cat) => (cat as Map)['id'] == selectedCatalogId,
-                          )
-                          as Map;
-
-                  this.setState(() {
-                    selectedItems.add({
-                      'catalog_id': selectedCat['id'],
-                      'name': selectedCat['name'],
-                      'origin': selectedCat['origin'],
-                      'unit': selectedCat['unit'],
-                      'request_qty': double.parse(qtyCtrl.text),
-                      'purpose': purposeCtrl.text,
-                      'approved_qty': 0,
-                    });
-                  });
-                  Navigator.pop(c);
-                },
-                child: const Text("Thêm"),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              const Icon(Icons.person, color: Colors.teal),
-              const SizedBox(width: 8),
-              Text(
-                "Người đề xuất: ${widget.userProfile.fullName}",
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: selectedItems.isEmpty
-              ? const Center(
-                  child: Text("Chưa có VTPT nào. Hãy bấm 'Thêm Vật Tư'."),
-                )
-              : ListView.builder(
-                  itemCount: selectedItems.length,
-                  itemBuilder: (c, i) {
-                    final item = selectedItems[i];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      child: ListTile(
-                        title: Text("${item['name']} -[${item['origin']}]"),
-                        subtitle: Text(
-                          "SL: ${item['request_qty']} ${item['unit']} | Mục đích: ${item['purpose']}",
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () =>
-                              setState(() => selectedItems.removeAt(i)),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.add),
-                  label: const Text("Thêm Vật Tư"),
-                  onPressed: _showAddItemDialog,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
-                    foregroundColor: Colors.white,
-                  ),
-                  icon: const Icon(Icons.send),
-                  label: const Text("GỬI PHIẾU"),
-                  onPressed: selectedItems.isEmpty
-                      ? null
-                      : () async {
-                          final success = await ref
-                              .read(materialRequestActionProvider)
-                              .submitRequest(
-                                widget.userProfile.id,
-                                widget.userProfile.departmentId ?? '',
-                                selectedItems,
-                              );
-                          if (success && context.mounted) {
-                            setState(() => selectedItems.clear());
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Đã gửi phiếu đề xuất!"),
-                              ),
-                            );
-                          }
-                        },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ==========================================
-// TAB 2: QUẢN LÝ DUYỆT PHIẾU (Giữ nguyên)
-// ==========================================
-class ApproveRequestsTab extends ConsumerWidget {
-  const ApproveRequestsTab({super.key});
-
-  void _showApproveDialog(
-    BuildContext context,
-    WidgetRef ref,
-    Map<String, dynamic> request,
-  ) {
-    final noteCtrl = TextEditingController();
-    final numberCtrl = TextEditingController(text: request['request_number']);
-    List<dynamic> items = List.from(request['items']);
-
-    List<TextEditingController> qtyCtrls = items.map((item) {
-      return TextEditingController(text: item['request_qty'].toString());
-    }).toList();
-
-    showDialog(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: Text("Duyệt Phiếu: ${request['profiles']['full_name']}"),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: numberCtrl,
-                  decoration: const InputDecoration(
-                    labelText: "Đề xuất số (Mã chính thức)",
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Chi tiết vật tư:",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal,
-                  ),
-                ),
-                const Divider(),
-                ...List.generate(items.length, (index) {
-                  final item = items[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            "${item['name']}\n(Xin: ${item['request_qty']} ${item['unit']})",
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 1,
-                          child: TextField(
-                            controller: qtyCtrls[index],
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: "SL Duyệt",
-                              isDense: true,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-                const Divider(),
-                TextField(
-                  controller: noteCtrl,
-                  decoration: const InputDecoration(
-                    labelText: "Ghi chú của quản lý",
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => ref
-                .read(materialRequestActionProvider)
-                .processRequest(
-                  request['id'],
-                  'rejected',
-                  numberCtrl.text,
-                  noteCtrl.text,
-                  items,
-                )
-                .then((_) => Navigator.pop(c)),
-            child: const Text("TỪ CHỐI", style: TextStyle(color: Colors.red)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.teal,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              for (int i = 0; i < items.length; i++) {
-                items[i]['approved_qty'] =
-                    double.tryParse(qtyCtrls[i].text) ?? 0;
-              }
-              ref
-                  .read(materialRequestActionProvider)
-                  .processRequest(
-                    request['id'],
-                    'approved',
-                    numberCtrl.text,
-                    noteCtrl.text,
-                    items,
-                  )
-                  .then((_) => Navigator.pop(c));
-            },
-            child: const Text("DUYỆT PHIẾU"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncData = ref.watch(pendingMaterialRequestsProvider);
-    return asyncData.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => Text("Lỗi: $e"),
-      data: (requests) {
-        if (requests.isEmpty)
-          return const Center(child: Text("Không có phiếu nào cần duyệt."));
-        return ListView.builder(
-          itemCount: requests.length,
-          itemBuilder: (c, i) {
-            final req = requests[i] as Map<String, dynamic>;
-            final date = DateFormat(
-              'dd/MM/yyyy',
-            ).format(DateTime.parse(req['created_at']));
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Colors.orange,
-                  child: Icon(Icons.pending, color: Colors.white),
-                ),
-                title: Text(
-                  "Người xin: ${req['profiles']['full_name']} - Bộ phận: ${req['departments']?['name'] ?? ''}",
-                ),
-                subtitle: Text(
-                  "Ngày: $date | Số món: ${(req['items'] as List).length}",
-                ),
-                trailing: ElevatedButton(
-                  onPressed: () => _showApproveDialog(context, ref, req),
-                  child: const Text("Duyệt"),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-
-
-
-class MyRequestsTab extends ConsumerWidget {
-  final String userId;
-  const MyRequestsTab({super.key, required this.userId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncData = ref.watch(myMaterialRequestsProvider(userId));
-    return asyncData.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => Text("Lỗi: $e"),
-      data: (requests) {
-        if (requests.isEmpty)
-          return const Center(child: Text("Bạn chưa tạo phiếu nào."));
-        return ListView.builder(
-          itemCount: requests.length,
-          itemBuilder: (c, i) {
-            final req = requests[i] as Map<String, dynamic>;
-            final isApprove = req['status'] == 'approved';
-            final isPending = req['status'] == 'pending_leader';
-
-            return ExpansionTile(
-              leading: Icon(
-                isApprove
-                    ? Icons.check_circle
-                    : (isPending ? Icons.schedule : Icons.cancel),
-                color: isApprove
-                    ? Colors.green
-                    : (isPending ? Colors.orange : Colors.red),
-              ),
-              title: Text("Phiếu: ${req['request_number']}"),
-              subtitle: Text(
-                "Trạng thái: ${isApprove ? 'Đã duyệt' : (isPending ? 'Đang chờ' : 'Từ chối')}",
-              ),
-              children: [
-                Container(
-                  color: Colors.grey.shade50,
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (req['manager_notes'] != null)
-                        Text(
-                          "Ghi chú QL: ${req['manager_notes']}",
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      const Divider(),
-                      ...(req['items'] as List)
-                          .map(
-                            (item) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text("• ${item['name']}"),
-                                  Text(
-                                    "Xin: ${item['request_qty']} -> Duyệt: ${item['approved_qty']} ${item['unit']}",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-
-
-
-class CatalogSettingsTab extends ConsumerWidget {
-  const CatalogSettingsTab({super.key});
-
-  void _showAddOrEditDialog(
-    BuildContext context,
-    WidgetRef ref, {
-    Map<String, dynamic>? item,
-  }) {
-    final isEditing = item != null;
-    final nameCtrl = TextEditingController(text: isEditing ? item['name'] : '');
-    final originCtrl = TextEditingController(
-      text: isEditing ? item['origin'] : '',
-    );
-    final unitCtrl = TextEditingController(text: isEditing ? item['unit'] : '');
-
-    showDialog(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: Text(isEditing ? "Sửa Mã VTPT" : "Thêm Mã VTPT Mới"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(
-                labelText: "Tên & Quy cách (*)",
-              ),
-            ),
-            TextField(
-              controller: originCtrl,
-              decoration: const InputDecoration(labelText: "Xuất xứ"),
-            ),
-            TextField(
-              controller: unitCtrl,
-              decoration: const InputDecoration(labelText: "Đơn vị tính (*)"),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c),
-            child: const Text("Hủy"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.teal,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              if (nameCtrl.text.isEmpty || unitCtrl.text.isEmpty) return;
-
-              if (isEditing) {
-                await ref
-                    .read(materialRequestActionProvider)
-                    .updateCatalog(
-                      item['id'],
-                      nameCtrl.text,
-                      originCtrl.text,
-                      unitCtrl.text,
-                    );
-              } else {
-                await ref
-                    .read(materialRequestActionProvider)
-                    .addCatalog(nameCtrl.text, originCtrl.text, unitCtrl.text);
-              }
-
-              if (context.mounted) Navigator.pop(c);
-            },
-            child: const Text("LƯU"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncData = ref.watch(materialCatalogsProvider);
-    return Scaffold(
-      body: asyncData.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Text("Lỗi: $e"),
-        data: (catalogs) => ListView.builder(
-          itemCount: catalogs.length,
-          itemBuilder: (c, i) {
-            final cat = catalogs[i] as Map<String, dynamic>;
-            return ListTile(
-              leading: const Icon(Icons.api, color: Colors.teal),
-              title: Text(
-                cat['name'],
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text("Xuất xứ: ${cat['origin']} | ĐVT: ${cat['unit']}"),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.blue),
-                    onPressed: () =>
-                        _showAddOrEditDialog(context, ref, item: cat),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (c) => AlertDialog(
-                          title: const Text("Xác nhận xóa"),
-                          content: const Text("Xóa mã VTPT này?"),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(c, false),
-                              child: const Text("Hủy"),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(c, true),
-                              child: const Text(
-                                "Xóa",
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirm == true) {
-                        final msg = await ref
-                            .read(materialRequestActionProvider)
-                            .deleteCatalog(cat['id']);
-                        if (context.mounted && msg != "OK") {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(msg),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.teal,
-        icon: const Icon(Icons.add),
-        label: const Text("Thêm Mã VTPT"),
-        onPressed: () => _showAddOrEditDialog(context, ref),
-      ),
-    );
-  }
-}
-
-class ApprovedHistoryTab extends ConsumerStatefulWidget {
-  @override
-  _ApprovedHistoryTabState createState() => _ApprovedHistoryTabState();
-}
-
-class _ApprovedHistoryTabState extends ConsumerState<ApprovedHistoryTab> {
-  DateTime? _startDate;
-  DateTime? _endDate;
-
-  @override
-  Widget build(BuildContext context) {
-
-    final asyncData = ref.watch(
-      approvedRequestsProvider((startDate: _startDate, endDate: _endDate)),
-    );
-    final profile = ref.watch(currentProfileProvider).valueOrNull;
-    final isGlobalAdmin = profile?.role == 'admin';
-    final allowedFeatures =
-        ref
-            .watch(rolePermissionsProviderUser(profile?.role ?? ''))
-            .valueOrNull ??
-        [];
-    final canDelete = isGlobalAdmin || allowedFeatures.contains('de_xuat_xoa');
-
-    return Column(
-      children: [
-
-        Container(
-          padding: const EdgeInsets.all(8),
-          color: Colors.grey.shade200,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              TextButton.icon(
-                icon: const Icon(Icons.date_range),
-                label: Text(
-                  _startDate == null
-                      ? "Từ ngày"
-                      : DateFormat('dd/MM/yy').format(_startDate!),
-                ),
-                onPressed: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _startDate ?? DateTime.now(),
-                    firstDate: DateTime(2022),
-                    lastDate: DateTime.now(),
-                  );
-                  if (picked != null) setState(() => _startDate = picked);
-                },
-              ),
-              TextButton.icon(
-                icon: const Icon(Icons.date_range),
-                label: Text(
-                  _endDate == null
-                      ? "Đến ngày"
-                      : DateFormat('dd/MM/yy').format(_endDate!),
-                ),
-                onPressed: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _endDate ?? DateTime.now(),
-                    firstDate: DateTime(2022),
-                    lastDate: DateTime.now(),
-                  );
-                  if (picked != null) setState(() => _endDate = picked);
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.clear_all),
-                tooltip: "Xóa bộ lọc",
-                onPressed: () => setState(() {
-                  _startDate = null;
-                  _endDate = null;
-                  ref.invalidate(approvedRequestsProvider);
-                }),
-              ),
-            ],
-          ),
-        ),
-
-        Expanded(
-          child: asyncData.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, s) => Center(child: Text("Lỗi: $e")),
-            data: (requests) {
-              if (requests.isEmpty)
-                return const Center(child: Text("Không có dữ liệu phù hợp."));
-              return ListView.builder(
-                itemCount: requests.length,
-                itemBuilder: (c, i) {
-                  final req = requests[i] as Map<String, dynamic>;
-                  final isApprove = req['status'] == 'approved';
-
-                  return ExpansionTile(
-                    leading: Icon(
-                      isApprove ? Icons.check_circle : Icons.cancel,
-                      color: isApprove ? Colors.green : Colors.red,
-                    ),
-                    title: Text(
-                      "Phiếu: ${req['request_number']} - Người xin: ${req['profiles']['full_name']}",
-                    ),
-                    subtitle: Text(isApprove ? 'Đã duyệt' : 'Từ chối'),
-                    trailing: canDelete
-                        ? IconButton(
-                            icon: const Icon(
-                              Icons.delete_forever,
-                              color: Colors.grey,
-                            ),
-                            tooltip: "Xóa vĩnh viễn phiếu này",
-                            onPressed: () async {
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (c) => AlertDialog(
-                                  title: const Text("Xác nhận xóa"),
-                                  content: const Text(
-                                    "Xóa vĩnh viễn phiếu này?",
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(c, false),
-                                      child: const Text("Hủy"),
-                                    ),
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(c, true),
-                                      child: const Text(
-                                        "Xóa",
-                                        style: TextStyle(color: Colors.red),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (confirm == true) {
-                                await ref
-                                    .read(materialRequestActionProvider)
-                                    .deleteRequest(req['id']);
-                              }
-                            },
-                          )
-                        : null,
-                    children: [
-                      Container(
-                        color: Colors.grey.shade50,
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (req['manager_notes'] != null)
-                              Text(
-                                "Ghi chú QL: ${req['manager_notes']}",
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                            const Divider(),
-                            ...(req['items'] as List)
-                                .map(
-                                  (item) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 8.0),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text("• ${item['name']}"),
-                                        Text(
-                                          "Xin: ${item['request_qty']} -> Duyệt: ${item['approved_qty']} ${item['unit']}",
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }
@@ -4526,6 +3369,60 @@ class AuthGate extends ConsumerWidget {
     "supabase": "^2.78.1"
   }
 }
+</file>
+
+<file path=".repomixignore">
+# ================== CACHE & METADATA ==================
+.firebase/
+.metadata
+.devtools_options.yaml
+.analysis_options.yaml
+.firebaserc
+firebase.json
+
+# ================== WEB & BUILD ==================
+public/
+web/
+build/
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+coverage/
+
+# ================== Supabase Edge Functions (Deno) ==================
+supabase/functions/
+
+# ================== Binary & Assets ==================
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.ico
+*.pdf
+assets/
+
+# ================== Generated & Lock files ==================
+pubspec.lock
+**/*.g.dart
+**/*.freezed.dart
+**/*.mocks.dart
+
+# ================== Test & Example ==================
+test/
+example/
+
+# ================== Documentation & Misc ==================
+README.md
+CHANGELOG.md
+LICENSE
+
+# ================== Files quá dài & ít quan trọng cho AI context ==================
+lib/features/attendance/views/leave_pdf_generator.dart
+lib/features/reports/views/inventory_main_page.dart
+
+# ================== Optional (bỏ nếu muốn nhẹ hơn nữa) ==================
+# lib/features/reports/   # chỉ giữ nếu bạn đang làm mạnh phần báo cáo
 </file>
 
 <file path="database_schema.sql">
@@ -4619,8 +3516,29 @@ CREATE TABLE public.employee_feedbacks (
   content text NOT NULL,
   status character varying DEFAULT 'pending'::character varying,
   created_at timestamp with time zone DEFAULT now(),
+  is_anonymous boolean DEFAULT false,
   CONSTRAINT employee_feedbacks_pkey PRIMARY KEY (id),
   CONSTRAINT employee_feedbacks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.factory_machines (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  description text,
+  CONSTRAINT factory_machines_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.factory_materials (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  category character varying NOT NULL,
+  name character varying NOT NULL,
+  unit character varying NOT NULL,
+  initial_qty numeric DEFAULT 0,
+  total_import numeric DEFAULT 0,
+  total_export numeric DEFAULT 0,
+  current_qty numeric DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  department_id uuid,
+  CONSTRAINT factory_materials_pkey PRIMARY KEY (id),
+  CONSTRAINT factory_materials_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
 );
 CREATE TABLE public.internal_communications (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -4670,6 +3588,16 @@ CREATE TABLE public.maintenance_logs (
   CONSTRAINT maintenance_logs_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES public.assets(id),
   CONSTRAINT maintenance_logs_technician_id_fkey FOREIGN KEY (technician_id) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.material_catalogs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  origin character varying,
+  unit character varying NOT NULL,
+  is_active boolean DEFAULT true,
+  department_id uuid,
+  CONSTRAINT material_catalogs_pkey PRIMARY KEY (id),
+  CONSTRAINT material_catalogs_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
+);
 CREATE TABLE public.material_requests (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   requester_id uuid NOT NULL,
@@ -4678,8 +3606,27 @@ CREATE TABLE public.material_requests (
   budget_approved boolean DEFAULT false,
   approval_history jsonb DEFAULT '[]'::jsonb,
   created_at timestamp with time zone DEFAULT now(),
+  request_number character varying,
+  manager_notes text,
+  department_id uuid,
   CONSTRAINT material_requests_pkey PRIMARY KEY (id),
-  CONSTRAINT material_requests_requester_id_fkey FOREIGN KEY (requester_id) REFERENCES public.profiles(id)
+  CONSTRAINT material_requests_requester_id_fkey FOREIGN KEY (requester_id) REFERENCES public.profiles(id),
+  CONSTRAINT material_requests_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
+);
+CREATE TABLE public.material_transactions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  material_id uuid,
+  trans_type character varying NOT NULL,
+  quantity numeric NOT NULL,
+  trans_date date NOT NULL,
+  machine_id uuid,
+  notes text,
+  recorded_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT material_transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT material_transactions_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.factory_materials(id),
+  CONSTRAINT material_transactions_machine_id_fkey FOREIGN KEY (machine_id) REFERENCES public.factory_machines(id),
+  CONSTRAINT material_transactions_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.monthly_evaluations (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -4738,6 +3685,7 @@ CREATE TABLE public.profiles (
   email text,
   phone_number text,
   division_id uuid,
+  can_manage_inventory boolean DEFAULT false,
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
   CONSTRAINT profiles_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id),
@@ -6266,6 +5214,198 @@ class HomeDashboardPage extends StatelessWidget {
 }
 </file>
 
+<file path="lib/features/reports/controllers/material_request_controller.dart">
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/supabase_provider.dart';
+
+
+final materialCatalogsProvider = FutureProvider((ref) async {
+  final res = await ref
+      .read(supabaseProvider)
+      .from('material_catalogs')
+      .select()
+      .eq('is_active', true)
+      .order('name');
+  return res;
+});
+
+
+final myMaterialRequestsProvider = FutureProvider.family<List<dynamic>, String>(
+  (ref, userId) async {
+    final res = await ref
+        .read(supabaseProvider)
+        .from('material_requests')
+        .select('*, departments(name)')
+        .eq('requester_id', userId)
+        .order('created_at', ascending: false);
+    return res;
+  },
+);
+
+
+final pendingMaterialRequestsProvider = FutureProvider((ref) async {
+  final res = await ref
+      .read(supabaseProvider)
+      .from('material_requests')
+      .select('*, profiles:requester_id(full_name), departments(name)')
+      .eq('status', 'pending_leader')
+      .order('created_at', ascending: false);
+  return res;
+});
+
+final materialRequestActionProvider = Provider(
+  (ref) => MaterialRequestActionController(ref),
+);
+
+final approvedRequestsProvider =
+    FutureProvider.family<
+      List<dynamic>,
+      ({DateTime? startDate, DateTime? endDate})
+    >((ref, filters) async {
+      var query = ref
+          .read(supabaseProvider)
+          .from('material_requests')
+          .select('*, profiles:requester_id(full_name), departments(name)')
+          .inFilter('status', ['approved', 'rejected']);
+
+      if (filters.startDate != null) {
+        query = query.gte('created_at', filters.startDate!.toIso8601String());
+      }
+      if (filters.endDate != null) {
+
+        final endDate = filters.endDate!.add(const Duration(days: 1));
+        query = query.lte('created_at', endDate.toIso8601String());
+      }
+
+      final res = await query.order('created_at', ascending: false);
+      return res;
+    });
+
+class MaterialRequestActionController {
+  final Ref ref;
+  MaterialRequestActionController(this.ref);
+
+
+  Future<bool> addCatalog(String name, String origin, String unit) async {
+    try {
+      await ref.read(supabaseProvider).from('material_catalogs').insert({
+        'name': name,
+        'origin': origin,
+        'unit': unit,
+      });
+      ref.invalidate(materialCatalogsProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+
+  Future<bool> submitRequest(
+    String userId,
+    String deptId,
+    List<Map<String, dynamic>> items,
+  ) async {
+    try {
+
+      final tempNumber =
+          "DX-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}";
+
+      await ref.read(supabaseProvider).from('material_requests').insert({
+        'requester_id': userId,
+        'department_id': deptId,
+        'request_number': tempNumber,
+        'items': items,
+        'status': 'pending_leader',
+      });
+      ref.invalidate(myMaterialRequestsProvider(userId));
+      return true;
+    } catch (e) {
+      print(e);
+      return false;
+    }
+  }
+
+  Future<bool> updateCatalog(
+    String id,
+    String name,
+    String origin,
+    String unit,
+  ) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('material_catalogs')
+          .update({'name': name, 'origin': origin, 'unit': unit})
+          .eq('id', id);
+      ref.invalidate(materialCatalogsProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+
+  Future<String> deleteCatalog(String id) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('material_catalogs')
+          .delete()
+          .eq('id', id);
+      ref.invalidate(materialCatalogsProvider);
+      return "OK";
+    } catch (e) {
+      return "Không thể xóa do vật tư này đã được dùng trong các phiếu đề xuất cũ.";
+    }
+  }
+
+
+  Future<bool> processRequest(
+    String requestId,
+    String status,
+    String officialNumber,
+    String notes,
+    List<dynamic> updatedItems,
+  ) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('material_requests')
+          .update({
+            'status': status,
+            'request_number': officialNumber,
+            'manager_notes': notes,
+            'items': updatedItems,
+          })
+          .eq('id', requestId);
+
+      ref.invalidate(pendingMaterialRequestsProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteRequest(String requestId) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('material_requests')
+          .delete()
+          .eq('id', requestId);
+
+      ref.invalidate(myMaterialRequestsProvider);
+      ref.invalidate(pendingMaterialRequestsProvider);
+      ref.invalidate(approvedRequestsProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+}
+</file>
+
 <file path="lib/features/reports/controllers/production_report_controller.dart">
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6633,6 +5773,917 @@ class ProductionReportActionController {
 }
 </file>
 
+<file path="lib/features/reports/views/material_request_page.dart">
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../controllers/material_request_controller.dart';
+
+import '../../home/views/main_navigation_page.dart';
+
+class MaterialRequestPage extends ConsumerWidget {
+  const MaterialRequestPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(currentProfileProvider);
+
+    return profileAsync.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, s) => Scaffold(body: Center(child: Text("Lỗi: $e"))),
+      data: (profile) {
+        if (profile == null) return const SizedBox();
+
+        final isGlobalAdmin = profile.role == 'admin';
+        final permissionsAsync = ref.watch(
+          rolePermissionsProviderUser(profile.role),
+        );
+
+        return permissionsAsync.when(
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+          error: (e, s) => Scaffold(body: Center(child: Text("Lỗi quyền: $e"))),
+          data: (allowedFeatures) {
+            final canCreate =
+                isGlobalAdmin || allowedFeatures.contains('de_xuat_tao');
+            final canApprove =
+                isGlobalAdmin || allowedFeatures.contains('de_xuat_duyet');
+            final canViewHistory =
+                isGlobalAdmin || allowedFeatures.contains('de_xuat_lich_su');
+            final canManageCatalog =
+                isGlobalAdmin || allowedFeatures.contains('de_xuat_danh_muc');
+
+            List<Tab> tabs = [];
+            List<Widget> tabViews = [];
+
+            if (canCreate) {
+              tabs.add(
+                const Tab(
+                  icon: Icon(Icons.add_shopping_cart),
+                  text: "Tạo Đề Xuất",
+                ),
+              );
+              tabViews.add(CreateRequestTab(userProfile: profile));
+              tabs.add(
+                const Tab(icon: Icon(Icons.history), text: "Phiếu Của Tôi"),
+              );
+              tabViews.add(MyRequestsTab(userId: profile.id));
+            }
+            if (canApprove) {
+              tabs.add(
+                const Tab(icon: Icon(Icons.fact_check), text: "Duyệt Phiếu"),
+              );
+              tabViews.add(const ApproveRequestsTab());
+            }
+            if (canViewHistory) {
+              tabs.add(
+                const Tab(icon: Icon(Icons.archive), text: "Lịch Sử Duyệt"),
+              );
+              tabViews.add(ApprovedHistoryTab());
+            }
+            if (canManageCatalog) {
+              tabs.add(
+                const Tab(icon: Icon(Icons.category), text: "Danh Mục VTPT"),
+              );
+              tabViews.add(const CatalogSettingsTab());
+            }
+
+            if (tabs.isEmpty)
+              return const Scaffold(
+                body: Center(
+                  child: Text("Bạn không có quyền dùng tính năng này."),
+                ),
+              );
+
+            return DefaultTabController(
+              length: tabs.length,
+              child: Scaffold(
+                appBar: AppBar(
+                  title: const Text(
+                    "Đề Xuất Vật Tư",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  backgroundColor: Colors.teal.shade700,
+                  foregroundColor: Colors.white,
+                  bottom: TabBar(
+                    isScrollable: true,
+                    indicatorColor: Colors.white,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white70,
+                    tabs: tabs,
+                  ),
+                ),
+                body: TabBarView(children: tabViews),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+
+
+
+class CreateRequestTab extends ConsumerStatefulWidget {
+  final dynamic userProfile;
+  const CreateRequestTab({super.key, required this.userProfile});
+
+  @override
+  ConsumerState<CreateRequestTab> createState() => _CreateRequestTabState();
+}
+
+class _CreateRequestTabState extends ConsumerState<CreateRequestTab> {
+  List<Map<String, dynamic>> selectedItems = [];
+
+  void _showAddItemDialog() {
+    String? selectedCatalogId;
+    final qtyCtrl = TextEditingController();
+    final purposeCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (context, setState) {
+          final catalogsAsync = ref.watch(materialCatalogsProvider);
+          return AlertDialog(
+            title: const Text("Thêm VTPT vào phiếu"),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  catalogsAsync.when(
+                    loading: () => const CircularProgressIndicator(),
+                    error: (e, s) => const Text("Lỗi tải danh mục"),
+                    data: (catalogs) => DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      value: selectedCatalogId,
+                      hint: const Text("Chọn vật tư..."),
+                      items: catalogs
+                          .map(
+                            (cat) => DropdownMenuItem(
+                              value: cat['id'].toString(),
+                              child: Text(
+                                "${(cat as Map<String, dynamic>)['name']} (${cat['origin']} - ${cat['unit']})",
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) =>
+                          setState(() => selectedCatalogId = val),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: qtyCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Số lượng đề nghị",
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: purposeCtrl,
+                    decoration: const InputDecoration(
+                      labelText: "Mục đích sử dụng",
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c),
+                child: const Text("Hủy"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (selectedCatalogId == null || qtyCtrl.text.isEmpty) return;
+                  final catalogs =
+                      ref.read(materialCatalogsProvider).valueOrNull ?? [];
+                  final selectedCat =
+                      catalogs.firstWhere(
+                            (cat) => (cat as Map)['id'] == selectedCatalogId,
+                          )
+                          as Map;
+
+                  this.setState(() {
+                    selectedItems.add({
+                      'catalog_id': selectedCat['id'],
+                      'name': selectedCat['name'],
+                      'origin': selectedCat['origin'],
+                      'unit': selectedCat['unit'],
+                      'request_qty': double.parse(qtyCtrl.text),
+                      'purpose': purposeCtrl.text,
+                      'approved_qty': 0,
+                    });
+                  });
+                  Navigator.pop(c);
+                },
+                child: const Text("Thêm"),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              const Icon(Icons.person, color: Colors.teal),
+              const SizedBox(width: 8),
+              Text(
+                "Người đề xuất: ${widget.userProfile.fullName}",
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: selectedItems.isEmpty
+              ? const Center(
+                  child: Text("Chưa có VTPT nào. Hãy bấm 'Thêm Vật Tư'."),
+                )
+              : ListView.builder(
+                  itemCount: selectedItems.length,
+                  itemBuilder: (c, i) {
+                    final item = selectedItems[i];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      child: ListTile(
+                        title: Text("${item['name']} -[${item['origin']}]"),
+                        subtitle: Text(
+                          "SL: ${item['request_qty']} ${item['unit']} | Mục đích: ${item['purpose']}",
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () =>
+                              setState(() => selectedItems.removeAt(i)),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text("Thêm Vật Tư"),
+                  onPressed: _showAddItemDialog,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.send),
+                  label: const Text("GỬI PHIẾU"),
+                  onPressed: selectedItems.isEmpty
+                      ? null
+                      : () async {
+                          final success = await ref
+                              .read(materialRequestActionProvider)
+                              .submitRequest(
+                                widget.userProfile.id,
+                                widget.userProfile.departmentId ?? '',
+                                selectedItems,
+                              );
+                          if (success && context.mounted) {
+                            setState(() => selectedItems.clear());
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Đã gửi phiếu đề xuất!"),
+                              ),
+                            );
+                          }
+                        },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ==========================================
+// TAB 2: QUẢN LÝ DUYỆT PHIẾU (Giữ nguyên)
+// ==========================================
+class ApproveRequestsTab extends ConsumerWidget {
+  const ApproveRequestsTab({super.key});
+
+  void _showApproveDialog(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> request,
+  ) {
+    final noteCtrl = TextEditingController();
+    final numberCtrl = TextEditingController(text: request['request_number']);
+    List<dynamic> items = List.from(request['items']);
+
+    List<TextEditingController> qtyCtrls = items.map((item) {
+      return TextEditingController(text: item['request_qty'].toString());
+    }).toList();
+
+    showDialog(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text("Duyệt Phiếu: ${request['profiles']['full_name']}"),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: numberCtrl,
+                  decoration: const InputDecoration(
+                    labelText: "Đề xuất số (Mã chính thức)",
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Chi tiết vật tư:",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal,
+                  ),
+                ),
+                const Divider(),
+                ...List.generate(items.length, (index) {
+                  final item = items[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            "${item['name']}\n(Xin: ${item['request_qty']} ${item['unit']})",
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: TextField(
+                            controller: qtyCtrls[index],
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: "SL Duyệt",
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                const Divider(),
+                TextField(
+                  controller: noteCtrl,
+                  decoration: const InputDecoration(
+                    labelText: "Ghi chú của quản lý",
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => ref
+                .read(materialRequestActionProvider)
+                .processRequest(
+                  request['id'],
+                  'rejected',
+                  numberCtrl.text,
+                  noteCtrl.text,
+                  items,
+                )
+                .then((_) => Navigator.pop(c)),
+            child: const Text("TỪ CHỐI", style: TextStyle(color: Colors.red)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              for (int i = 0; i < items.length; i++) {
+                items[i]['approved_qty'] =
+                    double.tryParse(qtyCtrls[i].text) ?? 0;
+              }
+              ref
+                  .read(materialRequestActionProvider)
+                  .processRequest(
+                    request['id'],
+                    'approved',
+                    numberCtrl.text,
+                    noteCtrl.text,
+                    items,
+                  )
+                  .then((_) => Navigator.pop(c));
+            },
+            child: const Text("DUYỆT PHIẾU"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncData = ref.watch(pendingMaterialRequestsProvider);
+    return asyncData.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => Text("Lỗi: $e"),
+      data: (requests) {
+        if (requests.isEmpty)
+          return const Center(child: Text("Không có phiếu nào cần duyệt."));
+        return ListView.builder(
+          itemCount: requests.length,
+          itemBuilder: (c, i) {
+            final req = requests[i] as Map<String, dynamic>;
+            final date = DateFormat(
+              'dd/MM/yyyy',
+            ).format(DateTime.parse(req['created_at']));
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.orange,
+                  child: Icon(Icons.pending, color: Colors.white),
+                ),
+                title: Text(
+                  "Người xin: ${req['profiles']['full_name']} - Bộ phận: ${req['departments']?['name'] ?? ''}",
+                ),
+                subtitle: Text(
+                  "Ngày: $date | Số món: ${(req['items'] as List).length}",
+                ),
+                trailing: ElevatedButton(
+                  onPressed: () => _showApproveDialog(context, ref, req),
+                  child: const Text("Duyệt"),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+
+
+
+class MyRequestsTab extends ConsumerWidget {
+  final String userId;
+  const MyRequestsTab({super.key, required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncData = ref.watch(myMaterialRequestsProvider(userId));
+    return asyncData.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => Text("Lỗi: $e"),
+      data: (requests) {
+        if (requests.isEmpty)
+          return const Center(child: Text("Bạn chưa tạo phiếu nào."));
+        return ListView.builder(
+          itemCount: requests.length,
+          itemBuilder: (c, i) {
+            final req = requests[i] as Map<String, dynamic>;
+            final isApprove = req['status'] == 'approved';
+            final isPending = req['status'] == 'pending_leader';
+
+            return ExpansionTile(
+              leading: Icon(
+                isApprove
+                    ? Icons.check_circle
+                    : (isPending ? Icons.schedule : Icons.cancel),
+                color: isApprove
+                    ? Colors.green
+                    : (isPending ? Colors.orange : Colors.red),
+              ),
+              title: Text("Phiếu: ${req['request_number']}"),
+              subtitle: Text(
+                "Trạng thái: ${isApprove ? 'Đã duyệt' : (isPending ? 'Đang chờ' : 'Từ chối')}",
+              ),
+              children: [
+                Container(
+                  color: Colors.grey.shade50,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (req['manager_notes'] != null)
+                        Text(
+                          "Ghi chú QL: ${req['manager_notes']}",
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      const Divider(),
+                      ...(req['items'] as List)
+                          .map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text("• ${item['name']}"),
+                                  Text(
+                                    "Xin: ${item['request_qty']} -> Duyệt: ${item['approved_qty']} ${item['unit']}",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+
+
+
+class CatalogSettingsTab extends ConsumerWidget {
+  const CatalogSettingsTab({super.key});
+
+  void _showAddOrEditDialog(
+    BuildContext context,
+    WidgetRef ref, {
+    Map<String, dynamic>? item,
+  }) {
+    final isEditing = item != null;
+    final nameCtrl = TextEditingController(text: isEditing ? item['name'] : '');
+    final originCtrl = TextEditingController(
+      text: isEditing ? item['origin'] : '',
+    );
+    final unitCtrl = TextEditingController(text: isEditing ? item['unit'] : '');
+
+    showDialog(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(isEditing ? "Sửa Mã VTPT" : "Thêm Mã VTPT Mới"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              decoration: const InputDecoration(
+                labelText: "Tên & Quy cách (*)",
+              ),
+            ),
+            TextField(
+              controller: originCtrl,
+              decoration: const InputDecoration(labelText: "Xuất xứ"),
+            ),
+            TextField(
+              controller: unitCtrl,
+              decoration: const InputDecoration(labelText: "Đơn vị tính (*)"),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c),
+            child: const Text("Hủy"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              if (nameCtrl.text.isEmpty || unitCtrl.text.isEmpty) return;
+
+              if (isEditing) {
+                await ref
+                    .read(materialRequestActionProvider)
+                    .updateCatalog(
+                      item['id'],
+                      nameCtrl.text,
+                      originCtrl.text,
+                      unitCtrl.text,
+                    );
+              } else {
+                await ref
+                    .read(materialRequestActionProvider)
+                    .addCatalog(nameCtrl.text, originCtrl.text, unitCtrl.text);
+              }
+
+              if (context.mounted) Navigator.pop(c);
+            },
+            child: const Text("LƯU"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncData = ref.watch(materialCatalogsProvider);
+    return Scaffold(
+      body: asyncData.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, s) => Text("Lỗi: $e"),
+        data: (catalogs) => ListView.builder(
+          itemCount: catalogs.length,
+          itemBuilder: (c, i) {
+            final cat = catalogs[i] as Map<String, dynamic>;
+            return ListTile(
+              leading: const Icon(Icons.api, color: Colors.teal),
+              title: Text(
+                cat['name'],
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text("Xuất xứ: ${cat['origin']} | ĐVT: ${cat['unit']}"),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    onPressed: () =>
+                        _showAddOrEditDialog(context, ref, item: cat),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (c) => AlertDialog(
+                          title: const Text("Xác nhận xóa"),
+                          content: const Text("Xóa mã VTPT này?"),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(c, false),
+                              child: const Text("Hủy"),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(c, true),
+                              child: const Text(
+                                "Xóa",
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        final msg = await ref
+                            .read(materialRequestActionProvider)
+                            .deleteCatalog(cat['id']);
+                        if (context.mounted && msg != "OK") {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(msg),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: Colors.teal,
+        icon: const Icon(Icons.add),
+        label: const Text("Thêm Mã VTPT"),
+        onPressed: () => _showAddOrEditDialog(context, ref),
+      ),
+    );
+  }
+}
+
+class ApprovedHistoryTab extends ConsumerStatefulWidget {
+  @override
+  _ApprovedHistoryTabState createState() => _ApprovedHistoryTabState();
+}
+
+class _ApprovedHistoryTabState extends ConsumerState<ApprovedHistoryTab> {
+  DateTime? _startDate;
+  DateTime? _endDate;
+
+  @override
+  Widget build(BuildContext context) {
+
+    final asyncData = ref.watch(
+      approvedRequestsProvider((startDate: _startDate, endDate: _endDate)),
+    );
+    final profile = ref.watch(currentProfileProvider).valueOrNull;
+    final isGlobalAdmin = profile?.role == 'admin';
+    final allowedFeatures =
+        ref
+            .watch(rolePermissionsProviderUser(profile?.role ?? ''))
+            .valueOrNull ??
+        [];
+    final canDelete = isGlobalAdmin || allowedFeatures.contains('de_xuat_xoa');
+
+    return Column(
+      children: [
+
+        Container(
+          padding: const EdgeInsets.all(8),
+          color: Colors.grey.shade200,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              TextButton.icon(
+                icon: const Icon(Icons.date_range),
+                label: Text(
+                  _startDate == null
+                      ? "Từ ngày"
+                      : DateFormat('dd/MM/yy').format(_startDate!),
+                ),
+                onPressed: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _startDate ?? DateTime.now(),
+                    firstDate: DateTime(2022),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) setState(() => _startDate = picked);
+                },
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.date_range),
+                label: Text(
+                  _endDate == null
+                      ? "Đến ngày"
+                      : DateFormat('dd/MM/yy').format(_endDate!),
+                ),
+                onPressed: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _endDate ?? DateTime.now(),
+                    firstDate: DateTime(2022),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) setState(() => _endDate = picked);
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.clear_all),
+                tooltip: "Xóa bộ lọc",
+                onPressed: () => setState(() {
+                  _startDate = null;
+                  _endDate = null;
+                  ref.invalidate(approvedRequestsProvider);
+                }),
+              ),
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: asyncData.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, s) => Center(child: Text("Lỗi: $e")),
+            data: (requests) {
+              if (requests.isEmpty)
+                return const Center(child: Text("Không có dữ liệu phù hợp."));
+              return ListView.builder(
+                itemCount: requests.length,
+                itemBuilder: (c, i) {
+                  final req = requests[i] as Map<String, dynamic>;
+                  final isApprove = req['status'] == 'approved';
+
+                  return ExpansionTile(
+                    leading: Icon(
+                      isApprove ? Icons.check_circle : Icons.cancel,
+                      color: isApprove ? Colors.green : Colors.red,
+                    ),
+                    title: Text(
+                      "Phiếu: ${req['request_number']} - Người xin: ${req['profiles']['full_name']}",
+                    ),
+                    subtitle: Text(isApprove ? 'Đã duyệt' : 'Từ chối'),
+                    trailing: canDelete
+                        ? IconButton(
+                            icon: const Icon(
+                              Icons.delete_forever,
+                              color: Colors.grey,
+                            ),
+                            tooltip: "Xóa vĩnh viễn phiếu này",
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (c) => AlertDialog(
+                                  title: const Text("Xác nhận xóa"),
+                                  content: const Text(
+                                    "Xóa vĩnh viễn phiếu này?",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(c, false),
+                                      child: const Text("Hủy"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(c, true),
+                                      child: const Text(
+                                        "Xóa",
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                await ref
+                                    .read(materialRequestActionProvider)
+                                    .deleteRequest(req['id']);
+                              }
+                            },
+                          )
+                        : null,
+                    children: [
+                      Container(
+                        color: Colors.grey.shade50,
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (req['manager_notes'] != null)
+                              Text(
+                                "Ghi chú QL: ${req['manager_notes']}",
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            const Divider(),
+                            ...(req['items'] as List)
+                                .map(
+                                  (item) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("• ${item['name']}"),
+                                        Text(
+                                          "Xin: ${item['request_qty']} -> Duyệt: ${item['approved_qty']} ${item['unit']}",
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+</file>
+
 <file path="lib/features/reports/views/production_report_page.dart">
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6958,65 +7009,6 @@ class CabinetManagementTab extends ConsumerWidget {
       ),
     );
   }
-}
-</file>
-
-<file path="repomix.config.json">
-{
-  "output": {
-    "filePath": "factory-app.xml",
-    "style": "xml",
-    "removeComments": true,
-    "showLineNumbers": false,
-    "headerText": "=== FACTORY APP - HRM & ATTENDANCE SYSTEM ===\nFlutter + Riverpod + Supabase\n\nTính năng chính:\n• Quản lý Nhân sự & Phân quyền động (Role + Permissions)\n• Chấm công ngày / Bảng công tháng / Đánh giá xếp loại\n• Duyệt đơn nghỉ phép\n• Đóng góp ý kiến (Feedback)\n• Đề xuất vật tư & Quản lý kho\n• Hệ thống phân cấp quản lý (Role Hierarchy)\n\nCode được tổ chức theo Feature-First + Clean Architecture."
-  },
-  "ignore": {
-    "useDefaultPatterns": true,
-    "customPatterns": [
-      ".firebase/**",
-      ".metadata",
-      "devtools_options.yaml",
-      "analysis_options.yaml",
-      ".firebaserc",
-      "firebase.json",
-
-      "public/**",
-      "web/**",
-      "linux/**",
-      "macos/**",
-      "windows/**",
-      "android/**",
-      "ios/**",
-
-      "build/**",
-      ".dart_tool/**",
-      "**/*.g.dart",
-      "**/*.freezed.dart",
-
-      "assets/**",
-      "**/*.png",
-      "**/*.jpg",
-      "**/*.jpeg",
-      "**/*.svg",
-      "**/*.ico",
-
-      "pubspec.lock",
-      "test/**",
-      "node_modules/**",
-      "**/.env*",
-      "supabase/.temp/**",
-
-      "supabase/functions/**",          
-      "README.md",
-      "CHANGELOG.md",
-
-      "lib/features/attendance/views/leave_pdf_generator.dart",
-      "lib/features/reports/views/inventory_main_page.dart"
-    ]
-  },
-  "include": [],
-  "removeEmptyLines": true,
-  "compress": false
 }
 </file>
 
@@ -9313,6 +9305,65 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
 }
 </file>
 
+<file path="repomix.config.json">
+{
+  "output": {
+    "filePath": "factory-app.xml",
+    "style": "xml",
+    "removeComments": true,
+    "showLineNumbers": false,
+    "headerText": "=== FACTORY APP - HRM & ATTENDANCE SYSTEM ===\nFlutter + Riverpod + Supabase\n\nTính năng chính:\n• Quản lý Nhân sự & Phân quyền động (Role + Permissions)\n• Chấm công ngày / Bảng công tháng / Đánh giá xếp loại\n• Duyệt đơn nghỉ phép\n• Đóng góp ý kiến (Feedback)\n• Đề xuất vật tư & Quản lý kho\n• Hệ thống phân cấp quản lý (Role Hierarchy)\n\nCode được tổ chức theo Feature-First + Clean Architecture."
+  },
+  "ignore": {
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      ".firebase/**",
+      ".metadata",
+      "devtools_options.yaml",
+      "analysis_options.yaml",
+      ".firebaserc",
+      "firebase.json",
+
+      "public/**",
+      "web/**",
+      "linux/**",
+      "macos/**",
+      "windows/**",
+      "android/**",
+      "ios/**",
+
+      "build/**",
+      ".dart_tool/**",
+      "**/*.g.dart",
+      "**/*.freezed.dart",
+
+      "assets/**",
+      "**/*.png",
+      "**/*.jpg",
+      "**/*.jpeg",
+      "**/*.svg",
+      "**/*.ico",
+
+      "pubspec.lock",
+      "test/**",
+      "node_modules/**",
+      "**/.env*",
+      "supabase/.temp/**",
+
+      "supabase/functions/**",          
+      "README.md",
+      "CHANGELOG.md",
+
+      "lib/features/attendance/views/leave_pdf_generator.dart",
+      "lib/features/reports/views/inventory_main_page.dart"
+    ]
+  },
+  "include": [],
+  "removeEmptyLines": true,
+  "compress": false
+}
+</file>
+
 <file path="supabase/config.toml">
 # For detailed configuration reference documentation, visit:
 # https://supabase.com/docs/guides/local-development/cli/config
@@ -9746,311 +9797,6 @@ entrypoint = "./functions/update_credentials/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/update_credentials/*.html" ]
-</file>
-
-<file path="lib/features/admin/controllers/department_controller.dart">
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/supabase_provider.dart';
-
-
-
-final Map<String, String> GROUP_NAMES = {
-  "nhan_su": "Quản lý Nhân sự",
-  "phong_ban": "Cơ Cấu Tổ Chức & Cấu Hình",
-  "cham_cong": "Chấm Công & Xếp Loại",
-  "duyet_don": "Duyệt Đơn Từ",
-  "bao_cao": "Báo cáo & Thống kê",
-  "de_xuat": "Đề Xuất Vật Tư Phụ Tùng",
-  "vat_tu": "Quản Lý Kho Vật Tư",
-  "gop_y": "Đóng Góp & Tiện Ích",
-};
-
-final Map<String, Map<String, String>> ALL_FEATURES_NESTED = {
-  "nhan_su": {
-    "nhan_su_view": "Xem danh sách & Tìm kiếm",
-    "nhan_su_add": "Thêm nhân viên",
-    "nhan_su_edit": "Sửa/Khóa nhân viên",
-    "nhan_su_delete": "Xóa vĩnh viễn",
-  },
-  "phong_ban": {
-    "phong_ban_bo_phan": "Quản lý Bộ Phận",
-    "phong_ban_phong_ban": "Quản lý Phòng Ban",
-    "phong_ban_chuc_vu": "Quản lý Chức Vụ",
-    "phong_ban_phan_quyen": "Phân Quyền App",
-    "phong_ban_cap_bac": "Cấp Bậc Quản Lý",
-  },
-  "cham_cong": {
-    "cham_cong_ngay": "Chấm Công Ngày",
-    "cham_cong_thang": "Bảng Công Tháng",
-    "cham_cong_danh_gia": "Đánh Giá Xếp Loại",
-  },
-  "duyet_don": {
-    "duyet_don_cho": "Chờ duyệt",
-    "duyet_don_lich_su": "Lịch sử đã duyệt",
-  },
-  "bao_cao": {
-    "bao_cao_view_stats": "Xem Thống Kê & Biểu Đồ",
-    "bao_cao_enter_data": "Nhập liệu báo cáo hàng ngày",
-    "bao_cao_config_cabinet": "Cấu hình (Thêm/Sửa/Xóa Tủ điện)",
-  },
-  "gop_y": {"gop_y": "Đóng góp Ý kiến"},
-  "de_xuat": {
-    "de_xuat_tao": "Tạo phiếu & Xem phiếu cá nhân",
-    "de_xuat_duyet": "Duyệt phiếu đề xuất (Cấp Giám đốc)",
-    "de_xuat_lich_su": "Xem lịch sử tất cả phiếu đã duyệt",
-    "de_xuat_xoa": "Xóa phiếu đã duyệt/từ chối",
-    "de_xuat_danh_muc": "Quản lý danh mục VTPT (Thêm/Sửa/Xóa)",
-  },
-
-  "vat_tu": {
-    "vat_tu_xem": "Xem bảng vật tư & lịch sử",
-    "vat_tu_nhap_xuat": "Thực hiện Nhập/Xuất kho",
-    "vat_tu_cau_hinh_chung": "Cấu hình Vật tư & Máy móc chung",
-    "vat_tu_cap_quyen": "Cấp quyền Quản lý kho cho NV khác (HR/Admin)",
-  },
-};
-
-final divisionListProvider = FutureProvider<List<Map<String, dynamic>>>((
-  ref,
-) async {
-  final supabase = ref.read(supabaseProvider);
-  final response = await supabase
-      .from('divisions')
-      .select()
-      .order('name', ascending: true);
-  return List<Map<String, dynamic>>.from(response);
-});
-
-final roleListProvider = FutureProvider<List<Map<String, dynamic>>>((
-  ref,
-) async {
-  final supabase = ref.read(supabaseProvider);
-  final response = await supabase
-      .from('roles')
-      .select()
-      .order('created_at', ascending: true);
-  return List<Map<String, dynamic>>.from(response);
-});
-
-final departmentListProvider = FutureProvider<List<Map<String, dynamic>>>((
-  ref,
-) async {
-  final supabase = ref.read(supabaseProvider);
-  final response = await supabase
-      .from('departments')
-      .select('id, name, description, division_id')
-      .order('name', ascending: true);
-  return List<Map<String, dynamic>>.from(response);
-});
-
-final rolePermissionsProvider = FutureProvider<List<Map<String, dynamic>>>((
-  ref,
-) async {
-  final supabase = ref.read(supabaseProvider);
-  final response = await supabase.from('role_permissions').select();
-  return List<Map<String, dynamic>>.from(response);
-});
-
-final roleHierarchyProvider = FutureProvider<List<Map<String, dynamic>>>((
-  ref,
-) async {
-  final supabase = ref.read(supabaseProvider);
-  final response = await supabase.from('role_hierarchy').select();
-  return List<Map<String, dynamic>>.from(response);
-});
-
-
-
-final systemActionProvider = Provider((ref) => SystemActionController(ref));
-
-class SystemActionController {
-  final Ref ref;
-  SystemActionController(this.ref);
-
-
-  Future<bool> addDivision(String name, String? description) async {
-    try {
-      await ref.read(supabaseProvider).from('divisions').insert({
-        'name': name,
-        'description': description,
-      });
-      ref.invalidate(divisionListProvider);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<bool> updateDivision(
-    String id,
-    String name,
-    String? description,
-  ) async {
-    try {
-      await ref
-          .read(supabaseProvider)
-          .from('divisions')
-          .update({'name': name, 'description': description})
-          .eq('id', id);
-      ref.invalidate(divisionListProvider);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<String> deleteDivision(String id) async {
-    try {
-      await ref.read(supabaseProvider).from('divisions').delete().eq('id', id);
-      ref.invalidate(divisionListProvider);
-      return "OK";
-    } catch (e) {
-      return "Không thể xóa bộ phận này vì đang có phòng ban thuộc về nó.";
-    }
-  }
-
-
-  Future<bool> addDepartment({
-    required String name,
-    String? description,
-    String? divisionId,
-  }) async {
-    try {
-      await ref.read(supabaseProvider).from('departments').insert({
-        'name': name,
-        'description': description,
-        'division_id': divisionId,
-      });
-      ref.invalidate(departmentListProvider);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<bool> updateDepartment({
-    required String id,
-    required String name,
-    String? description,
-    String? divisionId,
-  }) async {
-    try {
-      await ref
-          .read(supabaseProvider)
-          .from('departments')
-          .update({
-            'name': name,
-            'description': description,
-            'division_id': divisionId,
-          })
-          .eq('id', id);
-      ref.invalidate(departmentListProvider);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<String> deleteDepartment(String id) async {
-    try {
-      await ref
-          .read(supabaseProvider)
-          .from('departments')
-          .delete()
-          .eq('id', id);
-      ref.invalidate(departmentListProvider);
-      return "OK";
-    } catch (e) {
-      return "Không thể xóa phòng ban này vì vẫn còn nhân viên.";
-    }
-  }
-
-
-  Future<bool> updateRolePermissions(String role, List<String> features) async {
-    try {
-      await ref.read(supabaseProvider).from('role_permissions').upsert({
-        'role': role,
-        'allowed_features': features,
-      });
-      ref.invalidate(rolePermissionsProvider);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-
-  Future<bool> addRoleHierarchy(String role, String managedBy) async {
-    try {
-      await ref.read(supabaseProvider).from('role_hierarchy').insert({
-        'role': role,
-        'managed_by_role': managedBy,
-      });
-      ref.invalidate(roleHierarchyProvider);
-      return true;
-    } catch (e) {
-
-      print("Lỗi thêm cấp bậc: $e");
-
-      return false;
-    }
-  }
-
-  Future<bool> deleteRoleHierarchy(String role, String managedBy) async {
-    try {
-      await ref
-          .read(supabaseProvider)
-          .from('role_hierarchy')
-          .delete()
-          .eq('role', role)
-          .eq('managed_by_role', managedBy);
-      ref.invalidate(roleHierarchyProvider);
-      return true;
-    } catch (e) {
-      print("Lỗi xóa cấp bậc: $e");
-      return false;
-    }
-  }
-
-  Future<bool> addRole(String code, String name, String? desc) async {
-    try {
-      await ref.read(supabaseProvider).from('roles').insert({
-        'code': code,
-        'name': name,
-        'description': desc,
-      });
-      ref.invalidate(roleListProvider);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<bool> updateRole(String code, String name, String? desc) async {
-    try {
-      await ref
-          .read(supabaseProvider)
-          .from('roles')
-          .update({'name': name, 'description': desc})
-          .eq('code', code);
-      ref.invalidate(roleListProvider);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<String> deleteRole(String code) async {
-    if (code == 'admin') return "Không thể xóa chức vụ Admin mặc định!";
-    try {
-      await ref.read(supabaseProvider).from('roles').delete().eq('code', code);
-      ref.invalidate(roleListProvider);
-      return "OK";
-    } catch (e) {
-      return "Không thể xóa do có nhân viên đang giữ chức vụ này.";
-    }
-  }
-}
 </file>
 
 <file path="lib/features/attendance/views/worker/tab_cong_ca_nhan.dart">
@@ -10683,6 +10429,311 @@ class _XinNghiPhepDialogState extends ConsumerState<XinNghiPhepDialog> {
         ),
       ],
     );
+  }
+}
+</file>
+
+<file path="lib/features/admin/controllers/department_controller.dart">
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/supabase_provider.dart';
+
+
+
+final Map<String, String> GROUP_NAMES = {
+  "nhan_su": "Quản lý Nhân sự",
+  "phong_ban": "Cơ Cấu Tổ Chức & Cấu Hình",
+  "cham_cong": "Chấm Công & Xếp Loại",
+  "duyet_don": "Duyệt Đơn Từ",
+  "bao_cao": "Báo cáo & Thống kê",
+  "de_xuat": "Đề Xuất Vật Tư Phụ Tùng",
+  "vat_tu": "Quản Lý Kho Vật Tư",
+  "gop_y": "Đóng Góp & Tiện Ích",
+};
+
+final Map<String, Map<String, String>> ALL_FEATURES_NESTED = {
+  "nhan_su": {
+    "nhan_su_view": "Xem danh sách & Tìm kiếm",
+    "nhan_su_add": "Thêm nhân viên",
+    "nhan_su_edit": "Sửa/Khóa nhân viên",
+    "nhan_su_delete": "Xóa vĩnh viễn",
+  },
+  "phong_ban": {
+    "phong_ban_bo_phan": "Quản lý Bộ Phận",
+    "phong_ban_phong_ban": "Quản lý Phòng Ban",
+    "phong_ban_chuc_vu": "Quản lý Chức Vụ",
+    "phong_ban_phan_quyen": "Phân Quyền App",
+    "phong_ban_cap_bac": "Cấp Bậc Quản Lý",
+  },
+  "cham_cong": {
+    "cham_cong_ngay": "Chấm Công Ngày",
+    "cham_cong_thang": "Bảng Công Tháng",
+    "cham_cong_danh_gia": "Đánh Giá Xếp Loại",
+  },
+  "duyet_don": {
+    "duyet_don_cho": "Chờ duyệt",
+    "duyet_don_lich_su": "Lịch sử đã duyệt",
+  },
+  "bao_cao": {
+    "bao_cao_view_stats": "Xem Thống Kê & Biểu Đồ",
+    "bao_cao_enter_data": "Nhập liệu báo cáo hàng ngày",
+    "bao_cao_config_cabinet": "Cấu hình (Thêm/Sửa/Xóa Tủ điện)",
+  },
+  "gop_y": {"gop_y": "Đóng góp Ý kiến"},
+  "de_xuat": {
+    "de_xuat_tao": "Tạo phiếu & Xem phiếu cá nhân",
+    "de_xuat_duyet": "Duyệt phiếu đề xuất (Cấp Giám đốc)",
+    "de_xuat_lich_su": "Xem lịch sử tất cả phiếu đã duyệt",
+    "de_xuat_xoa": "Xóa phiếu đã duyệt/từ chối",
+    "de_xuat_danh_muc": "Quản lý danh mục VTPT (Thêm/Sửa/Xóa)",
+  },
+
+  "vat_tu": {
+    "vat_tu_xem": "Xem bảng vật tư & lịch sử",
+    "vat_tu_nhap_xuat": "Thực hiện Nhập/Xuất kho",
+    "vat_tu_cau_hinh_chung": "Cấu hình Vật tư & Máy móc chung",
+    "vat_tu_cap_quyen": "Cấp quyền Quản lý kho cho NV khác (HR/Admin)",
+  },
+};
+
+final divisionListProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final response = await supabase
+      .from('divisions')
+      .select()
+      .order('name', ascending: true);
+  return List<Map<String, dynamic>>.from(response);
+});
+
+final roleListProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final response = await supabase
+      .from('roles')
+      .select()
+      .order('created_at', ascending: true);
+  return List<Map<String, dynamic>>.from(response);
+});
+
+final departmentListProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final response = await supabase
+      .from('departments')
+      .select('id, name, description, division_id')
+      .order('name', ascending: true);
+  return List<Map<String, dynamic>>.from(response);
+});
+
+final rolePermissionsProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final response = await supabase.from('role_permissions').select();
+  return List<Map<String, dynamic>>.from(response);
+});
+
+final roleHierarchyProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final response = await supabase.from('role_hierarchy').select();
+  return List<Map<String, dynamic>>.from(response);
+});
+
+
+
+final systemActionProvider = Provider((ref) => SystemActionController(ref));
+
+class SystemActionController {
+  final Ref ref;
+  SystemActionController(this.ref);
+
+
+  Future<bool> addDivision(String name, String? description) async {
+    try {
+      await ref.read(supabaseProvider).from('divisions').insert({
+        'name': name,
+        'description': description,
+      });
+      ref.invalidate(divisionListProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updateDivision(
+    String id,
+    String name,
+    String? description,
+  ) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('divisions')
+          .update({'name': name, 'description': description})
+          .eq('id', id);
+      ref.invalidate(divisionListProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String> deleteDivision(String id) async {
+    try {
+      await ref.read(supabaseProvider).from('divisions').delete().eq('id', id);
+      ref.invalidate(divisionListProvider);
+      return "OK";
+    } catch (e) {
+      return "Không thể xóa bộ phận này vì đang có phòng ban thuộc về nó.";
+    }
+  }
+
+
+  Future<bool> addDepartment({
+    required String name,
+    String? description,
+    String? divisionId,
+  }) async {
+    try {
+      await ref.read(supabaseProvider).from('departments').insert({
+        'name': name,
+        'description': description,
+        'division_id': divisionId,
+      });
+      ref.invalidate(departmentListProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updateDepartment({
+    required String id,
+    required String name,
+    String? description,
+    String? divisionId,
+  }) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('departments')
+          .update({
+            'name': name,
+            'description': description,
+            'division_id': divisionId,
+          })
+          .eq('id', id);
+      ref.invalidate(departmentListProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String> deleteDepartment(String id) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('departments')
+          .delete()
+          .eq('id', id);
+      ref.invalidate(departmentListProvider);
+      return "OK";
+    } catch (e) {
+      return "Không thể xóa phòng ban này vì vẫn còn nhân viên.";
+    }
+  }
+
+
+  Future<bool> updateRolePermissions(String role, List<String> features) async {
+    try {
+      await ref.read(supabaseProvider).from('role_permissions').upsert({
+        'role': role,
+        'allowed_features': features,
+      });
+      ref.invalidate(rolePermissionsProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+
+  Future<bool> addRoleHierarchy(String role, String managedBy) async {
+    try {
+      await ref.read(supabaseProvider).from('role_hierarchy').insert({
+        'role': role,
+        'managed_by_role': managedBy,
+      });
+      ref.invalidate(roleHierarchyProvider);
+      return true;
+    } catch (e) {
+
+      print("Lỗi thêm cấp bậc: $e");
+
+      return false;
+    }
+  }
+
+  Future<bool> deleteRoleHierarchy(String role, String managedBy) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('role_hierarchy')
+          .delete()
+          .eq('role', role)
+          .eq('managed_by_role', managedBy);
+      ref.invalidate(roleHierarchyProvider);
+      return true;
+    } catch (e) {
+      print("Lỗi xóa cấp bậc: $e");
+      return false;
+    }
+  }
+
+  Future<bool> addRole(String code, String name, String? desc) async {
+    try {
+      await ref.read(supabaseProvider).from('roles').insert({
+        'code': code,
+        'name': name,
+        'description': desc,
+      });
+      ref.invalidate(roleListProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updateRole(String code, String name, String? desc) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('roles')
+          .update({'name': name, 'description': desc})
+          .eq('code', code);
+      ref.invalidate(roleListProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String> deleteRole(String code) async {
+    if (code == 'admin') return "Không thể xóa chức vụ Admin mặc định!";
+    try {
+      await ref.read(supabaseProvider).from('roles').delete().eq('code', code);
+      ref.invalidate(roleListProvider);
+      return "OK";
+    } catch (e) {
+      return "Không thể xóa do có nhân viên đang giữ chức vụ này.";
+    }
   }
 }
 </file>

@@ -18,6 +18,7 @@ _$ProfileModelImpl _$$ProfileModelImplFromJson(Map<String, dynamic> json) =>
       email: json['email'] as String?,
       phoneNumber: json['phone_number'] as String?,
       isActive: json['is_active'] as bool? ?? true,
+      approvalStatus: json['approval_status'] as String? ?? 'approved',
     );
 
 Map<String, dynamic> _$$ProfileModelImplToJson(_$ProfileModelImpl instance) =>
@@ -32,4 +33,5 @@ Map<String, dynamic> _$$ProfileModelImplToJson(_$ProfileModelImpl instance) =>
       'email': instance.email,
       'phone_number': instance.phoneNumber,
       'is_active': instance.isActive,
+      'approval_status': instance.approvalStatus,
     };

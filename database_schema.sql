@@ -91,8 +91,29 @@ CREATE TABLE public.employee_feedbacks (
   content text NOT NULL,
   status character varying DEFAULT 'pending'::character varying,
   created_at timestamp with time zone DEFAULT now(),
+  is_anonymous boolean DEFAULT false,
   CONSTRAINT employee_feedbacks_pkey PRIMARY KEY (id),
   CONSTRAINT employee_feedbacks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.factory_machines (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  description text,
+  CONSTRAINT factory_machines_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.factory_materials (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  category character varying NOT NULL,
+  name character varying NOT NULL,
+  unit character varying NOT NULL,
+  initial_qty numeric DEFAULT 0,
+  total_import numeric DEFAULT 0,
+  total_export numeric DEFAULT 0,
+  current_qty numeric DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  department_id uuid,
+  CONSTRAINT factory_materials_pkey PRIMARY KEY (id),
+  CONSTRAINT factory_materials_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
 );
 CREATE TABLE public.internal_communications (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -142,6 +163,16 @@ CREATE TABLE public.maintenance_logs (
   CONSTRAINT maintenance_logs_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES public.assets(id),
   CONSTRAINT maintenance_logs_technician_id_fkey FOREIGN KEY (technician_id) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.material_catalogs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  origin character varying,
+  unit character varying NOT NULL,
+  is_active boolean DEFAULT true,
+  department_id uuid,
+  CONSTRAINT material_catalogs_pkey PRIMARY KEY (id),
+  CONSTRAINT material_catalogs_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
+);
 CREATE TABLE public.material_requests (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   requester_id uuid NOT NULL,
@@ -150,8 +181,27 @@ CREATE TABLE public.material_requests (
   budget_approved boolean DEFAULT false,
   approval_history jsonb DEFAULT '[]'::jsonb,
   created_at timestamp with time zone DEFAULT now(),
+  request_number character varying,
+  manager_notes text,
+  department_id uuid,
   CONSTRAINT material_requests_pkey PRIMARY KEY (id),
-  CONSTRAINT material_requests_requester_id_fkey FOREIGN KEY (requester_id) REFERENCES public.profiles(id)
+  CONSTRAINT material_requests_requester_id_fkey FOREIGN KEY (requester_id) REFERENCES public.profiles(id),
+  CONSTRAINT material_requests_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
+);
+CREATE TABLE public.material_transactions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  material_id uuid,
+  trans_type character varying NOT NULL,
+  quantity numeric NOT NULL,
+  trans_date date NOT NULL,
+  machine_id uuid,
+  notes text,
+  recorded_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT material_transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT material_transactions_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.factory_materials(id),
+  CONSTRAINT material_transactions_machine_id_fkey FOREIGN KEY (machine_id) REFERENCES public.factory_machines(id),
+  CONSTRAINT material_transactions_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.monthly_evaluations (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -210,6 +260,7 @@ CREATE TABLE public.profiles (
   email text,
   phone_number text,
   division_id uuid,
+  can_manage_inventory boolean DEFAULT false,
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
   CONSTRAINT profiles_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id),

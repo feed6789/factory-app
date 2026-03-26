@@ -12,6 +12,8 @@ class AuthExceptionHandler {
           return 'Email này đã được đăng ký trong hệ thống.';
         case 'Password should be at least 6 characters':
           return 'Mật khẩu phải có ít nhất 6 ký tự.';
+        case 'Tài khoản của bạn đang chờ HR duyệt. Vui lòng quay lại sau.':
+          return 'Tài khoản của bạn đang chờ HR duyệt. Vui lòng quay lại sau.';
         default:
           return 'Lỗi xác thực: ${error.message}';
       }

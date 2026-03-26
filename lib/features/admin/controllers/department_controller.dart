@@ -61,6 +61,27 @@ final Map<String, Map<String, String>> ALL_FEATURES_NESTED = {
   },
 };
 
+final shiftConfigsProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final response = await supabase
+      .from('shift_configs')
+      .select()
+      .order('created_at', ascending: true);
+  return List<Map<String, dynamic>>.from(response);
+});
+
+final attendanceStatusConfigsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+      final supabase = ref.read(supabaseProvider);
+      final response = await supabase
+          .from('attendance_status_configs')
+          .select()
+          .order('created_at', ascending: true);
+      return List<Map<String, dynamic>>.from(response);
+    });
+
 final divisionListProvider = FutureProvider<List<Map<String, dynamic>>>((
   ref,
 ) async {
@@ -299,6 +320,125 @@ class SystemActionController {
       return "OK";
     } catch (e) {
       return "Không thể xóa do có nhân viên đang giữ chức vụ này.";
+    }
+  }
+
+  // --- 1. PROVIDERS ĐỂ LẤY DỮ LIỆU CẤU HÌNH ĐỘNG ---
+  final shiftConfigsProvider = FutureProvider<List<Map<String, dynamic>>>((
+    ref,
+  ) async {
+    final supabase = ref.read(supabaseProvider);
+    final response = await supabase
+        .from('shift_configs')
+        .select()
+        .order('created_at', ascending: true);
+    return List<Map<String, dynamic>>.from(response);
+  });
+
+  final attendanceStatusConfigsProvider =
+      FutureProvider<List<Map<String, dynamic>>>((ref) async {
+        final supabase = ref.read(supabaseProvider);
+        final response = await supabase
+            .from('attendance_status_configs')
+            .select()
+            .order('created_at', ascending: true);
+        return List<Map<String, dynamic>>.from(response);
+      });
+
+  // --- 2. THÊM CÁC HÀM CRUD VÀO SystemActionController ---
+  // (Tìm class SystemActionController và thêm vào trong đó)
+
+  // Quản lý Ca làm việc (Shift)
+  Future<bool> addShiftConfig(String name, String symbol) async {
+    try {
+      await ref.read(supabaseProvider).from('shift_configs').insert({
+        'name': name,
+        'symbol': symbol,
+        'is_active': true,
+      });
+      ref.invalidate(shiftConfigsProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updateShiftConfig(
+    String id,
+    String name,
+    String symbol,
+    bool isActive,
+  ) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('shift_configs')
+          .update({'name': name, 'symbol': symbol, 'is_active': isActive})
+          .eq('id', id);
+      ref.invalidate(shiftConfigsProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String> deleteShiftConfig(String id) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('shift_configs')
+          .delete()
+          .eq('id', id);
+      ref.invalidate(shiftConfigsProvider);
+      return "OK";
+    } catch (e) {
+      return "Lỗi: Không thể xóa vì ca này đã được dùng để chấm công.";
+    }
+  }
+
+  // Quản lý Trạng thái công (Attendance Status)
+  Future<bool> addAttendanceStatusConfig(String name, String symbol) async {
+    try {
+      await ref.read(supabaseProvider).from('attendance_status_configs').insert(
+        {'name': name, 'symbol': symbol, 'is_active': true},
+      );
+      ref.invalidate(attendanceStatusConfigsProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updateAttendanceStatusConfig(
+    String id,
+    String name,
+    String symbol,
+    bool isActive,
+  ) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('attendance_status_configs')
+          .update({'name': name, 'symbol': symbol, 'is_active': isActive})
+          .eq('id', id);
+      ref.invalidate(attendanceStatusConfigsProvider);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String> deleteAttendanceStatusConfig(String id) async {
+    try {
+      await ref
+          .read(supabaseProvider)
+          .from('attendance_status_configs')
+          .delete()
+          .eq('id', id);
+      ref.invalidate(attendanceStatusConfigsProvider);
+      return "OK";
+    } catch (e) {
+      return "Lỗi: Không thể xóa vì trạng thái này đã được dùng.";
     }
   }
 }

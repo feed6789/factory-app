@@ -4,62 +4,38 @@ import 'package:intl/intl.dart';
 
 import '../controllers/attendance_controller.dart';
 import '../models/timesheet_model.dart';
+import '../../admin/controllers/department_controller.dart';
 
 class TabBangCongThang extends ConsumerWidget {
   const TabBangCongThang({super.key});
 
   // --- HÀM TÍNH MÀU SẮC (Giữ nguyên logic cực xịn của bạn) ---
-  Map<String, dynamic> _getCellStyle(String symbol, bool isSunday) {
+  Map<String, dynamic> _getCellStyle(
+    String symbol,
+    bool isSunday,
+    bool isWorking,
+  ) {
     Color bg = Colors.white;
     Color text = Colors.black87;
-    FontWeight weight = FontWeight.normal;
+    FontWeight weight = FontWeight.bold;
 
-    switch (symbol) {
-      case 'X':
-        bg = const Color(0xFFC8E6C9);
-        text = Colors.green.shade900;
-        weight = FontWeight.bold;
-        break;
-      case 'S':
-        bg = const Color(0xFFBBDEFB);
-        text = Colors.blue.shade900;
-        weight = FontWeight.bold;
-        break;
-      case 'C':
-        bg = const Color(0xFFFFF9C4);
-        text = Colors.orange.shade900;
-        weight = FontWeight.bold;
-        break;
-      case 'Đ':
-        bg = const Color(0xFFE1BEE7);
-        text = Colors.purple.shade900;
-        weight = FontWeight.bold;
-        break;
-      case 'P':
-        bg = Colors.grey.shade300;
-        text = Colors.blue.shade800;
-        weight = FontWeight.bold;
-        break;
-      case 'OM':
-        bg = const Color(0xFFFFCDD2);
-        text = Colors.red.shade900;
-        weight = FontWeight.bold;
-        break;
-      case 'KP':
-        bg = Colors.red.shade400;
-        text = Colors.white;
-        weight = FontWeight.bold;
-        break;
-      case '-':
-        bg = Colors.grey.shade100;
-        text = Colors.grey;
-        break;
-      default:
-        if (isSunday) {
-          bg = const Color(0xFFFFF3E0);
-          text = Colors.red.shade300;
-        }
+    if (symbol == '' || symbol == '-') {
+      bg = Colors.grey.shade100;
+      text = Colors.grey;
+      weight = FontWeight.normal;
+    } else if (isWorking) {
+      bg = const Color(0xFFE8F5E9); // Xanh nhạt
+      text = Colors.green.shade900;
+    } else {
+      bg = const Color(0xFFFFEBEE); // Đỏ nhạt
+      text = Colors.red.shade900;
     }
+
+    if (isSunday && (symbol == '' || symbol == '-')) {
+      bg = const Color(0xFFFFF3E0);
+      text = Colors.red.shade300;
+    }
+
     return {'bg': bg, 'text': text, 'weight': weight};
   }
 
@@ -88,7 +64,14 @@ class TabBangCongThang extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentMonth = ref.watch(selectedMonthProvider);
     final employeesAsync = ref.watch(departmentEmployeesProvider);
-    final timesheetsAsync = ref.watch(monthlyAttendanceStreamProvider);
+
+    // Đã đổi tên thành monthlyAttendanceProvider để dùng Future
+    final timesheetsAsync = ref.watch(monthlyAttendanceProvider);
+
+    // Lấy cấu hình động từ Riverpod
+    final shiftConfigs = ref.watch(shiftConfigsProvider).valueOrNull ?? [];
+    final statusConfigs =
+        ref.watch(attendanceStatusConfigsProvider).valueOrNull ?? [];
 
     int daysInMonth = DateTime(
       currentMonth.year,
@@ -101,7 +84,7 @@ class TabBangCongThang extends ConsumerWidget {
 
     return Column(
       children: [
-        // --- HEADER: CHỌN THÁNG ---
+        // ... (Giữ nguyên thanh AppBar chọn ngày của bạn) ...
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
@@ -118,9 +101,8 @@ class TabBangCongThang extends ConsumerWidget {
                     firstDate: DateTime(2020),
                     lastDate: DateTime(2030),
                   );
-                  if (picked != null) {
+                  if (picked != null)
                     ref.read(selectedMonthProvider.notifier).state = picked;
-                  }
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -151,26 +133,11 @@ class TabBangCongThang extends ConsumerWidget {
                   ),
                 ),
               ),
-              const Spacer(),
-              // Nút xuất Excel (Sau này bạn có thể gắp logic export cũ vào đây)
-              IconButton(
-                icon: const Icon(Icons.file_download, color: Colors.green),
-                tooltip: "Xuất file Excel",
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Chức năng xuất Excel sẽ tích hợp sau."),
-                    ),
-                  );
-                },
-              ),
             ],
           ),
         ),
 
-        // --- BODY: BẢNG DATA THỜI GIAN THỰC ---
         Expanded(
-          // Dùng Consumer lồng nhau để bắt trạng thái của cả 2 AsyncValue
           child: employeesAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, stack) =>
@@ -181,19 +148,18 @@ class TabBangCongThang extends ConsumerWidget {
 
               return timesheetsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) =>
-                    Center(child: Text("Lỗi tải bảng công: $err")),
+                error: (err, stack) => Center(
+                  child: Text("Lỗi tải bảng công: $err"),
+                ), // Lỗi Timeout đã biến mất!
                 data: (timesheetMap) {
-                  // --- VẼ BẢNG CÔNG NGHIỆP ---
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // CỘT 1: CỐ ĐỊNH TÊN NHÂN VIÊN
+                      // Cột tên nhân viên (Giữ nguyên)
                       SizedBox(
                         width: nameColumnWidth,
                         child: Column(
                           children: [
-                            // Header góc trái trên
                             Container(
                               height: cellHeight,
                               alignment: Alignment.centerLeft,
@@ -217,7 +183,6 @@ class TabBangCongThang extends ConsumerWidget {
                                 ),
                               ),
                             ),
-                            // Danh sách tên (Cuộn dọc)
                             Expanded(
                               child: ListView.builder(
                                 itemCount: employees.length,
@@ -253,7 +218,7 @@ class TabBangCongThang extends ConsumerWidget {
                         ),
                       ),
 
-                      // CỘT 2: CÁC NGÀY TRONG THÁNG (CUỘN NGANG + DỌC)
+                      // Bảng chấm công ngang
                       Expanded(
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
@@ -261,7 +226,7 @@ class TabBangCongThang extends ConsumerWidget {
                             width: daysInMonth * cellWidth,
                             child: Column(
                               children: [
-                                // Header Ngày (1 -> 30/31)
+                                // Dòng Header Ngày trong tháng (Giữ nguyên)
                                 Row(
                                   children: List.generate(daysInMonth, (index) {
                                     int day = index + 1;
@@ -299,15 +264,15 @@ class TabBangCongThang extends ConsumerWidget {
                                     );
                                   }),
                                 ),
-                                // Lưới Dữ Liệu Chấm Công
+
+                                // Các dòng dữ liệu chấm công
                                 Expanded(
                                   child: ListView.builder(
                                     itemCount: employees.length,
                                     itemBuilder: (context, empIndex) {
                                       final empId = employees[empIndex].id;
                                       final empTimesheets =
-                                          timesheetMap[empId] ??
-                                          {}; // Lấy map các ngày của NV này
+                                          timesheetMap[empId] ?? {};
 
                                       return Row(
                                         children: List.generate(daysInMonth, (
@@ -321,16 +286,62 @@ class TabBangCongThang extends ConsumerWidget {
                                                 day,
                                               ).weekday ==
                                               7;
-
-                                          // Tìm dữ liệu chấm công của ngày này
                                           final cellData = empTimesheets[day];
-                                          final symbol = _getSymbol(cellData);
+
+                                          // LOGIC TÍNH KÝ HIỆU ĐỘNG
+                                          String symbol = '-';
+                                          bool isWorking = false;
+
+                                          if (cellData != null) {
+                                            // Tìm trạng thái công trong cấu hình
+                                            final currentStatusConfig =
+                                                statusConfigs.firstWhere(
+                                                  (s) =>
+                                                      s['name'] ==
+                                                      cellData.status,
+                                                  orElse: () => {
+                                                    'name': cellData.status,
+                                                    'symbol': '',
+                                                    'is_working_day': true,
+                                                  }, // Tránh null
+                                                );
+
+                                            // Lấy giá trị boolean an toàn (Nếu null mặc định là false)
+                                            // Note: Bạn có thể cập nhật bảng attendance_status_configs để set Có mặt = is_working_day là true
+                                            isWorking =
+                                                currentStatusConfig['is_working_day'] ==
+                                                    true ||
+                                                cellData.status == 'Có mặt';
+
+                                            if (isWorking) {
+                                              // Nếu là ngày đi làm (VD: Có mặt), lấy ký hiệu của Ca Làm Việc
+                                              final currentShiftConfig =
+                                                  shiftConfigs.firstWhere(
+                                                    (s) =>
+                                                        s['name'] ==
+                                                        cellData.shiftType,
+                                                    orElse: () => {
+                                                      'symbol': 'X',
+                                                    },
+                                                  );
+                                              symbol =
+                                                  (currentShiftConfig['symbol']
+                                                      ?.toString() ??
+                                                  'X');
+                                            } else {
+                                              // Nếu là ngày nghỉ (VD: Nghỉ phép, đi trễ), lấy ký hiệu của Trạng thái công
+                                              symbol =
+                                                  (currentStatusConfig['symbol']
+                                                      ?.toString() ??
+                                                  '-');
+                                            }
+                                          }
+
                                           final style = _getCellStyle(
                                             symbol,
                                             isSun,
+                                            isWorking,
                                           );
-
-                                          // Đánh dấu ô có Tăng ca (Viền gạch chân cam mỏng chẳng hạn)
                                           bool hasOvertime =
                                               cellData?.overtimeStart != null &&
                                               cellData!

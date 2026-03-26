@@ -35,7 +35,12 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
     'office_staff',
     'worker',
   ];
-  final List<String> statusOptions = ['Tất cả', 'Đang hoạt động', 'Đã khóa'];
+  final List<String> statusOptions = [
+    'Tất cả',
+    'Đang hoạt động',
+    'Đã khóa',
+    'Chờ duyệt',
+  ];
 
   void _downloadTemplate(WidgetRef ref) {
     final headers = [
@@ -195,20 +200,25 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
               data: (allEmployees) {
                 // ĐẶT Ở ĐÂY: Sửa lại logic lọc nhân viên
                 final employees = allEmployees.where((emp) {
-                  // KHÔNG cho phép cấp dưới thấy và thao tác với Admin
                   if (!isCurrentUserAdmin && emp.role == 'admin') return false;
 
                   bool matchSearch =
                       emp.fullName.toLowerCase().contains(searchQuery) ||
                       emp.employeeCode.toLowerCase().contains(searchQuery);
-
                   bool matchRole =
                       filterRole == 'Tất cả' || emp.role == filterRole;
 
                   bool matchStatus = true;
+                  // Giả sử ProfileModel của bạn đã được map thêm trường approvalStatus (bạn nhớ update Model nhé)
+                  final approvalStatus =
+                      (emp as dynamic).approvalStatus ?? 'approved';
+
                   if (filterStatus == 'Đang hoạt động')
-                    matchStatus = emp.isActive;
-                  if (filterStatus == 'Đã khóa') matchStatus = !emp.isActive;
+                    matchStatus = emp.isActive && approvalStatus == 'approved';
+                  if (filterStatus == 'Đã khóa')
+                    matchStatus = !emp.isActive && approvalStatus == 'approved';
+                  if (filterStatus == 'Chờ duyệt')
+                    matchStatus = approvalStatus == 'pending';
 
                   return matchSearch && matchRole && matchStatus;
                 }).toList();
@@ -371,7 +381,46 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
                               onPressed: () =>
                                   _showEditDialog(context, ref, emp),
                             ),
-                            _buildLockUnlockButton(context, ref, emp),
+
+                            // --- THÊM NÚT DUYỆT Ở ĐÂY ---
+                            if (emp.approvalStatus == 'pending')
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4.0,
+                                ),
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(
+                                    Icons.check_circle,
+                                    size: 16,
+                                  ),
+                                  label: const Text("Duyệt"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  onPressed: () async {
+                                    final act = ref.read(
+                                      employeeActionProvider,
+                                    );
+                                    // Giả sử bạn đã viết hàm approveEmployee trong Controller như hướng dẫn trước
+                                    await act.approveEmployee(emp.id);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            "✅ Đã duyệt tài khoản!",
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                              )
+                            else
+                              // Nếu không phải pending thì hiện nút Khóa/Mở khóa bình thường
+                              _buildLockUnlockButton(context, ref, emp),
 
                             // ---- THÊM NÚT XÓA TẠI ĐÂY ----
                             IconButton(
@@ -507,7 +556,32 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      _buildLockUnlockButton(context, ref, emp),
+                      // --- THÊM NÚT DUYỆT Ở ĐÂY ---
+                      if (emp.approvalStatus == 'pending')
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.check_circle, size: 16),
+                          label: const Text("Duyệt"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          onPressed: () async {
+                            await ref
+                                .read(employeeActionProvider)
+                                .approveEmployee(emp.id);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("✅ Đã duyệt tài khoản!"),
+                                ),
+                              );
+                            }
+                          },
+                        )
+                      else
+                        _buildLockUnlockButton(context, ref, emp),
+                      // -----------------------------
                       IconButton(
                         icon: const Icon(
                           Icons.delete_forever,

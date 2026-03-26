@@ -77,6 +77,18 @@ class DepartmentManagementPage extends ConsumerWidget {
           tabViews.add(const _RoleHierarchyTab());
         }
 
+        if (isAdmin ||
+            myFeatures.contains('phong_ban_cau_hinh_ca') ||
+            myFeatures.contains('phong_ban_cau_hinh_cong')) {
+          tabs.add(
+            const Tab(
+              icon: Icon(Icons.settings_suggest),
+              text: "Cấu Hình Chấm Công",
+            ),
+          );
+          tabViews.add(const _AttendanceConfigTab());
+        }
+
         if (tabs.isEmpty)
           return const Scaffold(
             body: Center(child: Text("Bạn không có quyền xem trang này.")),
@@ -864,6 +876,244 @@ class _RoleHierarchyTab extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+// ====================== TAB CẤU HÌNH ĐỘNG (NO-CODE) ======================
+class _AttendanceConfigTab extends ConsumerWidget {
+  const _AttendanceConfigTab();
+
+  void _showAddOrEdit(
+    BuildContext context,
+    WidgetRef ref, {
+    required String type,
+    Map<String, dynamic>? item,
+  }) {
+    final isEditing = item != null;
+    final nameCtrl = TextEditingController(text: isEditing ? item['name'] : '');
+    final symbolCtrl = TextEditingController(
+      text: isEditing ? (item['symbol'] ?? '') : '',
+    );
+    bool isActive = isEditing ? item['is_active'] : true;
+
+    showDialog(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(isEditing ? "Sửa" : "Thêm mới"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                    labelText: type == 'shift'
+                        ? "Tên Ca (VD: Ca Ngày)"
+                        : "Trạng thái (VD: Nghỉ phép)",
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: symbolCtrl,
+                  decoration: const InputDecoration(
+                    labelText: "Ký hiệu trên bảng công (VD: X, P)",
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: const Text("Đang sử dụng"),
+                  value: isActive,
+                  onChanged: (val) => setState(() => isActive = val),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c),
+                child: const Text("Hủy"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (nameCtrl.text.isEmpty) return;
+                  final act = ref.read(systemActionProvider);
+                  bool success = false;
+
+                  if (type == 'shift') {
+                    success = isEditing
+                        ? await act.updateShiftConfig(
+                            item['id'].toString(),
+                            nameCtrl.text,
+                            symbolCtrl.text,
+                            isActive,
+                          )
+                        : await act.addShiftConfig(
+                            nameCtrl.text,
+                            symbolCtrl.text,
+                          );
+                  } else {
+                    success = isEditing
+                        ? await act.updateAttendanceStatusConfig(
+                            item['id'].toString(),
+                            nameCtrl.text,
+                            symbolCtrl.text,
+                            isActive,
+                          )
+                        : await act.addAttendanceStatusConfig(
+                            nameCtrl.text,
+                            symbolCtrl.text,
+                          );
+                  }
+
+                  if (context.mounted) {
+                    Navigator.pop(c);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? "Lưu thành công!"
+                              : "Lỗi (Có thể trùng tên).",
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: const Text("Lưu"),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSection(
+    BuildContext context,
+    WidgetRef ref,
+    String title,
+    String type,
+    AsyncValue<List<Map<String, dynamic>>> asyncData,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text("Thêm"),
+                style: ElevatedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: () => _showAddOrEdit(context, ref, type: type),
+              ),
+            ],
+          ),
+        ),
+        asyncData.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, s) => Center(child: Text("Lỗi: $e")),
+          data: (data) {
+            if (data.isEmpty)
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text("Chưa có dữ liệu."),
+              );
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: data.length,
+              itemBuilder: (c, i) => Card(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: ListTile(
+                  title: Text(
+                    data[i]['name'].toString(),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    "Ký hiệu: ${data[i]['symbol'] ?? 'Không có'} | Trạng thái: ${data[i]['is_active'] == true ? 'Đang dùng' : 'Đã ẩn'}",
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () => _showAddOrEdit(
+                          context,
+                          ref,
+                          type: type,
+                          item: data[i],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () async {
+                          final act = ref.read(systemActionProvider);
+                          final msg = type == 'shift'
+                              ? await act.deleteShiftConfig(
+                                  data[i]['id'].toString(),
+                                )
+                              : await act.deleteAttendanceStatusConfig(
+                                  data[i]['id'].toString(),
+                                );
+                          if (context.mounted)
+                            ScaffoldMessenger.of(
+                              context,
+                            ).showSnackBar(SnackBar(content: Text(msg)));
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const Divider(height: 32, thickness: 2),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final shiftData = ref.watch(shiftConfigsProvider);
+    final statusData = ref.watch(attendanceStatusConfigsProvider);
+
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            _buildSection(
+              context,
+              ref,
+              "1. Cấu hình Ca làm việc",
+              "shift",
+              shiftData,
+            ),
+            _buildSection(
+              context,
+              ref,
+              "2. Cấu hình Trạng thái nghỉ/công",
+              "status",
+              statusData,
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -60,33 +60,23 @@ class AttendanceRepository {
   }
 
   // 4. Lấy dữ liệu chấm công của cả THÁNG theo dạng Stream (Thời gian thực)
-  Stream<List<TimesheetModel>> streamTimesheetsByMonth(DateTime month) {
-    // 1. Xác định khoảng thời gian cần lọc
-    final start = DateTime(month.year, month.month, 1);
-    final end = DateTime(
+  Future<List<TimesheetModel>> getTimesheetsByMonth(DateTime month) async {
+    final startStr = DateTime(month.year, month.month, 1).toIso8601String();
+    final endStr = DateTime(
       month.year,
       month.month + 1,
       0,
       23,
       59,
       59,
-    ); // Cuối ngày cuối tháng
+    ).toIso8601String();
 
-    return _supabase.from('daily_timesheets').stream(primaryKey: ['id'])
-    // Lưu ý: Nếu có cột user_id, hãy thêm .eq('user_id', ...) ở đây để bảo mật
-    .map((List<Map<String, dynamic>> data) {
-      return data.map((json) => TimesheetModel.fromJson(json)).where((item) {
-          // 2. Chuyển đổi string date từ DB thành DateTime để so sánh
-          // Giả sử item.date trong Model là kiểu String (yyyy-MM-dd) hoặc DateTime
-          final itemDate = DateTime.parse(item.date.toString());
+    final response = await _supabase
+        .from('daily_timesheets')
+        .select()
+        .gte('date', startStr)
+        .lte('date', endStr);
 
-          // 3. Logic lọc: start <= itemDate <= end
-          return (itemDate.isAtSameMomentAs(start) ||
-                  itemDate.isAfter(start)) &&
-              (itemDate.isAtSameMomentAs(end) || itemDate.isBefore(end));
-        }).toList()
-        // 4. Sắp xếp lại danh sách theo ngày cho đẹp giao diện
-        ..sort((a, b) => a.date.compareTo(b.date));
-    });
+    return response.map((json) => TimesheetModel.fromJson(json)).toList();
   }
 }

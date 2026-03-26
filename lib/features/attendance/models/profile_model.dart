@@ -16,6 +16,9 @@ class ProfileModel with _$ProfileModel {
     String? email,
     @JsonKey(name: 'phone_number') String? phoneNumber,
     @JsonKey(name: 'is_active') @Default(true) bool isActive,
+    @JsonKey(name: 'approval_status')
+    @Default('approved')
+    String? approvalStatus,
   }) = _ProfileModel;
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) =>

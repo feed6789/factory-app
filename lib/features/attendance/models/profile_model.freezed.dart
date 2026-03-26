@@ -38,6 +38,8 @@ mixin _$ProfileModel {
   String? get phoneNumber => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_active')
   bool get isActive => throw _privateConstructorUsedError;
+  @JsonKey(name: 'approval_status')
+  String? get approvalStatus => throw _privateConstructorUsedError;
 
   /// Serializes this ProfileModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -67,6 +69,7 @@ abstract class $ProfileModelCopyWith<$Res> {
     String? email,
     @JsonKey(name: 'phone_number') String? phoneNumber,
     @JsonKey(name: 'is_active') bool isActive,
+    @JsonKey(name: 'approval_status') String? approvalStatus,
   });
 }
 
@@ -95,6 +98,7 @@ class _$ProfileModelCopyWithImpl<$Res, $Val extends ProfileModel>
     Object? email = freezed,
     Object? phoneNumber = freezed,
     Object? isActive = null,
+    Object? approvalStatus = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -138,6 +142,10 @@ class _$ProfileModelCopyWithImpl<$Res, $Val extends ProfileModel>
                 ? _value.isActive
                 : isActive // ignore: cast_nullable_to_non_nullable
                       as bool,
+            approvalStatus: freezed == approvalStatus
+                ? _value.approvalStatus
+                : approvalStatus // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -164,6 +172,7 @@ abstract class _$$ProfileModelImplCopyWith<$Res>
     String? email,
     @JsonKey(name: 'phone_number') String? phoneNumber,
     @JsonKey(name: 'is_active') bool isActive,
+    @JsonKey(name: 'approval_status') String? approvalStatus,
   });
 }
 
@@ -191,6 +200,7 @@ class __$$ProfileModelImplCopyWithImpl<$Res>
     Object? email = freezed,
     Object? phoneNumber = freezed,
     Object? isActive = null,
+    Object? approvalStatus = freezed,
   }) {
     return _then(
       _$ProfileModelImpl(
@@ -234,6 +244,10 @@ class __$$ProfileModelImplCopyWithImpl<$Res>
             ? _value.isActive
             : isActive // ignore: cast_nullable_to_non_nullable
                   as bool,
+        approvalStatus: freezed == approvalStatus
+            ? _value.approvalStatus
+            : approvalStatus // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -253,6 +267,7 @@ class _$ProfileModelImpl implements _ProfileModel {
     this.email,
     @JsonKey(name: 'phone_number') this.phoneNumber,
     @JsonKey(name: 'is_active') this.isActive = true,
+    @JsonKey(name: 'approval_status') this.approvalStatus = 'approved',
   });
 
   factory _$ProfileModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -285,10 +300,13 @@ class _$ProfileModelImpl implements _ProfileModel {
   @override
   @JsonKey(name: 'is_active')
   final bool isActive;
+  @override
+  @JsonKey(name: 'approval_status')
+  final String? approvalStatus;
 
   @override
   String toString() {
-    return 'ProfileModel(id: $id, employeeCode: $employeeCode, fullName: $fullName, role: $role, departmentId: $departmentId, divisionId: $divisionId, managerId: $managerId, email: $email, phoneNumber: $phoneNumber, isActive: $isActive)';
+    return 'ProfileModel(id: $id, employeeCode: $employeeCode, fullName: $fullName, role: $role, departmentId: $departmentId, divisionId: $divisionId, managerId: $managerId, email: $email, phoneNumber: $phoneNumber, isActive: $isActive, approvalStatus: $approvalStatus)';
   }
 
   @override
@@ -312,7 +330,9 @@ class _$ProfileModelImpl implements _ProfileModel {
             (identical(other.phoneNumber, phoneNumber) ||
                 other.phoneNumber == phoneNumber) &&
             (identical(other.isActive, isActive) ||
-                other.isActive == isActive));
+                other.isActive == isActive) &&
+            (identical(other.approvalStatus, approvalStatus) ||
+                other.approvalStatus == approvalStatus));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -329,6 +349,7 @@ class _$ProfileModelImpl implements _ProfileModel {
     email,
     phoneNumber,
     isActive,
+    approvalStatus,
   );
 
   /// Create a copy of ProfileModel
@@ -357,6 +378,7 @@ abstract class _ProfileModel implements ProfileModel {
     final String? email,
     @JsonKey(name: 'phone_number') final String? phoneNumber,
     @JsonKey(name: 'is_active') final bool isActive,
+    @JsonKey(name: 'approval_status') final String? approvalStatus,
   }) = _$ProfileModelImpl;
 
   factory _ProfileModel.fromJson(Map<String, dynamic> json) =
@@ -389,6 +411,9 @@ abstract class _ProfileModel implements ProfileModel {
   @override
   @JsonKey(name: 'is_active')
   bool get isActive;
+  @override
+  @JsonKey(name: 'approval_status')
+  String? get approvalStatus;
 
   /// Create a copy of ProfileModel
   /// with the given fields replaced by the non-null parameter values.
