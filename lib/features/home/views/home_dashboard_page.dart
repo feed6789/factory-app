@@ -89,11 +89,14 @@ class HomeDashboardPage extends StatelessWidget {
 
   Widget _buildMenuItemCard(BuildContext context, FeatureMenuItem item) {
     return Card(
-      elevation: 3,
-      shadowColor: Colors.black12,
-      clipBehavior: Clip
-          .antiAlias, // Quan trọng: Cắt các phần tử tràn ra ngoài góc bo tròn
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2, // Bóng đổ nhẹ, hiện đại
+      shadowColor: Colors.black26,
+      color: Colors.white, // Nền trắng tinh giúp dễ đọc chữ
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade200), // Viền xám nhạt
+      ),
       child: InkWell(
         onTap: () {
           if (item.isComingSoon || item.destination == null) {
@@ -110,52 +113,53 @@ class HomeDashboardPage extends StatelessWidget {
           }
         },
         child: Stack(
-          // Sử dụng Stack để đặt cái nhãn "Sắp có" vào góc
           children: [
-            // Nội dung chính của thẻ
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearFromTopToBottom(
-                  item.iconColor,
-                ), // Tự tạo màu nền nhẹ
-              ),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: item.iconColor.withOpacity(
+                          0.1,
+                        ), // Nền icon màu nhạt
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
                         item.icon,
-                        size: 54,
-                        color: item.iconColor.withOpacity(0.8),
+                        size: 42,
+                        color: item.iconColor, // Icon màu đậm
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        item.title,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: Colors.black87,
-                        ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      item.title,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Colors.black87, // Chữ đen xám tương phản cao
+                        height: 1.3,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            // Nhãn "Sắp có" gọn gàng ở góc trên cùng bên phải
             if (item.isComingSoon)
               Positioned(
                 top: 12,
                 right: -25,
                 child: Transform.rotate(
-                  angle: 0.785398, // Xoay 45 độ
+                  angle: 0.785398,
                   child: Container(
-                    color: Colors.orange.shade400,
+                    color:
+                        Colors.red.shade600, // Đổi sang màu đỏ đô cho nổi bật
                     padding: const EdgeInsets.symmetric(
                       horizontal: 30,
                       vertical: 4,

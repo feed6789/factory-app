@@ -10,6 +10,7 @@ final Map<String, String> GROUP_NAMES = {
   "phong_ban": "Cơ Cấu Tổ Chức & Cấu Hình",
   "cham_cong": "Chấm Công & Xếp Loại",
   "duyet_don": "Duyệt Đơn Từ",
+  "nhap_lieu": "Nhập Số Liệu & Cấu Hình Máy",
   "bao_cao": "Báo cáo & Thống kê",
   "de_xuat": "Đề Xuất Vật Tư Phụ Tùng",
   "vat_tu": "Quản Lý Kho Vật Tư", // Thêm nhóm Quản lý Kho
@@ -39,11 +40,12 @@ final Map<String, Map<String, String>> ALL_FEATURES_NESTED = {
     "duyet_don_cho": "Chờ duyệt",
     "duyet_don_lich_su": "Lịch sử đã duyệt",
   },
-  "bao_cao": {
-    "bao_cao_view_stats": "Xem Thống Kê & Biểu Đồ",
-    "bao_cao_enter_data": "Nhập liệu báo cáo hàng ngày",
-    "bao_cao_config_cabinet": "Cấu hình (Thêm/Sửa/Xóa Tủ điện)",
+  // --- THÊM NHÓM NHẬP LIỆU ---
+  "nhap_lieu": {
+    "nhap_lieu_dien": "Nhập số điện tiêu thụ hàng ngày",
+    "nhap_lieu_cau_hinh": "Cấu hình Máy móc / Tủ điện",
   },
+  "bao_cao": {"bao_cao_view_stats": "Xem Thống Kê & Biểu Đồ"},
   "gop_y": {"gop_y": "Đóng góp Ý kiến"},
   "de_xuat": {
     "de_xuat_tao": "Tạo phiếu & Xem phiếu cá nhân",

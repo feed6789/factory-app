@@ -59,3 +59,5 @@ windows/flutter/
 # Supabase Local Development
 supabase/.temp/
 supabase/functions/.env
+
+my-app.tar

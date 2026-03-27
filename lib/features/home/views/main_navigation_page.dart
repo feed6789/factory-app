@@ -14,6 +14,7 @@ import '../../attendance/views/manager_attendance_page.dart';
 import '../../reports/views/production_report_page.dart';
 import '../../attendance/views/feedback_submission_page.dart';
 import '../../attendance/views/feedback_main_page.dart';
+import '../../reports/views/data_entry_page.dart'; // <-- Thêm dòng này
 
 // Fetch quyền của role cụ thể
 final rolePermissionsProviderUser =
@@ -129,17 +130,23 @@ class MainNavigationPage extends ConsumerWidget {
             destination: const LeaveApprovalPage(),
             iconColor: Colors.orange.shade700,
           ),
-          "cong_ca_nhan": FeatureMenuItem(
-            title: 'Bảng Công Cá Nhân',
-            icon: Icons.calendar_month,
-            destination: TabCongCaNhan(currentUserId: profile.id),
-            iconColor: Colors.green.shade600,
+          "nhap_lieu": const FeatureMenuItem(
+            title: 'Nhập Liệu & Cấu Hình',
+            icon: Icons.edit_note,
+            destination: DataEntryPage(),
+            iconColor: Colors.blueAccent,
           ),
           "bao_cao": const FeatureMenuItem(
             title: 'Báo cáo & Thống kê',
             icon: Icons.bar_chart,
             destination: ProductionReportPage(),
             iconColor: Colors.purple,
+          ),
+          "cong_ca_nhan": FeatureMenuItem(
+            title: 'Bảng Công Cá Nhân',
+            icon: Icons.calendar_month,
+            destination: TabCongCaNhan(currentUserId: profile.id),
+            iconColor: Colors.green.shade600,
           ),
 
           // ==========================================
@@ -224,6 +231,9 @@ class MainNavigationPage extends ConsumerWidget {
             }
             if (hasAnyPermissionInGroup(allowedFeatures, 'duyet_don')) {
               userFeatures.add(allFeaturesMap['duyet_don']!);
+            }
+            if (hasAnyPermissionInGroup(allowedFeatures, 'nhap_lieu')) {
+              userFeatures.add(allFeaturesMap['nhap_lieu']!);
             }
             if (hasAnyPermissionInGroup(allowedFeatures, 'bao_cao')) {
               userFeatures.add(allFeaturesMap['bao_cao']!);
