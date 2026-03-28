@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../controllers/attendance_controller.dart';
-import '../models/timesheet_model.dart';
 import '../../admin/controllers/department_controller.dart';
 
 class TabBangCongThang extends ConsumerWidget {
@@ -37,27 +36,6 @@ class TabBangCongThang extends ConsumerWidget {
     }
 
     return {'bg': bg, 'text': text, 'weight': weight};
-  }
-
-  // --- HÀM RÚT GỌN KÝ HIỆU ---
-  String _getSymbol(TimesheetModel? cellData) {
-    if (cellData == null) return '';
-    String tt = cellData.status;
-    String ca = cellData.shiftType;
-
-    if (tt == 'Có mặt') {
-      if (ca == 'Ca Ngày') return 'X';
-      if (ca == 'Sáng') return 'S';
-      if (ca == 'Chiều') return 'C';
-      if (ca == 'Đêm') return 'Đ';
-      if (ca == 'Nửa Ngày') return '/';
-      return 'X'; // Mặc định
-    } else {
-      if (tt == 'Nghỉ phép') return 'P';
-      if (tt == 'Nghỉ ốm') return 'OM';
-      if (tt == 'Nghỉ không phép') return 'KP';
-      return '-'; // Ngày nghỉ
-    }
   }
 
   @override

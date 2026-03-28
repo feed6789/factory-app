@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import '../../../core/services/supabase_provider.dart';
 import '../models/evaluation_model.dart';
 import '../../auth/controllers/auth_controller.dart';
-import 'attendance_controller.dart';
 
 // State lưu tháng đang chọn để đánh giá
 final evaluationMonthProvider = StateProvider<DateTime>(
