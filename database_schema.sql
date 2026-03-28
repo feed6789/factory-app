@@ -21,6 +21,15 @@ CREATE TABLE public.attendance_logs (
   CONSTRAINT attendance_logs_pkey PRIMARY KEY (id),
   CONSTRAINT attendance_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.attendance_status_configs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL UNIQUE,
+  is_working_day boolean DEFAULT true,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  symbol character varying,
+  CONSTRAINT attendance_status_configs_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.compressed_air_readings (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   pressure_value numeric,
@@ -261,6 +270,7 @@ CREATE TABLE public.profiles (
   phone_number text,
   division_id uuid,
   can_manage_inventory boolean DEFAULT false,
+  approval_status character varying DEFAULT 'approved'::character varying,
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
   CONSTRAINT profiles_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id),
@@ -297,6 +307,16 @@ CREATE TABLE public.roles (
   description text,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT roles_pkey PRIMARY KEY (code)
+);
+CREATE TABLE public.shift_configs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL UNIQUE,
+  start_time time without time zone,
+  end_time time without time zone,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  symbol character varying,
+  CONSTRAINT shift_configs_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.tasks (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
