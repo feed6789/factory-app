@@ -5,6 +5,7 @@ import '../../../core/services/supabase_provider.dart';
 
 // --- PROVIDERS LẤY DỮ LIỆU ---
 
+// Khôi phục lại ở đầu file
 final Map<String, String> GROUP_NAMES = {
   "nhan_su": "Quản lý Nhân sự",
   "phong_ban": "Cơ Cấu Tổ Chức & Cấu Hình",
@@ -12,8 +13,7 @@ final Map<String, String> GROUP_NAMES = {
   "duyet_don": "Duyệt Đơn Từ",
   "nhap_lieu": "Nhập Số Liệu & Cấu Hình Máy",
   "bao_cao": "Báo cáo & Thống kê",
-  "de_xuat": "Đề Xuất Vật Tư Phụ Tùng",
-  "vat_tu": "Quản Lý Kho Vật Tư", // Thêm nhóm Quản lý Kho
+  "vat_tu": "Quản Lý Vật Tư & Đề Xuất",
   "gop_y": "Đóng Góp & Tiện Ích",
 };
 
@@ -27,40 +27,32 @@ final Map<String, Map<String, String>> ALL_FEATURES_NESTED = {
   "phong_ban": {
     "phong_ban_bo_phan": "Quản lý Bộ Phận",
     "phong_ban_phong_ban": "Quản lý Phòng Ban",
-    "phong_ban_chuc_vu": "Quản lý Chức Vụ",
+    "phong_ban_chuc_vu": "Quản lý Chức Vụ & Cấp Bậc",
     "phong_ban_phan_quyen": "Phân Quyền App",
-    "phong_ban_cap_bac": "Cấp Bậc Quản Lý",
   },
   "cham_cong": {
     "cham_cong_ngay": "Chấm Công Ngày",
     "cham_cong_thang": "Bảng Công Tháng",
     "cham_cong_danh_gia": "Đánh Giá Xếp Loại",
+    "cham_cong_cau_hinh": "Cấu hình Ca/Trạng thái",
   },
   "duyet_don": {
     "duyet_don_cho": "Chờ duyệt",
     "duyet_don_lich_su": "Lịch sử đã duyệt",
   },
-  // --- THÊM NHÓM NHẬP LIỆU ---
   "nhap_lieu": {
-    "nhap_lieu_dien": "Nhập số điện tiêu thụ hàng ngày",
+    "nhap_lieu_dien": "Nhập số điện tiêu thụ",
     "nhap_lieu_cau_hinh": "Cấu hình Máy móc / Tủ điện",
   },
   "bao_cao": {"bao_cao_view_stats": "Xem Thống Kê & Biểu Đồ"},
-  "gop_y": {"gop_y": "Đóng góp Ý kiến"},
-  "de_xuat": {
-    "de_xuat_tao": "Tạo phiếu & Xem phiếu cá nhân",
-    "de_xuat_duyet": "Duyệt phiếu đề xuất (Cấp Giám đốc)",
-    "de_xuat_lich_su": "Xem lịch sử tất cả phiếu đã duyệt",
-    "de_xuat_xoa": "Xóa phiếu đã duyệt/từ chối",
-    "de_xuat_danh_muc": "Quản lý danh mục VTPT (Thêm/Sửa/Xóa)",
-  },
-
   "vat_tu": {
-    "vat_tu_xem": "Xem bảng vật tư & lịch sử",
-    "vat_tu_nhap_xuat": "Thực hiện Nhập/Xuất kho",
-    "vat_tu_cau_hinh_chung": "Cấu hình Vật tư & Máy móc chung",
-    "vat_tu_cap_quyen": "Cấp quyền Quản lý kho cho NV khác (HR/Admin)",
+    "vat_tu_xem_kho": "Xem Tồn kho & Nhập/Xuất", // Của tính năng Kho cũ
+    "vat_tu_de_xuat": "Tạo phiếu & Xem phiếu cá nhân", // Của tính năng Đề xuất
+    "vat_tu_duyet": "Duyệt phiếu đề xuất",
+    "vat_tu_lich_su": "Xem lịch sử phiếu đề xuất",
+    "vat_tu_danh_muc": "Quản lý danh mục Mã VTPT",
   },
+  "gop_y": {"gop_y": "Đóng góp Ý kiến"},
 };
 
 final shiftConfigsProvider = FutureProvider<List<Map<String, dynamic>>>((
@@ -125,11 +117,14 @@ final rolePermissionsProvider = FutureProvider<List<Map<String, dynamic>>>((
   return List<Map<String, dynamic>>.from(response);
 });
 
-final roleHierarchyProvider = FutureProvider<List<Map<String, dynamic>>>((
+final approvalWorkflowsProvider = FutureProvider<List<Map<String, dynamic>>>((
   ref,
 ) async {
   final supabase = ref.read(supabaseProvider);
-  final response = await supabase.from('role_hierarchy').select();
+  final response = await supabase
+      .from('approval_workflows')
+      .select()
+      .order('created_at', ascending: true);
   return List<Map<String, dynamic>>.from(response);
 });
 
@@ -253,45 +248,52 @@ class SystemActionController {
     }
   }
 
-  // 4. THÊM/XÓA PHÂN CẤP
-  Future<bool> addRoleHierarchy(String role, String managedBy) async {
+  Future<bool> addApprovalWorkflow(
+    String roleCode,
+    String workflowName,
+    String moduleType,
+    List<String> steps,
+  ) async {
     try {
-      await ref.read(supabaseProvider).from('role_hierarchy').insert({
-        'role': role,
-        'managed_by_role': managedBy,
+      await ref.read(supabaseProvider).from('approval_workflows').insert({
+        'role_code': roleCode,
+        'workflow_name': workflowName,
+        'module_type': moduleType, // <--- LƯU VÀO DB
+        'steps': steps,
       });
-      ref.invalidate(roleHierarchyProvider);
+      ref.invalidate(approvalWorkflowsProvider);
       return true;
     } catch (e) {
-      // Ghi log lỗi để debug
-      print("Lỗi thêm cấp bậc: $e");
-      // Trả về false để UI biết và thông báo
       return false;
     }
   }
 
-  Future<bool> deleteRoleHierarchy(String role, String managedBy) async {
+  Future<String> deleteApprovalWorkflow(String id) async {
     try {
       await ref
           .read(supabaseProvider)
-          .from('role_hierarchy')
+          .from('approval_workflows')
           .delete()
-          .eq('role', role)
-          .eq('managed_by_role', managedBy);
-      ref.invalidate(roleHierarchyProvider);
-      return true;
+          .eq('id', id);
+      ref.invalidate(approvalWorkflowsProvider);
+      return "Đã xóa quy trình";
     } catch (e) {
-      print("Lỗi xóa cấp bậc: $e");
-      return false;
+      return "Lỗi khi xóa quy trình";
     }
   }
 
-  Future<bool> addRole(String code, String name, String? desc) async {
+  Future<bool> addRole(
+    String code,
+    String name,
+    String? desc,
+    int levelRank,
+  ) async {
     try {
       await ref.read(supabaseProvider).from('roles').insert({
         'code': code,
         'name': name,
         'description': desc,
+        'level_rank': levelRank,
       });
       ref.invalidate(roleListProvider);
       return true;
@@ -300,12 +302,17 @@ class SystemActionController {
     }
   }
 
-  Future<bool> updateRole(String code, String name, String? desc) async {
+  Future<bool> updateRole(
+    String code,
+    String name,
+    String? desc,
+    int levelRank,
+  ) async {
     try {
       await ref
           .read(supabaseProvider)
           .from('roles')
-          .update({'name': name, 'description': desc})
+          .update({'name': name, 'description': desc, 'level_rank': levelRank})
           .eq('code', code);
       ref.invalidate(roleListProvider);
       return true;

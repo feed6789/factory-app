@@ -1,0 +1,482 @@
+TỔNG HỢP CÁC TÍNH NĂNG ĐỀ XUẤT MỚI
+A. Báo cáo & Thống kê Nâng cao
+Mục tiêu
+Cung cấp cho ban lãnh đạo và quản lý các báo cáo tổng hợp, giúp ra quyết định nhanh chóng.
+
+Các loại báo cáo
+Loại báo cáo	Nội dung	Ai dùng
+Báo cáo chấm công	Tổng hợp ngày công, nghỉ phép, đi trễ, tăng ca theo tháng/phòng ban	Giám đốc, Trưởng phòng
+Báo cáo đánh giá	Xếp loại nhân viên (A/B/C), đề xuất khen thưởng/kỷ luật	HR, Giám đốc
+Báo cáo sản xuất	Sản lượng theo máy/ca/ngày, tỷ lệ OK/NG	Quản đốc, Kỹ thuật
+Báo cáo điện năng	Điện tiêu thụ theo ngày/tháng, so sánh với sản lượng	Kỹ thuật, Ban giám đốc
+Báo cáo vật tư	Tồn kho, nhập/xuất, dự báo hết hàng	Kế toán, Kho
+Tính năng của báo cáo
+Bộ lọc linh hoạt
+
+Lọc theo thời gian (ngày, tuần, tháng, quý, năm)
+
+Lọc theo phòng ban, bộ phận
+
+Lọc theo loại báo cáo
+
+Xuất dữ liệu
+
+Xuất Excel (.xlsx) để lưu trữ và xử lý
+
+Xuất PDF (.pdf) để in ấn và ký duyệt
+
+Trực quan hóa
+
+Biểu đồ cột so sánh
+
+Biểu đồ đường theo xu hướng
+
+Thẻ tóm tắt KPI (chỉ số quan trọng)
+
+Tự động gửi
+
+Gửi báo cáo định kỳ qua email
+
+Thông báo khi có chỉ số bất thường
+
+B. Quản lý Tài sản
+Mục tiêu
+Theo dõi tất cả tài sản của nhà máy: máy móc, thiết bị, công cụ, dụng cụ.
+
+Các đối tượng quản lý
+Loại tài sản	Ví dụ	Đặc điểm
+Máy móc sản xuất	Máy CNC, máy ép, máy cắt	Có lịch bảo trì định kỳ
+Thiết bị văn phòng	Máy tính, máy in, bàn ghế	Có thể cho mượn giữa phòng ban
+Công cụ dụng cụ	Máy khoan, đồ nghề	Thường xuyên mượn/trả
+Tính năng chính
+Quản lý danh mục
+
+Thêm/sửa/xóa tài sản
+
+kiểm kê định kỳ
+
+Gán mã QR cho từng tài sản (dễ quét tìm kiếm)
+
+Phân loại tài sản theo nhóm
+
+Theo dõi trạng thái
+
+Đang dùng
+
+Đang sửa chữa
+
+Đã thanh lý
+
+Cần bảo trì
+
+Quản lý mượn/trả
+
+Ghi nhận ai mượn, mượn khi nào, hẹn trả khi nào
+
+Nhắc nhở khi đến hạn trả
+
+Lịch sử mượn trả
+
+Bảo trì định kỳ
+
+Thiết lập chu kỳ bảo trì (1 tháng, 3 tháng, 6 tháng)
+
+Cảnh báo khi đến lịch bảo trì
+
+Ghi nhận lịch sử bảo trì
+
+Quét QR
+
+Dùng camera điện thoại quét mã QR trên tài sản
+
+Hiện ngay thông tin tài sản
+
+Cho phép cập nhật trạng thái nhanh
+
+C. Nhật ký Sản xuất
+Mục tiêu
+Ghi nhận chi tiết hoạt động sản xuất hàng ngày để theo dõi hiệu suất và phát hiện vấn đề sớm.
+
+Các trường thông tin cần ghi
+Thông tin	Mô tả	Tại sao cần
+Ngày, ca sản xuất	Ca ngày, ca đêm	Biết năng suất theo ca
+Máy móc sử dụng	Máy nào đang chạy	Theo dõi hiệu suất từng máy
+Sản phẩm	Mã sản phẩm, tên sản phẩm	Biết đang sản xuất cái gì
+Số lượng OK	Sản phẩm đạt chất lượng	Tính năng suất
+Số lượng NG	Sản phẩm lỗi	Phát hiện vấn đề chất lượng
+Nguyên nhân lỗi	Tại sao bị lỗi	Cải tiến quy trình
+Điện năng	Số điện tiêu thụ	Tính chi phí, hiệu suất năng lượng
+Ghi chú sự cố	Máy hỏng, thiếu nguyên liệu...	Cảnh báo cho quản lý
+Tính năng chính
+Nhập nhật ký
+theo dõi thời gian ngừng máy
+
+Form nhập liệu nhanh gọn
+
+Tự động tính tỷ lệ OK/NG
+
+Hiển thị cảnh báo khi tỷ lệ lỗi cao (>15%)
+
+Theo dõi chỉ số OEE
+
+OEE = (Thời gian chạy máy) × (Tốc độ) × (Chất lượng)
+
+Giúp đánh giá hiệu suất máy móc tổng thể
+
+Cảnh báo tự động
+
+Khi tỷ lệ lỗi vượt ngưỡng
+
+Khi máy ngừng quá lâu
+
+Gửi thông báo cho quản đốc
+
+Thống kê theo máy
+
+Máy nào chạy tốt nhất?
+
+Máy nào hay hỏng?
+
+Máy nào tiêu thụ điện nhiều nhất?
+
+D. Giao Việc (Task Management)
+Mục tiêu
+Quản lý công việc được giao, theo dõi tiến độ, đảm bảo hoàn thành đúng hạn.
+
+Luồng công việc
+text
+Người giao tạo task → Người nhận thấy task → Cập nhật tiến độ → Hoàn thành → Người giao xác nhận
+Các trạng thái công việc
+Trạng thái	Ý nghĩa	Hành động
+Chưa làm	Mới tạo, chưa bắt đầu	Nhận việc, bắt đầu làm
+Đang làm	Đã bắt đầu thực hiện	Cập nhật tiến độ
+Chờ duyệt	Làm xong, chờ người giao kiểm tra	Xác nhận hoàn thành
+Hoàn thành	Đã được xác nhận	Xem lại
+Quá hạn	Chưa hoàn thành sau deadline	Cảnh báo, điều chỉnh
+Tính năng chính
+Tạo công việc
+phê duyệt hoàn thành
+
+Tiêu đề, mô tả chi tiết
+
+Chọn người thực hiện
+
+Đặt deadline (hạn hoàn thành)
+
+Đính kèm hình ảnh, file
+
+Theo dõi tiến độ
+
+Người nhận cập nhật % hoàn thành
+
+Thêm ảnh minh họa
+
+Ghi chú khó khăn
+
+Nhắc nhở
+
+Thông báo khi có task mới được giao
+
+Nhắc trước deadline 1 ngày
+
+Nhắc khi quá hạn
+
+Phân quyền
+
+Quản lý giao việc cho nhân viên cấp dưới
+
+Nhân viên xem việc được giao
+
+Giám đốc xem tất cả
+
+Báo cáo công việc
+
+Danh sách việc đã hoàn thành trong tuần/tháng
+
+Đánh giá hiệu suất theo nhân viên
+
+E. Dashboard Tổng quan
+Mục tiêu
+Cung cấp một màn hình chính tổng hợp tất cả thông tin quan trọng, giúp lãnh đạo nắm bắt tình hình nhanh chóng.
+
+Các thành phần
+Thành phần	Nội dung	Cập nhật
+KPI cards	Số nhân viên, tỷ lệ đi làm, sản lượng tháng, OEE	Hàng ngày
+Biểu đồ chấm công	Tỷ lệ đi làm theo ngày trong tuần	Hàng ngày
+Biểu đồ sản xuất	Sản lượng theo ngày trong tháng	Hàng ngày
+Cảnh báo	Nhân viên nghỉ nhiều, máy cần bảo trì, task quá hạn	Thời gian thực
+Hoạt động gần đây	Ai vừa check-in, ai vừa hoàn thành task, đơn xin nghỉ mới	Thời gian thực
+TỔNG KẾT CÁC TÍNH NĂNG THEO THỨ TỰ ƯU TIÊN
+Ưu tiên	Tính năng	Lý do
+1	Báo cáo nâng cao	Quản lý cần số liệu để ra quyết định, đây là nhu cầu cốt lõi
+2	Giao việc	Cần thiết để điều phối công việc hàng ngày, dễ implement
+3	Nhật ký sản xuất	Phù hợp với bản chất nhà máy, theo dõi hiệu suất
+4	Quản lý tài sản	Hữu ích nhưng có thể triển khai sau
+5	Dashboard tổng quan	Là điểm nhấn, nhưng phụ thuộc vào các tính năng khác đã có dữ liệu
+
+
+
+TÍNH NĂNG CẦN BỔ SUNG
+1. Quản lý Kho (Warehouse Management) - QUAN TRỌNG
+Tại sao cần?
+
+Dự án đã có "Đề xuất vật tư" và "Quản lý vật tư" nhưng chưa có module quản lý kho thực tế
+
+Khi vật tư được duyệt và nhập về, cần nhập kho, xuất kho, theo dõi tồn
+
+Các chức năng cần có:
+
+Chức năng	Mô tả
+Nhập kho	Khi mua vật tư mới, ghi nhận số lượng, giá trị, ngày nhập, nhà cung cấp
+Xuất kho	Khi đưa vật tư ra sử dụng, ghi nhận số lượng, lý do, người nhận
+Kiểm kho	Kiểm tra số lượng thực tế so với sổ sách, phát hiện chênh lệch
+Cảnh báo tồn kho tối thiểu	Khi hàng sắp hết, tự động gửi đề xuất mua mới
+Lịch sử nhập xuất	Xem chi tiết từng giao dịch theo ngày, theo vật tư
+Báo cáo tồn kho	Xuất Excel danh sách vật tư còn trong kho
+Ví dụ luồng hoạt động:
+
+text
+Đề xuất vật tư được duyệt → Nhà cung cấp giao hàng → Thủ kho nhập kho (ghi nhận số lượng)
+→ Công nhân làm phiếu lĩnh vật tư → Thủ kho xuất kho → Cập nhật tồn kho
+2. Quản lý Yêu cầu & Sự cố (Issue Tracking)
+Tại sao cần?
+
+Nhà máy luôn phát sinh các vấn đề: máy hỏng, thiếu vật tư, sự cố an toàn
+
+Cần một nơi tập trung để báo cáo, theo dõi, xử lý
+
+Các loại sự cố:
+
+Loại	Ví dụ	Người xử lý
+Hỏng máy	Máy CNC ngừng hoạt động, lỗi phần mềm	Kỹ thuật, bảo trì
+Chất lượng	Sản phẩm lỗi hàng loạt, sai quy cách	QC, Kỹ thuật
+An toàn	Tai nạn lao động, nguy cơ cháy nổ	An toàn lao động
+Vật tư	Thiếu nguyên liệu, hàng kém chất lượng	Kho, Mua hàng
+Chức năng:
+
+Tạo yêu cầu/sự cố (có thể kèm ảnh)
+
+Phân công người xử lý
+
+Cập nhật trạng thái: Mới → Đang xử lý → Đã xử lý → Đóng
+
+Đánh giá thời gian xử lý
+
+Thống kê: sự cố thường gặp, thời gian xử lý trung bình
+
+3. Quản lý Ca & Tăng ca
+Tại sao cần?
+
+Dự án đã có chấm công nhưng chưa có quản lý đăng ký tăng ca
+
+Công nhân cần xin phép tăng ca trước, không phải ai cũng được tăng ca tùy tiện
+
+Chức năng:
+
+Chức năng	Mô tả
+Đăng ký tăng ca	Công nhân gửi yêu cầu tăng ca, chọn ngày, số giờ
+Duyệt tăng ca	Quản lý phê duyệt, có thể điều chỉnh
+Giới hạn tăng ca	Theo quy định, mỗi nhân viên không được tăng ca quá X giờ/tháng
+Tính lương tăng ca	Hệ số tăng ca khác nhau (ngày thường, cuối tuần, lễ)
+4. Quản lý Đào tạo & Chứng chỉ
+Tại sao cần?
+
+Nhà máy có nhiều loại máy móc, mỗi máy yêu cầu chứng chỉ vận hành riêng
+
+Cần theo dõi ai có chứng chỉ, khi nào hết hạn
+
+Chức năng:
+
+Danh mục chứng chỉ (Vận hành máy CNC, lái xe nâng, an toàn lao động...)
+
+Gán chứng chỉ cho nhân viên, kèm ngày cấp, ngày hết hạn
+
+Cảnh báo khi chứng chỉ sắp hết hạn
+
+Không cho phân công vào máy nếu chưa có chứng chỉ
+
+5. Thông báo nội bộ (Internal Announcements)
+Tại sao cần?
+
+Cần kênh để ban lãnh đạo gửi thông báo đến toàn thể nhân viên
+
+Có thể gửi theo phòng ban, theo nhóm
+
+Chức năng:
+
+Tạo thông báo (tiêu đề, nội dung, đính kèm file)
+
+Gửi đến: tất cả, theo phòng ban, theo chức vụ
+
+Đánh dấu đã đọc
+
+Lưu trữ thông báo cũ
+
+
+
+Quản lý lương thưởng 
+
+Giai đoạn 1: Báo cáo nâng cao + Nhật ký sản xuất + Giao việc
+
+Giai đoạn 2: Quản lý kho + Quản lý tài sản + Dashboard
+
+Giai đoạn 3: Quản lý sự cố + Tăng ca + Chứng chỉ + Thông báo
+
+
+CÁC LOẠI NHẬP LIỆU CẦN BỔ SUNG
+A. Sản xuất (Production)
+Loại dữ liệu	Nội dung	Tần suất	Mục đích
+Sản lượng	Số lượng sản phẩm OK/NG theo ca, theo máy	Hàng ngày	Tính hiệu suất, theo dõi chất lượng
+Thời gian ngừng máy	Thời gian máy dừng, nguyên nhân (hỏng, bảo trì, thiếu nguyên liệu)	Hàng ngày	Tính OEE, tìm nguyên nhân mất thời gian
+Nguyên vật liệu sử dụng	Lượng nguyên liệu đã dùng cho sản xuất	Hàng ngày	Kiểm soát định mức, tính giá thành
+Chất lượng đầu vào	Kiểm tra nguyên liệu nhập về (đạt/không đạt)	Mỗi lô nhập	Đảm bảo chất lượng đầu vào
+Chất lượng đầu ra	Kết quả kiểm tra sản phẩm (tỷ lệ lỗi theo loại lỗi)	Hàng ngày	Cải tiến quy trình
+B. Kho & Vật tư (Inventory)
+Loại dữ liệu	Nội dung	Tần suất	Mục đích
+Nhập kho	Vật tư mới về, số lượng, giá trị, nhà cung cấp, số hóa đơn	Khi có hàng về	Cập nhật tồn kho, theo dõi chi phí
+Xuất kho	Vật tư đưa ra sử dụng, số lượng, lý do, người nhận	Hàng ngày	Kiểm soát hao hụt, tính chi phí sản xuất
+Kiểm kho	Số lượng thực tế so với sổ sách, chênh lệch	Hàng tuần/tháng	Phát hiện thất thoát, sai sót
+Yêu cầu mua hàng	Đề xuất mua vật tư mới, số lượng, lý do	Khi sắp hết hàng	Tự động tạo phiếu đề xuất
+C. Nhân sự (HR)
+Loại dữ liệu	Nội dung	Tần suất	Mục đích
+Đơn xin nghỉ	Loại nghỉ, thời gian, lý do	Khi có nhu cầu	Đã có, cần cải thiện
+Đăng ký tăng ca	Ngày tăng ca, số giờ, lý do	Trước khi tăng ca	Kiểm soát chi phí tăng ca
+Kỷ luật / Khen thưởng	Nội dung, hình thức, ngày hiệu lực	Khi phát sinh	Lưu hồ sơ nhân viên
+Khám sức khỏe	Kết quả khám sức khỏe định kỳ, ngày hết hạn	Định kỳ	Đảm bảo an toàn lao động
+D. Máy móc & Thiết bị (Equipment)
+Loại dữ liệu	Nội dung	Tần suất	Mục đích
+Bảo trì định kỳ	Ngày bảo trì, nội dung, người thực hiện, chi phí	Định kỳ	Theo dõi lịch sử bảo trì
+Sửa chữa đột xuất	Hỏng hóc, nguyên nhân, thời gian sửa, chi phí	Khi có sự cố	Tính chi phí bảo trì, cảnh báo máy hay hỏng
+Số giờ vận hành	Tổng số giờ máy đã chạy	Hàng ngày	Tính khấu hao, lên lịch bảo trì
+E. Môi trường & An toàn (HSE)
+Loại dữ liệu	Nội dung	Tần suất	Mục đích
+Nước	Lượng nước tiêu thụ, chất lượng nước thải	Hàng ngày	Giám sát môi trường
+Khí nén	Áp suất, lưu lượng khí nén	Hàng ngày	Đã có bảng compressed_air_readings
+Nhiệt độ độ ẩm	Nhiệt độ, độ ẩm trong phân xưởng	Hàng ngày	Đảm bảo điều kiện sản xuất
+Chất thải	Lượng chất thải phát sinh, xử lý	Hàng ngày	Báo cáo môi trường
+Sự cố an toàn	Tai nạn, sự cố suýt xảy ra, biện pháp xử lý	Khi có sự cố	Cải thiện an toàn lao động
+TỔNG HỢP CÁC MÀN HÌNH NHẬP LIỆU ĐỀ XUẤT
+1. Màn hình nhập liệu sản xuất (Quan trọng nhất)
+text
+[NHẬP LIỆU SẢN XUẤT - CA NGÀY 26/03/2026]
+
+▼ Máy móc
+[Chọn máy] ▼  [Máy CNC-01]
+
+▼ Sản phẩm
+[Chọn sản phẩm] ▼  [SP-001 - Ống thép]
+
+▼ Số lượng
+[OK: 1250]  [NG: 23]  [Tỷ lệ: 98.2%]
+
+▼ Thời gian (phút)
+[Chạy máy: 420]  [Ngừng máy: 45]
+
+▼ Nguyên nhân ngừng máy
+[☑ Hỏng máy]  [☐ Thiếu nguyên liệu]  [☐ Chờ lệnh]  [☐ Vệ sinh]
+
+▼ Nguyên liệu sử dụng
+[Thép tấm: 1250 kg]  [Sơn: 8 lít]
+
+▼ Ghi chú
+[_______________________________]
+
+[LƯU NHẬT KÝ]  [LƯU & TIẾP MÁY KHÁC]
+2. Màn hình nhập kho (Kho vật tư)
+text
+[NHẬP KHO - 26/03/2026]
+
+▼ Vật tư
+[Chọn vật tư] ▼  [Sơn công nghiệp - ĐVT: lít]
+
+▼ Số lượng
+[100] [lít]
+
+▼ Nhà cung cấp
+[Công ty Sơn ABC] ▼
+
+▼ Hóa đơn số
+[INV-2026-0123]
+
+▼ Đơn giá
+[50,000] VNĐ/lít
+
+▼ Vị trí lưu trữ
+[Kệ A - Tầng 2]
+
+▼ Ghi chú
+[_______________________________]
+
+[NHẬP KHO]  [LƯU & TIẾP]
+3. Màn hình bảo trì máy
+text
+[BẢO TRÌ MÁY - 26/03/2026]
+
+▼ Máy móc
+[Máy CNC-01] ▼
+
+▼ Loại bảo trì
+[☑ Định kỳ]  [☐ Đột xuất]
+
+▼ Nội dung công việc
+[Thay dầu, vệ sinh bộ lọc, hiệu chuẩn]
+
+▼ Thời gian
+[Bắt đầu: 08:00]  [Kết thúc: 11:30]  [Tổng: 3.5 giờ]
+
+▼ Người thực hiện
+[Nguyễn Văn Bảo trì] ▼
+
+▼ Chi phí (nếu có)
+[2,500,000] VNĐ
+
+▼ Kết quả
+[☑ Hoàn thành]  [☐ Cần bảo trì thêm]
+
+[LƯU PHIẾU BẢO TRÌ]
+4. Màn hình nhập liệu tổng hợp (All-in-One)
+Ý tưởng: Một màn hình duy nhất cho ca trưởng/quản đốc nhập tất cả dữ liệu của ca
+
+text
+[NHẬP LIỆU CA SẢN XUẤT]
+Ca ngày - 26/03/2026 - Phân xưởng A
+
+┌─────────────────────────────────────────┐
+│ SẢN XUẤT                                 │
+├─────────────────────────────────────────┤
+│ Máy CNC-01:  OK: 450  NG: 12  Ngừng: 30p │
+│ Máy CNC-02:  OK: 520  NG: 8   Ngừng: 0p  │
+│ Máy CNC-03:  OK: 380  NG: 25  Ngừng: 45p │
+│ [+ Thêm dòng]                            │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│ VẬT TƯ XUẤT KHO                          │
+├─────────────────────────────────────────┤
+│ Sơn công nghiệp:   20 lít               │
+│ Dung môi pha sơn:   5 lít               │
+│ Giấy nhám:         10 tờ                │
+│ [+ Thêm vật tư]                          │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│ ĐIỆN NĂNG                               │
+├─────────────────────────────────────────┤
+│ Tủ điện A1:  1,250 kWh                  │
+│ Tủ điện A2:    980 kWh                  │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│ SỰ CỐ / GHI CHÚ                         │
+├─────────────────────────────────────────┤
+│ [Máy CNC-03 bị lỗi cảm biến 15 phút]    │
+└─────────────────────────────────────────┘
+
+[HOÀN TẤT CA] [LƯU TẠM THỜI]
+ĐỀ XUẤT THỨ TỰ PHÁT TRIỂN
+Giai đoạn	Loại nhập liệu	Lý do
+1	Sản lượng + Thời gian ngừng máy	Cốt lõi của sản xuất, tính OEE
+2	Nhập kho / Xuất kho	Quản lý vật tư, đã có đề xuất vật tư cần bổ sung kho
+3	Bảo trì máy	Dữ liệu từ thời gian ngừng máy sẽ dẫn đến bảo trì
+4	Nguyên liệu sử dụng	Tính định mức, giá thành
+5	Các loại còn lại	Có thể làm sau khi các tính năng chính ổn định

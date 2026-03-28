@@ -73,20 +73,11 @@ class DepartmentManagementPage extends ConsumerWidget {
           tabViews.add(const _RolePermissionsTab());
         }
         if (isAdmin || myFeatures.contains('phong_ban_cap_bac')) {
-          tabs.add(const Tab(icon: Icon(Icons.account_tree), text: "Cấp Bậc"));
-          tabViews.add(const _RoleHierarchyTab());
-        }
-
-        if (isAdmin ||
-            myFeatures.contains('phong_ban_cau_hinh_ca') ||
-            myFeatures.contains('phong_ban_cau_hinh_cong')) {
+          // Hoặc dùng phong_ban_chuc_vu
           tabs.add(
-            const Tab(
-              icon: Icon(Icons.settings_suggest),
-              text: "Cấu Hình Chấm Công",
-            ),
+            const Tab(icon: Icon(Icons.account_tree), text: "Tuyến Duyệt Đơn"),
           );
-          tabViews.add(const _AttendanceConfigTab());
+          tabViews.add(const _ApprovalWorkflowTab());
         }
 
         if (tabs.isEmpty)
@@ -440,34 +431,25 @@ class _RolePermissionsTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, s) => Text("Lỗi: $e"),
       data: (roles) {
+        // SẮP XẾP ROLE THEO CẤP BẬC TỪ NHỎ (SẾP) ĐẾN LỚN (NHÂN VIÊN)
+        final sortedRoles = List<Map<String, dynamic>>.from(roles);
+        sortedRoles.sort(
+          (a, b) => (a['level_rank'] ?? 4).compareTo(b['level_rank'] ?? 4),
+        );
+
         return permissionsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, s) => Text("Lỗi: $e"),
           data: (perms) {
             return ListView.builder(
-              itemCount: roles.length,
+              itemCount: sortedRoles.length,
               itemBuilder: (context, index) {
-                final roleCode = roles[index]['code'];
-                final roleName = roles[index]['name'];
+                final roleCode = sortedRoles[index]['code'];
+                final roleName = sortedRoles[index]['name'];
+                final level = sortedRoles[index]['level_rank'] ?? 4;
 
-                if (roleCode == 'admin') {
-                  return Card(
-                    margin: const EdgeInsets.all(8),
-                    child: ListTile(
-                      title: Text(
-                        "Chức vụ: $roleName",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        "Tài khoản mặc định có TẤT CẢ quyền. Không thể chỉnh sửa.",
-                      ),
-                      trailing: const Icon(Icons.lock, color: Colors.red),
-                    ),
-                  );
-                }
+                if (roleCode == 'admin')
+                  return const SizedBox.shrink(); // Ẩn Admin
 
                 final existingRecord = perms
                     .where((p) => p['role'] == roleCode)
@@ -485,7 +467,7 @@ class _RolePermissionsTab extends ConsumerWidget {
                   ),
                   child: ExpansionTile(
                     title: Text(
-                      "Chức vụ: $roleName",
+                      "Cấp $level - $roleName ($roleCode)",
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.blue,
@@ -493,110 +475,70 @@ class _RolePermissionsTab extends ConsumerWidget {
                     ),
                     children: GROUP_NAMES.entries.map((group) {
                       final featuresInGroup = ALL_FEATURES_NESTED[group.key]!;
-                      final Set<String> groupFeatureKeys = featuresInGroup.keys
-                          .map((e) => e.toString()) // Đảm bảo chuyển về string
+                      final groupFeatureKeys = featuresInGroup.keys
+                          .map((e) => e.toString())
                           .toSet();
-                      final Set<String> selectedFeaturesInGroup =
-                          currentFeatures
-                              .where((f) => groupFeatureKeys.contains(f))
-                              .toSet();
-
-                      // LOGIC MỚI: Xác định trạng thái của Checkbox "Chọn tất cả"
+                      final selectedInGroup = currentFeatures
+                          .where((f) => groupFeatureKeys.contains(f))
+                          .toSet();
                       final bool isAllSelected =
-                          selectedFeaturesInGroup.length ==
-                          groupFeatureKeys.length;
-                      // tristate cho phép có trạng thái gạch ngang (khi chỉ chọn 1 vài cái)
+                          selectedInGroup.length == groupFeatureKeys.length;
                       final bool isIndeterminate =
-                          selectedFeaturesInGroup.isNotEmpty && !isAllSelected;
+                          selectedInGroup.isNotEmpty && !isAllSelected;
 
-                      return Padding(
-                        padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // CHECKBOX "CHỌN TẤT CẢ"
-                            CheckboxListTile(
-                              title: Text(
-                                group.value,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CheckboxListTile(
+                            title: Text(
+                              group.value,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
                               ),
-                              value: isIndeterminate ? null : isAllSelected,
-                              tristate: true, // Cho phép trạng thái gạch ngang
-                              onChanged: (bool? checked) {
-                                List<String> newFeatures = List.from(
-                                  currentFeatures,
+                            ),
+                            value: isIndeterminate ? null : isAllSelected,
+                            tristate: true,
+                            onChanged: (bool? checked) {
+                              List<String> newF = List.from(currentFeatures);
+                              if (checked == true) {
+                                newF.addAll(groupFeatureKeys);
+                                newF = newF.toSet().toList();
+                              } else {
+                                newF.removeWhere(
+                                  (f) => groupFeatureKeys.contains(f),
                                 );
-                                if (checked == true) {
-                                  // Khi tick chọn
-                                  // Thêm tất cả quyền con của nhóm này vào
-                                  newFeatures.addAll(groupFeatureKeys);
-                                  // Xóa các quyền trùng lặp
-                                  newFeatures = newFeatures.toSet().toList();
-                                } else {
-                                  // Khi bỏ tick
-                                  // Xóa tất cả quyền con của nhóm này đi
-                                  newFeatures.removeWhere(
-                                    (feature) =>
-                                        groupFeatureKeys.contains(feature),
-                                  );
-                                }
-                                // Cập nhật lên Supabase
-                                ref
-                                    .read(systemActionProvider)
-                                    .updateRolePermissions(
-                                      roleCode,
-                                      newFeatures,
+                              }
+                              ref
+                                  .read(systemActionProvider)
+                                  .updateRolePermissions(roleCode, newF);
+                            },
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 24.0),
+                            child: Column(
+                              children: featuresInGroup.entries.map((f) {
+                                return CheckboxListTile(
+                                  visualDensity: VisualDensity.compact,
+                                  title: Text(f.value),
+                                  value: currentFeatures.contains(f.key),
+                                  onChanged: (bool? checked) {
+                                    List<String> newF = List.from(
+                                      currentFeatures,
                                     );
-                              },
+                                    if (checked == true)
+                                      newF.add(f.key);
+                                    else
+                                      newF.remove(f.key);
+                                    ref
+                                        .read(systemActionProvider)
+                                        .updateRolePermissions(roleCode, newF);
+                                  },
+                                );
+                              }).toList(),
                             ),
-
-                            // Danh sách các quyền con
-                            Padding(
-                              padding: const EdgeInsets.only(left: 24.0),
-                              child: Column(
-                                children: featuresInGroup.entries.map((
-                                  feature,
-                                ) {
-                                  final isAllowed = currentFeatures.contains(
-                                    feature.key,
-                                  );
-                                  return CheckboxListTile(
-                                    visualDensity: VisualDensity.compact,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                    ),
-                                    title: Text(
-                                      feature.value,
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                    value: isAllowed,
-                                    onChanged: (bool? checked) {
-                                      if (checked == null) return;
-                                      List<String> newFeatures = List.from(
-                                        currentFeatures,
-                                      );
-                                      if (checked) {
-                                        newFeatures.add(feature.key);
-                                      } else {
-                                        newFeatures.remove(feature.key);
-                                      }
-                                      ref
-                                          .read(systemActionProvider)
-                                          .updateRolePermissions(
-                                            roleCode,
-                                            newFeatures,
-                                          );
-                                    },
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                            const Divider(),
-                          ],
-                        ),
+                          ),
+                          const Divider(),
+                        ],
                       );
                     }).toList(),
                   ),
@@ -625,17 +567,20 @@ class _RolesTab extends ConsumerWidget {
     final descCtrl = TextEditingController(
       text: isEditing ? item['description'] : '',
     );
+    final levelCtrl = TextEditingController(
+      text: isEditing ? (item['level_rank']?.toString() ?? '4') : '4',
+    );
 
     showDialog(
       context: context,
       builder: (c) => AlertDialog(
-        title: Text(isEditing ? "Sửa Chức Vụ" : "Thêm Chức Vụ Mới"),
+        title: Text(isEditing ? "Sửa Chức Vụ & Cấp Bậc" : "Thêm Chức Vụ Mới"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: codeCtrl,
-              enabled: !isEditing, // Đã tạo thì không cho sửa mã Code
+              enabled: !isEditing,
               decoration: const InputDecoration(
                 labelText: "Mã chức vụ (VD: manager)",
               ),
@@ -643,6 +588,15 @@ class _RolesTab extends ConsumerWidget {
             TextField(
               controller: nameCtrl,
               decoration: const InputDecoration(labelText: "Tên hiển thị"),
+            ),
+            TextField(
+              controller: levelCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: "Cấp bậc (Level: 0, 1, 2, 3, 4)",
+                helperText:
+                    "Số càng nhỏ, cấp càng cao. (VD: Giám đốc=1, Quản lý=2, NV=4)",
+              ),
             ),
             TextField(
               controller: descCtrl,
@@ -659,16 +613,19 @@ class _RolesTab extends ConsumerWidget {
             onPressed: () async {
               if (codeCtrl.text.isEmpty || nameCtrl.text.isEmpty) return;
               final act = ref.read(systemActionProvider);
+              final lvl = int.tryParse(levelCtrl.text) ?? 4;
               final success = isEditing
                   ? await act.updateRole(
                       codeCtrl.text.trim(),
                       nameCtrl.text.trim(),
                       descCtrl.text.trim(),
+                      lvl,
                     )
                   : await act.addRole(
                       codeCtrl.text.trim(),
                       nameCtrl.text.trim(),
                       descCtrl.text.trim(),
+                      lvl,
                     );
               if (context.mounted) {
                 Navigator.pop(c);
@@ -743,35 +700,43 @@ class _RolesTab extends ConsumerWidget {
   }
 }
 
-// ====================== TAB 4: PHÂN CẤP QUẢN LÝ ======================
-class _RoleHierarchyTab extends ConsumerWidget {
-  const _RoleHierarchyTab();
+// ====================== TAB: TUYẾN DUYỆT ĐƠN (WORKFLOWS) ======================
+class _ApprovalWorkflowTab extends ConsumerWidget {
+  const _ApprovalWorkflowTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Lấy danh sách cấu hình cấp bậc
-    final hierarchyAsync = ref.watch(roleHierarchyProvider);
-    // Lấy danh sách chức vụ động
+    final workflowsAsync = ref.watch(approvalWorkflowsProvider);
     final rolesAsync = ref.watch(roleListProvider);
 
     return rolesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, s) => Center(child: Text("Lỗi tải chức vụ: $e")),
       data: (roles) {
-        return hierarchyAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, s) => Center(child: Text("Lỗi tải cấp bậc: $e")),
-          data: (hierarchy) {
-            return ListView.builder(
-              itemCount: roles.length,
-              itemBuilder: (context, index) {
-                final roleCode = roles[index]['code'];
-                final roleName = roles[index]['name'];
+        // Sắp xếp Role theo cấp bậc để hiển thị
+        final sortedRoles = List<Map<String, dynamic>>.from(roles);
+        sortedRoles.sort(
+          (a, b) => (a['level_rank'] ?? 4).compareTo(b['level_rank'] ?? 4),
+        );
 
-                // Tìm xem chức vụ này phải báo cáo cho những ai
-                final managedByRoles = hierarchy
-                    .where((h) => h['role'] == roleCode)
-                    .map((h) => h['managed_by_role'])
+        return workflowsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, s) => Center(child: Text("Lỗi tải quy trình: $e")),
+          data: (workflows) {
+            return ListView.builder(
+              itemCount: sortedRoles.length,
+              itemBuilder: (context, index) {
+                final roleCode = sortedRoles[index]['code'];
+                final roleName = sortedRoles[index]['name'];
+                final level = sortedRoles[index]['level_rank'] ?? 4;
+
+                // GIÁM ĐỐC (CẤP 1) VÀ ADMIN KHÔNG CẦN QUY TRÌNH DUYỆT ĐƠN
+                if (roleCode == 'admin' || level <= 1)
+                  return const SizedBox.shrink();
+
+                // Lấy các quy trình thuộc về Role này
+                final myWorkflows = workflows
+                    .where((w) => w['role_code'] == roleCode)
                     .toList();
 
                 return Card(
@@ -780,95 +745,161 @@ class _RoleHierarchyTab extends ConsumerWidget {
                     vertical: 8,
                   ),
                   elevation: 2,
-                  child: ListTile(
-                    title: Text(
-                      "Chức vụ: $roleName ($roleCode)",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Wrap(
-                        spacing: 8,
-                        children: managedByRoles.map((mCode) {
-                          // Tìm tên hiển thị của chức vụ quản lý để UI thân thiện hơn
-                          final managerRoleObj = roles.firstWhere(
-                            (r) => r['code'] == mCode,
-                            orElse: () => {
-                              'name': mCode,
-                            }, // Fallback nếu không tìm thấy
-                          );
-                          final managerName = managerRoleObj['name'];
-
-                          return Chip(
-                            label: Text(
-                              "Báo cáo cho: $managerName",
-                              style: const TextStyle(fontSize: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Chức vụ tạo đơn: $roleName (Cấp $level)",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.blue,
+                              ),
                             ),
-                            backgroundColor: Colors.blue.shade50,
-                            deleteIconColor: Colors.red,
-                            // Chặn không cho xóa cấp bậc nếu là Admin
-                            onDeleted: roleCode == 'admin'
-                                ? null
-                                : () => ref
-                                      .read(systemActionProvider)
-                                      .deleteRoleHierarchy(
-                                        roleCode,
-                                        mCode.toString(),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.alt_route, size: 16),
+                              label: const Text("Thêm Quy Trình"),
+                              style: ElevatedButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                backgroundColor: Colors.green.shade600,
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: () => _showAddWorkflowDialog(
+                                context,
+                                ref,
+                                sortedRoles,
+                                roleCode,
+                                roleName,
+                                level,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(),
+                        if (myWorkflows.isEmpty)
+                          const Row(
+                            children: [
+                              Icon(
+                                Icons.warning_amber_rounded,
+                                color: Colors.red,
+                                size: 18,
+                              ), // Thay Emoji bằng Icon chuẩn
+                              SizedBox(width: 8),
+                              Text(
+                                "Chưa cấu hình luồng duyệt. Đơn sẽ không gửi được.",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ...myWorkflows.map((wf) {
+                          // Lấy mảng các bước duyệt
+                          List<dynamic> steps = wf['steps'] ?? [];
+
+                          // Tạo giao diện chuỗi mũi tên: [Người tạo] -> [Người duyệt 1] -> [Giám đốc]
+                          List<Widget> stepWidgets = [
+                            Chip(
+                              label: const Text(
+                                "Người làm đơn",
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              backgroundColor: Colors.grey.shade200,
+                            ),
+                          ];
+
+                          for (var stepCode in steps) {
+                            final approverRole = sortedRoles.firstWhere(
+                              (r) => r['code'] == stepCode,
+                              orElse: () => {'name': stepCode, 'level_rank': 4},
+                            );
+                            stepWidgets.add(
+                              const Icon(
+                                Icons.arrow_forward,
+                                color: Colors.orange,
+                                size: 20,
+                              ),
+                            );
+                            stepWidgets.add(
+                              Chip(
+                                label: Text(
+                                  "${approverRole['name']}",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                backgroundColor: approverRole['level_rank'] == 1
+                                    ? Colors.purple
+                                    : Colors
+                                          .blue, // Đánh dấu Giám đốc bằng màu Tím
+                              ),
+                            );
+                          }
+
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                              top: 8.0,
+                              bottom: 8.0,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.label_important,
+                                            color: Colors.blue,
+                                            size: 18,
+                                          ), // Thay Emoji bằng Icon
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            "${wf['workflow_name']}",
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                      const SizedBox(height: 6),
+                                      Wrap(
+                                        spacing: 4,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
+                                        children: stepWidgets,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () => ref
+                                      .read(systemActionProvider)
+                                      .deleteApprovalWorkflow(
+                                        wf['id'].toString(),
+                                      ),
+                                ),
+                              ],
+                            ),
                           );
                         }).toList(),
-                      ),
+                      ],
                     ),
-                    // Khóa thao tác thêm người quản lý đối với Admin
-                    trailing: roleCode == 'admin'
-                        ? const Icon(Icons.lock, color: Colors.grey)
-                        : IconButton(
-                            icon: const Icon(
-                              Icons.add_circle,
-                              color: Colors.green,
-                              size: 32,
-                            ),
-                            tooltip: "Thêm người quản lý",
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (c) => SimpleDialog(
-                                  title: Text("Thêm cấp trên cho:\n$roleName"),
-                                  children: roles
-                                      .where(
-                                        // Ẩn đi chức vụ hiện tại VÀ những chức vụ đã được chọn làm quản lý rồi
-                                        (r) =>
-                                            r['code'] != roleCode &&
-                                            !managedByRoles.contains(r['code']),
-                                      )
-                                      .map(
-                                        (r) => ListTile(
-                                          leading: const Icon(
-                                            Icons.person_add,
-                                            color: Colors.blueGrey,
-                                          ),
-                                          title: Text(
-                                            "${r['name']} (${r['code']})",
-                                          ),
-                                          onTap: () {
-                                            ref
-                                                .read(systemActionProvider)
-                                                .addRoleHierarchy(
-                                                  roleCode,
-                                                  r['code'],
-                                                );
-                                            Navigator.pop(c);
-                                          },
-                                        ),
-                                      )
-                                      .toList(),
-                                ),
-                              );
-                            },
-                          ),
                   ),
                 );
               },
@@ -878,56 +909,112 @@ class _RoleHierarchyTab extends ConsumerWidget {
       },
     );
   }
-}
 
-// ====================== TAB CẤU HÌNH ĐỘNG (NO-CODE) ======================
-class _AttendanceConfigTab extends ConsumerWidget {
-  const _AttendanceConfigTab();
-
-  void _showAddOrEdit(
+  // Hộp thoại tạo Quy trình duyệt siêu thông minh
+  void _showAddWorkflowDialog(
     BuildContext context,
-    WidgetRef ref, {
-    required String type,
-    Map<String, dynamic>? item,
-  }) {
-    final isEditing = item != null;
-    final nameCtrl = TextEditingController(text: isEditing ? item['name'] : '');
-    final symbolCtrl = TextEditingController(
-      text: isEditing ? (item['symbol'] ?? '') : '',
-    );
-    bool isActive = isEditing ? item['is_active'] : true;
+    WidgetRef ref,
+    List<Map<String, dynamic>> allRoles,
+    String roleCode,
+    String roleName,
+    int currentLevel,
+  ) {
+    final nameCtrl = TextEditingController();
+    // Lọc ra những người có cấp bậc CAO HƠN người làm đơn (level_rank nhỏ hơn)
+    final availableApprovers = allRoles
+        .where(
+          (r) => (r['level_rank'] ?? 4) < currentLevel && r['code'] != 'admin',
+        )
+        .toList();
+    List<String> selectedSteps = [];
+    String selectedModule = 'leave_request';
 
     showDialog(
       context: context,
       builder: (c) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: Text(isEditing ? "Sửa" : "Thêm mới"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  decoration: InputDecoration(
-                    labelText: type == 'shift'
-                        ? "Tên Ca (VD: Ca Ngày)"
-                        : "Trạng thái (VD: Nghỉ phép)",
+            title: Text("Tạo quy trình cho: $roleName"),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // --- THÊM DROPDOWN CHỌN LOẠI QUY TRÌNH ---
+                  const Text(
+                    "Áp dụng cho tính năng:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: symbolCtrl,
-                  decoration: const InputDecoration(
-                    labelText: "Ký hiệu trên bảng công (VD: X, P)",
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: selectedModule,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'leave_request',
+                            child: Text("Đơn Xin Nghỉ Phép"),
+                          ),
+                          DropdownMenuItem(
+                            value: 'material_request',
+                            child: Text("Phiếu Đề Xuất Vật Tư"),
+                          ),
+                        ],
+                        onChanged: (val) =>
+                            setState(() => selectedModule = val!),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                SwitchListTile(
-                  title: const Text("Đang sử dụng"),
-                  value: isActive,
-                  onChanged: (val) => setState(() => isActive = val),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: "Tên quy trình",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Tick chọn những cấp sẽ tham gia duyệt đơn này:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const Text(
+                    "(Hệ thống sẽ tự động sắp xếp theo thứ tự cấp bậc từ thấp đến Giám đốc)",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  ...availableApprovers.map((r) {
+                    final rCode = r['code'].toString();
+                    final isDirector = r['level_rank'] == 1;
+                    return CheckboxListTile(
+                      title: Text(
+                        "${r['name']} (Cấp ${r['level_rank']})",
+                        style: TextStyle(
+                          color: isDirector ? Colors.purple : Colors.black87,
+                          fontWeight: isDirector
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                      value: selectedSteps.contains(rCode),
+                      onChanged: (val) {
+                        setState(() {
+                          if (val == true)
+                            selectedSteps.add(rCode);
+                          else
+                            selectedSteps.remove(rCode);
+                        });
+                      },
+                    );
+                  }).toList(),
+                ],
+              ),
             ),
             actions: [
               TextButton(
@@ -935,184 +1022,55 @@ class _AttendanceConfigTab extends ConsumerWidget {
                 child: const Text("Hủy"),
               ),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade800,
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: () async {
-                  if (nameCtrl.text.isEmpty) return;
-                  final act = ref.read(systemActionProvider);
-                  bool success = false;
+                  if (nameCtrl.text.isEmpty || selectedSteps.isEmpty) return;
 
-                  if (type == 'shift') {
-                    success = isEditing
-                        ? await act.updateShiftConfig(
-                            item['id'].toString(),
-                            nameCtrl.text,
-                            symbolCtrl.text,
-                            isActive,
-                          )
-                        : await act.addShiftConfig(
-                            nameCtrl.text,
-                            symbolCtrl.text,
-                          );
-                  } else {
-                    success = isEditing
-                        ? await act.updateAttendanceStatusConfig(
-                            item['id'].toString(),
-                            nameCtrl.text,
-                            symbolCtrl.text,
-                            isActive,
-                          )
-                        : await act.addAttendanceStatusConfig(
-                            nameCtrl.text,
-                            symbolCtrl.text,
-                          );
-                  }
+                  // THUẬT TOÁN SẮP XẾP LẠI THỨ TỰ DUYỆT TỪ DƯỚI LÊN GIÁM ĐỐC
+                  selectedSteps.sort((a, b) {
+                    final levelA =
+                        allRoles.firstWhere(
+                          (r) => r['code'] == a,
+                          orElse: () => {'level_rank': 0},
+                        )['level_rank'] ??
+                        0;
+                    final levelB =
+                        allRoles.firstWhere(
+                          (r) => r['code'] == b,
+                          orElse: () => {'level_rank': 0},
+                        )['level_rank'] ??
+                        0;
+                    return levelB.compareTo(levelA); // Sort giảm dần
+                  });
+
+                  final success = await ref
+                      .read(systemActionProvider)
+                      .addApprovalWorkflow(
+                        roleCode,
+                        nameCtrl.text,
+                        selectedModule,
+                        selectedSteps,
+                      );
 
                   if (context.mounted) {
                     Navigator.pop(c);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          success
-                              ? "Lưu thành công!"
-                              : "Lỗi (Có thể trùng tên).",
+                          success ? "Đã lưu quy trình!" : "Lỗi khi lưu.",
                         ),
                       ),
                     );
                   }
                 },
-                child: const Text("Lưu"),
+                child: const Text("TẠO QUY TRÌNH"),
               ),
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildSection(
-    BuildContext context,
-    WidgetRef ref,
-    String title,
-    String type,
-    AsyncValue<List<Map<String, dynamic>>> asyncData,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-              ),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text("Thêm"),
-                style: ElevatedButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                ),
-                onPressed: () => _showAddOrEdit(context, ref, type: type),
-              ),
-            ],
-          ),
-        ),
-        asyncData.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, s) => Center(child: Text("Lỗi: $e")),
-          data: (data) {
-            if (data.isEmpty)
-              return const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text("Chưa có dữ liệu."),
-              );
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: data.length,
-              itemBuilder: (c, i) => Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                child: ListTile(
-                  title: Text(
-                    data[i]['name'].toString(),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    "Ký hiệu: ${data[i]['symbol'] ?? 'Không có'} | Trạng thái: ${data[i]['is_active'] == true ? 'Đang dùng' : 'Đã ẩn'}",
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showAddOrEdit(
-                          context,
-                          ref,
-                          type: type,
-                          item: data[i],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () async {
-                          final act = ref.read(systemActionProvider);
-                          final msg = type == 'shift'
-                              ? await act.deleteShiftConfig(
-                                  data[i]['id'].toString(),
-                                )
-                              : await act.deleteAttendanceStatusConfig(
-                                  data[i]['id'].toString(),
-                                );
-                          if (context.mounted)
-                            ScaffoldMessenger.of(
-                              context,
-                            ).showSnackBar(SnackBar(content: Text(msg)));
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        const Divider(height: 32, thickness: 2),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final shiftData = ref.watch(shiftConfigsProvider);
-    final statusData = ref.watch(attendanceStatusConfigsProvider);
-
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            _buildSection(
-              context,
-              ref,
-              "1. Cấu hình Ca làm việc",
-              "shift",
-              shiftData,
-            ),
-            _buildSection(
-              context,
-              ref,
-              "2. Cấu hình Trạng thái nghỉ/công",
-              "status",
-              statusData,
-            ),
-            const SizedBox(height: 40),
-          ],
-        ),
       ),
     );
   }

@@ -15,6 +15,7 @@ import '../../reports/views/production_report_page.dart';
 import '../../attendance/views/feedback_submission_page.dart';
 import '../../attendance/views/feedback_main_page.dart';
 import '../../reports/views/data_entry_page.dart'; // <-- Thêm dòng này
+import '../../reports/views/material_main_page.dart';
 
 // Fetch quyền của role cụ thể
 final rolePermissionsProviderUser =
@@ -153,16 +154,10 @@ class MainNavigationPage extends ConsumerWidget {
           // ĐÃ SỬA: MỞ KHÓA TÍNH NĂNG VẬT TƯ
           // ==========================================
           "vat_tu": const FeatureMenuItem(
-            title: 'Quản lý Vật tư',
-            icon: Icons.inventory_2,
-            destination: InventoryMainPage(), // Liên kết tới trang Vật Tư
+            title: 'Quản lý Vật tư & Đề xuất',
+            icon: Icons.inventory, // Icon thùng hàng chuẩn ERP
+            destination: MaterialMainPage(), // <--- TRỎ VỀ TRANG GỘP MỚI
             iconColor: Colors.brown,
-          ),
-          "de_xuat_vt": const FeatureMenuItem(
-            title: 'Đề Xuất Vật Tư',
-            icon: Icons.assignment_add,
-            destination: MaterialRequestPage(),
-            iconColor: Colors.teal,
           ),
 
           "tai_san": const FeatureMenuItem(
@@ -243,12 +238,6 @@ class MainNavigationPage extends ConsumerWidget {
             if (canAccessInventory ||
                 hasAnyPermissionInGroup(allowedFeatures, 'vat_tu')) {
               userFeatures.add(allFeaturesMap['vat_tu']!);
-            }
-
-            if (hasAnyPermissionInGroup(allowedFeatures, 'de_xuat')) {
-              userFeatures.add(
-                allFeaturesMap['de_xuat_vt']!,
-              ); // Map tên de_xuat_vt bạn đã tạo ở bước trước
             }
 
             // Luôn thêm Bảng công cá nhân

@@ -380,27 +380,45 @@ class _XinNghiPhepDialogState extends ConsumerState<XinNghiPhepDialog> {
                   // ĐỌC CẤP BẬC TỪ DATABASE ĐỂ LỌC
                   return Consumer(
                     builder: (context, ref, child) {
-                      final hierarchyAsync = ref.watch(roleHierarchyProvider);
+                      final workflowsAsync = ref.watch(
+                        approvalWorkflowsProvider,
+                      );
                       final currentUserAsync = ref.watch(
                         currentProfileProvider,
                       );
 
-                      return hierarchyAsync.when(
+                      return workflowsAsync.when(
                         loading: () => const CircularProgressIndicator(),
-                        error: (e, s) => const Text("Lỗi phân cấp"),
-                        data: (hierarchy) {
+                        error: (e, s) => const Text(
+                          "Lỗi tải quy trình duyệt",
+                          style: TextStyle(color: Colors.red),
+                        ),
+                        data: (workflows) {
                           final currentUserRole =
                               currentUserAsync.valueOrNull?.role ?? 'worker';
                           final currentUserDept =
                               currentUserAsync.valueOrNull?.departmentId;
 
-                          // Chỉ lấy những ROLE được phép quản lý role hiện tại
-                          final allowedManagerRoles = hierarchy
-                              .where((h) => h['role'] == currentUserRole)
-                              .map((h) => h['managed_by_role'])
+                          // 1. Tìm các quy trình duyệt dành cho chức vụ của người này
+                          final myWorkflows = workflows
+                              .where(
+                                (w) =>
+                                    w['role_code'] == currentUserRole &&
+                                    w['module_type'] ==
+                                        'leave_request', // <--- LỌC ĐÚNG QUY TRÌNH NGHỈ PHÉP
+                              )
                               .toList();
 
-                          // Lọc danh sách nhân viên: Phải khớp Role và Khớp phòng ban
+                          // 2. Trích xuất ra danh sách "Người duyệt bước 1" (Phần tử đầu tiên trong mảng steps)
+                          final List<String> allowedManagerRoles = [];
+                          for (var wf in myWorkflows) {
+                            final steps = wf['steps'] as List<dynamic>? ?? [];
+                            if (steps.isNotEmpty) {
+                              allowedManagerRoles.add(steps.first.toString());
+                            }
+                          }
+
+                          // 3. Lọc danh sách nhân sự thực tế trong công ty khớp với Role duyệt bước 1
                           final managers = employees.where((e) {
                             bool isAllowedRole = allowedManagerRoles.contains(
                               e.role,
@@ -408,11 +426,11 @@ class _XinNghiPhepDialogState extends ConsumerState<XinNghiPhepDialog> {
                             bool isSameDept =
                                 e.departmentId == currentUserDept ||
                                 e.role == 'director' ||
-                                e.role ==
-                                    'admin'; // Giám đốc có thể ko thuộc phòng ban cụ thể
+                                e.role == 'admin';
                             return isAllowedRole && isSameDept;
                           }).toList();
 
+                          // Reset dropdown nếu dữ liệu không khớp
                           if (_selectedApproverId != null &&
                               !managers.any(
                                 (m) => m.id == _selectedApproverId,
@@ -433,7 +451,7 @@ class _XinNghiPhepDialogState extends ConsumerState<XinNghiPhepDialog> {
                                 isExpanded: true,
                                 value: _selectedApproverId,
                                 hint: const Text(
-                                  "-- Chọn người quản lý (Theo cấp bậc) --",
+                                  "-- Chọn người nhận đơn (Bước 1) --",
                                 ),
                                 items: managers
                                     .map(

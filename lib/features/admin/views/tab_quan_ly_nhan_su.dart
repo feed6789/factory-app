@@ -702,7 +702,6 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
               final divisionsAsync = ref.watch(divisionListProvider);
               final departmentsAsync = ref.watch(departmentListProvider);
               final rolesAsync = ref.watch(roleListProvider);
-              final hierarchyAsync = ref.watch(roleHierarchyProvider);
               final employeesAsync = ref.watch(employeeListProvider);
 
               return AlertDialog(
@@ -886,67 +885,78 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
                         const SizedBox(height: 12),
 
                         // Dropdown Người quản lý
-                        hierarchyAsync.when(
+                        employeesAsync.when(
                           loading: () => const SizedBox.shrink(),
-                          error: (e, s) => const Text("Lỗi tải phân cấp"),
-                          data: (hierarchyList) {
-                            return employeesAsync.when(
-                              loading: () => const SizedBox.shrink(),
-                              error: (e, s) => const Text("Lỗi tải NV"),
-                              data: (employees) {
-                                final allowedManagerRoles = hierarchyList
-                                    .where((h) => h['role'] == selectedRole)
-                                    .map((h) => h['managed_by_role'] as String)
-                                    .toList();
+                          error: (e, s) => const Text("Lỗi tải NV"),
+                          data: (employees) {
+                            // 1. THÊM DÒNG NÀY ĐỂ LẤY DANH SÁCH ROLES (CHỨC VỤ)
+                            final roles = rolesAsync.valueOrNull ?? [];
 
-                                final validManagers = employees.where((e) {
-                                  if (e.id == profile.id) return false;
-                                  if (!allowedManagerRoles.contains(e.role))
-                                    return false;
+                            // 2. Lấy level_rank của chức vụ đang được chọn cho nhân viên này
+                            final currentRoleLevel =
+                                roles.firstWhere(
+                                  (r) => r['code'] == selectedRole,
+                                  orElse: () => {'level_rank': 4},
+                                )['level_rank'] ??
+                                4;
 
-                                  if (e.role == 'team_leader' ||
-                                      e.role == 'section_head') {
-                                    bool matchDept =
-                                        selectedDepartmentId == null ||
-                                        e.departmentId == selectedDepartmentId;
-                                    bool matchDiv =
-                                        selectedDivisionId == null ||
-                                        e.divisionId == selectedDivisionId;
-                                    return matchDept && matchDiv;
-                                  }
-                                  return true;
-                                }).toList();
+                            // Lọc danh sách những người đủ tiêu chuẩn làm Quản lý trực tiếp
+                            final validManagers = employees.where((e) {
+                              if (e.id == profile.id)
+                                return false; // Không tự quản lý chính mình
 
-                                if (selectedManagerId != null &&
-                                    !validManagers.any(
-                                      (m) => m.id == selectedManagerId,
-                                    )) {
-                                  WidgetsBinding.instance.addPostFrameCallback(
-                                    (_) => setState(
-                                      () => selectedManagerId = null,
+                              final eLevel =
+                                  roles.firstWhere(
+                                    (r) => r['code'] == e.role,
+                                    orElse: () => {'level_rank': 4},
+                                  )['level_rank'] ??
+                                  4;
+
+                              // Tiêu chí 1: Người quản lý phải có cấp bậc cao hơn (số level nhỏ hơn)
+                              if (eLevel >= currentRoleLevel &&
+                                  e.role != 'admin')
+                                return false;
+
+                              // Tiêu chí 2: Cùng bộ phận/phòng ban, hoặc người đó là Giám đốc/Admin
+                              bool matchDept =
+                                  selectedDepartmentId == null ||
+                                  e.departmentId == selectedDepartmentId;
+                              bool matchDiv =
+                                  selectedDivisionId == null ||
+                                  e.divisionId == selectedDivisionId;
+
+                              return (matchDept && matchDiv) ||
+                                  e.role == 'director' ||
+                                  e.role == 'admin';
+                            }).toList();
+
+                            // Reset biến nếu người quản lý cũ không còn hợp lệ
+                            if (selectedManagerId != null &&
+                                !validManagers.any(
+                                  (m) => m.id == selectedManagerId,
+                                )) {
+                              WidgetsBinding.instance.addPostFrameCallback(
+                                (_) => setState(() => selectedManagerId = null),
+                              );
+                            }
+
+                            return DropdownButtonFormField<String>(
+                              value: selectedManagerId,
+                              decoration: const InputDecoration(
+                                labelText: "Người quản lý trực tiếp",
+                              ),
+                              items: validManagers
+                                  .map(
+                                    (manager) => DropdownMenuItem(
+                                      value: manager.id,
+                                      child: Text(
+                                        "${manager.fullName} (${manager.role})",
+                                      ),
                                     ),
-                                  );
-                                }
-
-                                return DropdownButtonFormField<String>(
-                                  value: selectedManagerId,
-                                  decoration: const InputDecoration(
-                                    labelText: "Người quản lý trực tiếp",
-                                  ),
-                                  items: validManagers
-                                      .map(
-                                        (manager) => DropdownMenuItem(
-                                          value: manager.id,
-                                          child: Text(
-                                            "${manager.fullName} (${manager.role})",
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                  onChanged: (val) =>
-                                      setState(() => selectedManagerId = val),
-                                );
-                              },
+                                  )
+                                  .toList(),
+                              onChanged: (val) =>
+                                  setState(() => selectedManagerId = val),
                             );
                           },
                         ),
