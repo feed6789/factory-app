@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ung_dung_nm/core/services/supabase_provider.dart';
-import 'package:ung_dung_nm/features/reports/views/inventory_main_page.dart';
-import 'package:ung_dung_nm/features/reports/views/material_request_page.dart';
 
 import 'home_dashboard_page.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -12,7 +10,6 @@ import '../../admin/views/tab_quan_ly_nhan_su.dart';
 import '../../admin/views/department_management_page.dart';
 import '../../attendance/views/manager_attendance_page.dart';
 import '../../reports/views/production_report_page.dart';
-import '../../attendance/views/feedback_submission_page.dart';
 import '../../attendance/views/feedback_main_page.dart';
 import '../../reports/views/data_entry_page.dart'; // <-- Thêm dòng này
 import '../../reports/views/material_main_page.dart';

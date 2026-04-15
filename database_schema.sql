@@ -1,6 +1,24 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.app_features (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  module_group character varying NOT NULL,
+  group_name character varying NOT NULL,
+  feature_code character varying NOT NULL UNIQUE,
+  feature_name character varying NOT NULL,
+  CONSTRAINT app_features_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.approval_workflows (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  role_code character varying NOT NULL,
+  workflow_name character varying NOT NULL,
+  steps jsonb NOT NULL DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  module_type character varying DEFAULT 'leave_request'::character varying,
+  CONSTRAINT approval_workflows_pkey PRIMARY KEY (id),
+  CONSTRAINT approval_workflows_role_fkey FOREIGN KEY (role_code) REFERENCES public.roles(code)
+);
 CREATE TABLE public.assets (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   qr_code character varying UNIQUE,
@@ -290,12 +308,6 @@ CREATE TABLE public.quality_issues (
   CONSTRAINT quality_issues_pkey PRIMARY KEY (id),
   CONSTRAINT quality_issues_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.profiles(id)
 );
-CREATE TABLE public.role_hierarchy (
-  role text NOT NULL,
-  managed_by_role text NOT NULL,
-  CONSTRAINT role_hierarchy_role_fkey FOREIGN KEY (role) REFERENCES public.roles(code),
-  CONSTRAINT role_hierarchy_managed_by_role_fkey FOREIGN KEY (managed_by_role) REFERENCES public.roles(code)
-);
 CREATE TABLE public.role_permissions (
   role text NOT NULL,
   allowed_features jsonb NOT NULL DEFAULT '[]'::jsonb,
@@ -306,6 +318,7 @@ CREATE TABLE public.roles (
   name character varying NOT NULL,
   description text,
   created_at timestamp with time zone DEFAULT now(),
+  level_rank integer DEFAULT 4,
   CONSTRAINT roles_pkey PRIMARY KEY (code)
 );
 CREATE TABLE public.shift_configs (

@@ -211,9 +211,11 @@ class EmployeeActionController {
   // ===============================================
   // HÀM MỚI: NHẬP DỮ LIỆU TỪ FILE CSV
   // ===============================================
+  // Thay thế toàn bộ hàm cũ bằng hàm này:
   Future<String> importEmployeesFromCsv() async {
     try {
-      // 1. Mở cửa sổ chọn file
+      final supabase = ref.read(supabaseProvider);
+
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['csv'],
@@ -221,28 +223,43 @@ class EmployeeActionController {
 
       if (result == null) return "Hủy bỏ. Không có file nào được chọn.";
 
-      // 2. Đọc nội dung file
-      final bytes = result.files.single.bytes!;
-      final csvString = utf8.decode(bytes);
+      Uint8List bytes = result.files.single.bytes!;
+      // Sửa lỗi Encoding BOM
+      if (bytes.length > 3 &&
+          bytes[0] == 239 &&
+          bytes[1] == 187 &&
+          bytes[2] == 191) {
+        bytes = bytes.sublist(3);
+      }
+      final csvString = utf8.decode(bytes, allowMalformed: true);
 
-      // 3. Gọi Edge Function và gửi dữ liệu lên
-      final supabase = ref.read(supabaseProvider);
+      // GỌI HÀM NGUYÊN BẢN (Không tự nhét headers vào nữa)
       final response = await supabase.functions.invoke(
         'bulk_upsert_employees',
         body: {'csvData': csvString},
       );
 
       if (response.status != 200) {
-        throw Exception(
-          response.data['error'] ?? 'Lỗi không xác định từ server.',
-        );
+        final errorData = response.data;
+        if (response.status == 403 &&
+            errorData is Map &&
+            errorData.containsKey('error')) {
+          return "Từ chối truy cập: ${errorData['error']}";
+        }
+        if (errorData is Map && errorData.containsKey('error')) {
+          throw Exception(errorData['error']);
+        }
+        throw Exception('Lỗi máy chủ: Status ${response.status}.');
       }
 
-      // 4. Invalidate provider để tải lại danh sách mới
       ref.invalidate(employeeListProvider);
       return response.data['message'] ?? "Import thành công!";
     } catch (e) {
-      return "Import thất bại: ${e.toString()}";
+      print("CSV Error: $e");
+      if (e.toString().contains('JWT') || e.toString().contains('401')) {
+        return "Phiên đăng nhập không hợp lệ. Vui lòng đăng xuất và đăng nhập lại.";
+      }
+      return "Import thất bại: Cấu trúc file không đúng hoặc có lỗi kết nối.";
     }
   }
 }

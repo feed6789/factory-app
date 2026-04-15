@@ -63,9 +63,25 @@ Code được tổ chức theo Feature-First + Clean Architecture.
 .repomixignore
 database_schema.sql
 Dockerfile
+function.txt
 lib/core/exceptions/auth_exception_handler.dart
+lib/core/services/logger_service.dart
 lib/core/services/supabase_provider.dart
 lib/core/services/sync_service.dart
+lib/core/utils/app_logger.dart
+lib/core/widgets/common/app_dialog.dart
+lib/core/widgets/common/app_snackbar.dart
+lib/core/widgets/common/empty_state.dart
+lib/core/widgets/common/loading_overlay.dart
+lib/core/widgets/custom_date_picker.dart
+lib/core/widgets/custom_dropdown.dart
+lib/core/widgets/forms/date_picker_field.dart
+lib/core/widgets/forms/dropdown_field.dart
+lib/core/widgets/forms/number_field.dart
+lib/core/widgets/forms/text_field_with_label.dart
+lib/core/widgets/layout/page_header.dart
+lib/core/widgets/layout/responsive_grid.dart
+lib/core/widgets/layout/section_card.dart
 lib/features/admin/controllers/department_controller.dart
 lib/features/admin/controllers/employee_controller.dart
 lib/features/admin/views/admin_dashboard_page.dart
@@ -103,6 +119,7 @@ lib/features/reports/controllers/production_report_controller.dart
 lib/features/reports/models/electrical_cabinet_model.dart
 lib/features/reports/models/electricity_reading_model.dart
 lib/features/reports/views/data_entry_page.dart
+lib/features/reports/views/material_main_page.dart
 lib/features/reports/views/material_request_page.dart
 lib/features/reports/views/production_report_page.dart
 lib/main.dart
@@ -127,6 +144,495 @@ RUN flutter build web
 FROM nginx:alpine
 COPY --from=build-env /app/build/web /usr/share/nginx/html
 EXPOSE 80
+</file>
+
+<file path="function.txt">
+TỔNG HỢP CÁC TÍNH NĂNG ĐỀ XUẤT MỚI
+A. Báo cáo & Thống kê Nâng cao
+Mục tiêu
+Cung cấp cho ban lãnh đạo và quản lý các báo cáo tổng hợp, giúp ra quyết định nhanh chóng.
+
+Các loại báo cáo
+Loại báo cáo	Nội dung	Ai dùng
+Báo cáo chấm công	Tổng hợp ngày công, nghỉ phép, đi trễ, tăng ca theo tháng/phòng ban	Giám đốc, Trưởng phòng
+Báo cáo đánh giá	Xếp loại nhân viên (A/B/C), đề xuất khen thưởng/kỷ luật	HR, Giám đốc
+Báo cáo sản xuất	Sản lượng theo máy/ca/ngày, tỷ lệ OK/NG	Quản đốc, Kỹ thuật
+Báo cáo điện năng	Điện tiêu thụ theo ngày/tháng, so sánh với sản lượng	Kỹ thuật, Ban giám đốc
+Báo cáo vật tư	Tồn kho, nhập/xuất, dự báo hết hàng	Kế toán, Kho
+Tính năng của báo cáo
+Bộ lọc linh hoạt
+
+Lọc theo thời gian (ngày, tuần, tháng, quý, năm)
+
+Lọc theo phòng ban, bộ phận
+
+Lọc theo loại báo cáo
+
+Xuất dữ liệu
+
+Xuất Excel (.xlsx) để lưu trữ và xử lý
+
+Xuất PDF (.pdf) để in ấn và ký duyệt
+
+Trực quan hóa
+
+Biểu đồ cột so sánh
+
+Biểu đồ đường theo xu hướng
+
+Thẻ tóm tắt KPI (chỉ số quan trọng)
+
+Tự động gửi
+
+Gửi báo cáo định kỳ qua email
+
+Thông báo khi có chỉ số bất thường
+
+B. Quản lý Tài sản
+Mục tiêu
+Theo dõi tất cả tài sản của nhà máy: máy móc, thiết bị, công cụ, dụng cụ.
+
+Các đối tượng quản lý
+Loại tài sản	Ví dụ	Đặc điểm
+Máy móc sản xuất	Máy CNC, máy ép, máy cắt	Có lịch bảo trì định kỳ
+Thiết bị văn phòng	Máy tính, máy in, bàn ghế	Có thể cho mượn giữa phòng ban
+Công cụ dụng cụ	Máy khoan, đồ nghề	Thường xuyên mượn/trả
+Tính năng chính
+Quản lý danh mục
+
+Thêm/sửa/xóa tài sản
+
+kiểm kê định kỳ
+
+Gán mã QR cho từng tài sản (dễ quét tìm kiếm)
+
+Phân loại tài sản theo nhóm
+
+Theo dõi trạng thái
+
+Đang dùng
+
+Đang sửa chữa
+
+Đã thanh lý
+
+Cần bảo trì
+
+Quản lý mượn/trả
+
+Ghi nhận ai mượn, mượn khi nào, hẹn trả khi nào
+
+Nhắc nhở khi đến hạn trả
+
+Lịch sử mượn trả
+
+Bảo trì định kỳ
+
+Thiết lập chu kỳ bảo trì (1 tháng, 3 tháng, 6 tháng)
+
+Cảnh báo khi đến lịch bảo trì
+
+Ghi nhận lịch sử bảo trì
+
+Quét QR
+
+Dùng camera điện thoại quét mã QR trên tài sản
+
+Hiện ngay thông tin tài sản
+
+Cho phép cập nhật trạng thái nhanh
+
+C. Nhật ký Sản xuất
+Mục tiêu
+Ghi nhận chi tiết hoạt động sản xuất hàng ngày để theo dõi hiệu suất và phát hiện vấn đề sớm.
+
+Các trường thông tin cần ghi
+Thông tin	Mô tả	Tại sao cần
+Ngày, ca sản xuất	Ca ngày, ca đêm	Biết năng suất theo ca
+Máy móc sử dụng	Máy nào đang chạy	Theo dõi hiệu suất từng máy
+Sản phẩm	Mã sản phẩm, tên sản phẩm	Biết đang sản xuất cái gì
+Số lượng OK	Sản phẩm đạt chất lượng	Tính năng suất
+Số lượng NG	Sản phẩm lỗi	Phát hiện vấn đề chất lượng
+Nguyên nhân lỗi	Tại sao bị lỗi	Cải tiến quy trình
+Điện năng	Số điện tiêu thụ	Tính chi phí, hiệu suất năng lượng
+Ghi chú sự cố	Máy hỏng, thiếu nguyên liệu...	Cảnh báo cho quản lý
+Tính năng chính
+Nhập nhật ký
+theo dõi thời gian ngừng máy
+
+Form nhập liệu nhanh gọn
+
+Tự động tính tỷ lệ OK/NG
+
+Hiển thị cảnh báo khi tỷ lệ lỗi cao (>15%)
+
+Theo dõi chỉ số OEE
+
+OEE = (Thời gian chạy máy) × (Tốc độ) × (Chất lượng)
+
+Giúp đánh giá hiệu suất máy móc tổng thể
+
+Cảnh báo tự động
+
+Khi tỷ lệ lỗi vượt ngưỡng
+
+Khi máy ngừng quá lâu
+
+Gửi thông báo cho quản đốc
+
+Thống kê theo máy
+
+Máy nào chạy tốt nhất?
+
+Máy nào hay hỏng?
+
+Máy nào tiêu thụ điện nhiều nhất?
+
+D. Giao Việc (Task Management)
+Mục tiêu
+Quản lý công việc được giao, theo dõi tiến độ, đảm bảo hoàn thành đúng hạn.
+
+Luồng công việc
+text
+Người giao tạo task → Người nhận thấy task → Cập nhật tiến độ → Hoàn thành → Người giao xác nhận
+Các trạng thái công việc
+Trạng thái	Ý nghĩa	Hành động
+Chưa làm	Mới tạo, chưa bắt đầu	Nhận việc, bắt đầu làm
+Đang làm	Đã bắt đầu thực hiện	Cập nhật tiến độ
+Chờ duyệt	Làm xong, chờ người giao kiểm tra	Xác nhận hoàn thành
+Hoàn thành	Đã được xác nhận	Xem lại
+Quá hạn	Chưa hoàn thành sau deadline	Cảnh báo, điều chỉnh
+Tính năng chính
+Tạo công việc
+phê duyệt hoàn thành
+
+Tiêu đề, mô tả chi tiết
+
+Chọn người thực hiện
+
+Đặt deadline (hạn hoàn thành)
+
+Đính kèm hình ảnh, file
+
+Theo dõi tiến độ
+
+Người nhận cập nhật % hoàn thành
+
+Thêm ảnh minh họa
+
+Ghi chú khó khăn
+
+Nhắc nhở
+
+Thông báo khi có task mới được giao
+
+Nhắc trước deadline 1 ngày
+
+Nhắc khi quá hạn
+
+Phân quyền
+
+Quản lý giao việc cho nhân viên cấp dưới
+
+Nhân viên xem việc được giao
+
+Giám đốc xem tất cả
+
+Báo cáo công việc
+
+Danh sách việc đã hoàn thành trong tuần/tháng
+
+Đánh giá hiệu suất theo nhân viên
+
+E. Dashboard Tổng quan
+Mục tiêu
+Cung cấp một màn hình chính tổng hợp tất cả thông tin quan trọng, giúp lãnh đạo nắm bắt tình hình nhanh chóng.
+
+Các thành phần
+Thành phần	Nội dung	Cập nhật
+KPI cards	Số nhân viên, tỷ lệ đi làm, sản lượng tháng, OEE	Hàng ngày
+Biểu đồ chấm công	Tỷ lệ đi làm theo ngày trong tuần	Hàng ngày
+Biểu đồ sản xuất	Sản lượng theo ngày trong tháng	Hàng ngày
+Cảnh báo	Nhân viên nghỉ nhiều, máy cần bảo trì, task quá hạn	Thời gian thực
+Hoạt động gần đây	Ai vừa check-in, ai vừa hoàn thành task, đơn xin nghỉ mới	Thời gian thực
+TỔNG KẾT CÁC TÍNH NĂNG THEO THỨ TỰ ƯU TIÊN
+Ưu tiên	Tính năng	Lý do
+1	Báo cáo nâng cao	Quản lý cần số liệu để ra quyết định, đây là nhu cầu cốt lõi
+2	Giao việc	Cần thiết để điều phối công việc hàng ngày, dễ implement
+3	Nhật ký sản xuất	Phù hợp với bản chất nhà máy, theo dõi hiệu suất
+4	Quản lý tài sản	Hữu ích nhưng có thể triển khai sau
+5	Dashboard tổng quan	Là điểm nhấn, nhưng phụ thuộc vào các tính năng khác đã có dữ liệu
+
+
+
+TÍNH NĂNG CẦN BỔ SUNG
+1. Quản lý Kho (Warehouse Management) - QUAN TRỌNG
+Tại sao cần?
+
+Dự án đã có "Đề xuất vật tư" và "Quản lý vật tư" nhưng chưa có module quản lý kho thực tế
+
+Khi vật tư được duyệt và nhập về, cần nhập kho, xuất kho, theo dõi tồn
+
+Các chức năng cần có:
+
+Chức năng	Mô tả
+Nhập kho	Khi mua vật tư mới, ghi nhận số lượng, giá trị, ngày nhập, nhà cung cấp
+Xuất kho	Khi đưa vật tư ra sử dụng, ghi nhận số lượng, lý do, người nhận
+Kiểm kho	Kiểm tra số lượng thực tế so với sổ sách, phát hiện chênh lệch
+Cảnh báo tồn kho tối thiểu	Khi hàng sắp hết, tự động gửi đề xuất mua mới
+Lịch sử nhập xuất	Xem chi tiết từng giao dịch theo ngày, theo vật tư
+Báo cáo tồn kho	Xuất Excel danh sách vật tư còn trong kho
+Ví dụ luồng hoạt động:
+
+text
+Đề xuất vật tư được duyệt → Nhà cung cấp giao hàng → Thủ kho nhập kho (ghi nhận số lượng)
+→ Công nhân làm phiếu lĩnh vật tư → Thủ kho xuất kho → Cập nhật tồn kho
+2. Quản lý Yêu cầu & Sự cố (Issue Tracking)
+Tại sao cần?
+
+Nhà máy luôn phát sinh các vấn đề: máy hỏng, thiếu vật tư, sự cố an toàn
+
+Cần một nơi tập trung để báo cáo, theo dõi, xử lý
+
+Các loại sự cố:
+
+Loại	Ví dụ	Người xử lý
+Hỏng máy	Máy CNC ngừng hoạt động, lỗi phần mềm	Kỹ thuật, bảo trì
+Chất lượng	Sản phẩm lỗi hàng loạt, sai quy cách	QC, Kỹ thuật
+An toàn	Tai nạn lao động, nguy cơ cháy nổ	An toàn lao động
+Vật tư	Thiếu nguyên liệu, hàng kém chất lượng	Kho, Mua hàng
+Chức năng:
+
+Tạo yêu cầu/sự cố (có thể kèm ảnh)
+
+Phân công người xử lý
+
+Cập nhật trạng thái: Mới → Đang xử lý → Đã xử lý → Đóng
+
+Đánh giá thời gian xử lý
+
+Thống kê: sự cố thường gặp, thời gian xử lý trung bình
+
+3. Quản lý Ca & Tăng ca
+Tại sao cần?
+
+Dự án đã có chấm công nhưng chưa có quản lý đăng ký tăng ca
+
+Công nhân cần xin phép tăng ca trước, không phải ai cũng được tăng ca tùy tiện
+
+Chức năng:
+
+Chức năng	Mô tả
+Đăng ký tăng ca	Công nhân gửi yêu cầu tăng ca, chọn ngày, số giờ
+Duyệt tăng ca	Quản lý phê duyệt, có thể điều chỉnh
+Giới hạn tăng ca	Theo quy định, mỗi nhân viên không được tăng ca quá X giờ/tháng
+Tính lương tăng ca	Hệ số tăng ca khác nhau (ngày thường, cuối tuần, lễ)
+4. Quản lý Đào tạo & Chứng chỉ
+Tại sao cần?
+
+Nhà máy có nhiều loại máy móc, mỗi máy yêu cầu chứng chỉ vận hành riêng
+
+Cần theo dõi ai có chứng chỉ, khi nào hết hạn
+
+Chức năng:
+
+Danh mục chứng chỉ (Vận hành máy CNC, lái xe nâng, an toàn lao động...)
+
+Gán chứng chỉ cho nhân viên, kèm ngày cấp, ngày hết hạn
+
+Cảnh báo khi chứng chỉ sắp hết hạn
+
+Không cho phân công vào máy nếu chưa có chứng chỉ
+
+5. Thông báo nội bộ (Internal Announcements)
+Tại sao cần?
+
+Cần kênh để ban lãnh đạo gửi thông báo đến toàn thể nhân viên
+
+Có thể gửi theo phòng ban, theo nhóm
+
+Chức năng:
+
+Tạo thông báo (tiêu đề, nội dung, đính kèm file)
+
+Gửi đến: tất cả, theo phòng ban, theo chức vụ
+
+Đánh dấu đã đọc
+
+Lưu trữ thông báo cũ
+
+
+
+Quản lý lương thưởng 
+
+Giai đoạn 1: Báo cáo nâng cao + Nhật ký sản xuất + Giao việc
+
+Giai đoạn 2: Quản lý kho + Quản lý tài sản + Dashboard
+
+Giai đoạn 3: Quản lý sự cố + Tăng ca + Chứng chỉ + Thông báo
+
+
+CÁC LOẠI NHẬP LIỆU CẦN BỔ SUNG
+A. Sản xuất (Production)
+Loại dữ liệu	Nội dung	Tần suất	Mục đích
+Sản lượng	Số lượng sản phẩm OK/NG theo ca, theo máy	Hàng ngày	Tính hiệu suất, theo dõi chất lượng
+Thời gian ngừng máy	Thời gian máy dừng, nguyên nhân (hỏng, bảo trì, thiếu nguyên liệu)	Hàng ngày	Tính OEE, tìm nguyên nhân mất thời gian
+Nguyên vật liệu sử dụng	Lượng nguyên liệu đã dùng cho sản xuất	Hàng ngày	Kiểm soát định mức, tính giá thành
+Chất lượng đầu vào	Kiểm tra nguyên liệu nhập về (đạt/không đạt)	Mỗi lô nhập	Đảm bảo chất lượng đầu vào
+Chất lượng đầu ra	Kết quả kiểm tra sản phẩm (tỷ lệ lỗi theo loại lỗi)	Hàng ngày	Cải tiến quy trình
+B. Kho & Vật tư (Inventory)
+Loại dữ liệu	Nội dung	Tần suất	Mục đích
+Nhập kho	Vật tư mới về, số lượng, giá trị, nhà cung cấp, số hóa đơn	Khi có hàng về	Cập nhật tồn kho, theo dõi chi phí
+Xuất kho	Vật tư đưa ra sử dụng, số lượng, lý do, người nhận	Hàng ngày	Kiểm soát hao hụt, tính chi phí sản xuất
+Kiểm kho	Số lượng thực tế so với sổ sách, chênh lệch	Hàng tuần/tháng	Phát hiện thất thoát, sai sót
+Yêu cầu mua hàng	Đề xuất mua vật tư mới, số lượng, lý do	Khi sắp hết hàng	Tự động tạo phiếu đề xuất
+C. Nhân sự (HR)
+Loại dữ liệu	Nội dung	Tần suất	Mục đích
+Đơn xin nghỉ	Loại nghỉ, thời gian, lý do	Khi có nhu cầu	Đã có, cần cải thiện
+Đăng ký tăng ca	Ngày tăng ca, số giờ, lý do	Trước khi tăng ca	Kiểm soát chi phí tăng ca
+Kỷ luật / Khen thưởng	Nội dung, hình thức, ngày hiệu lực	Khi phát sinh	Lưu hồ sơ nhân viên
+Khám sức khỏe	Kết quả khám sức khỏe định kỳ, ngày hết hạn	Định kỳ	Đảm bảo an toàn lao động
+D. Máy móc & Thiết bị (Equipment)
+Loại dữ liệu	Nội dung	Tần suất	Mục đích
+Bảo trì định kỳ	Ngày bảo trì, nội dung, người thực hiện, chi phí	Định kỳ	Theo dõi lịch sử bảo trì
+Sửa chữa đột xuất	Hỏng hóc, nguyên nhân, thời gian sửa, chi phí	Khi có sự cố	Tính chi phí bảo trì, cảnh báo máy hay hỏng
+Số giờ vận hành	Tổng số giờ máy đã chạy	Hàng ngày	Tính khấu hao, lên lịch bảo trì
+E. Môi trường & An toàn (HSE)
+Loại dữ liệu	Nội dung	Tần suất	Mục đích
+Nước	Lượng nước tiêu thụ, chất lượng nước thải	Hàng ngày	Giám sát môi trường
+Khí nén	Áp suất, lưu lượng khí nén	Hàng ngày	Đã có bảng compressed_air_readings
+Nhiệt độ độ ẩm	Nhiệt độ, độ ẩm trong phân xưởng	Hàng ngày	Đảm bảo điều kiện sản xuất
+Chất thải	Lượng chất thải phát sinh, xử lý	Hàng ngày	Báo cáo môi trường
+Sự cố an toàn	Tai nạn, sự cố suýt xảy ra, biện pháp xử lý	Khi có sự cố	Cải thiện an toàn lao động
+TỔNG HỢP CÁC MÀN HÌNH NHẬP LIỆU ĐỀ XUẤT
+1. Màn hình nhập liệu sản xuất (Quan trọng nhất)
+text
+[NHẬP LIỆU SẢN XUẤT - CA NGÀY 26/03/2026]
+
+▼ Máy móc
+[Chọn máy] ▼  [Máy CNC-01]
+
+▼ Sản phẩm
+[Chọn sản phẩm] ▼  [SP-001 - Ống thép]
+
+▼ Số lượng
+[OK: 1250]  [NG: 23]  [Tỷ lệ: 98.2%]
+
+▼ Thời gian (phút)
+[Chạy máy: 420]  [Ngừng máy: 45]
+
+▼ Nguyên nhân ngừng máy
+[☑ Hỏng máy]  [☐ Thiếu nguyên liệu]  [☐ Chờ lệnh]  [☐ Vệ sinh]
+
+▼ Nguyên liệu sử dụng
+[Thép tấm: 1250 kg]  [Sơn: 8 lít]
+
+▼ Ghi chú
+[_______________________________]
+
+[LƯU NHẬT KÝ]  [LƯU & TIẾP MÁY KHÁC]
+2. Màn hình nhập kho (Kho vật tư)
+text
+[NHẬP KHO - 26/03/2026]
+
+▼ Vật tư
+[Chọn vật tư] ▼  [Sơn công nghiệp - ĐVT: lít]
+
+▼ Số lượng
+[100] [lít]
+
+▼ Nhà cung cấp
+[Công ty Sơn ABC] ▼
+
+▼ Hóa đơn số
+[INV-2026-0123]
+
+▼ Đơn giá
+[50,000] VNĐ/lít
+
+▼ Vị trí lưu trữ
+[Kệ A - Tầng 2]
+
+▼ Ghi chú
+[_______________________________]
+
+[NHẬP KHO]  [LƯU & TIẾP]
+3. Màn hình bảo trì máy
+text
+[BẢO TRÌ MÁY - 26/03/2026]
+
+▼ Máy móc
+[Máy CNC-01] ▼
+
+▼ Loại bảo trì
+[☑ Định kỳ]  [☐ Đột xuất]
+
+▼ Nội dung công việc
+[Thay dầu, vệ sinh bộ lọc, hiệu chuẩn]
+
+▼ Thời gian
+[Bắt đầu: 08:00]  [Kết thúc: 11:30]  [Tổng: 3.5 giờ]
+
+▼ Người thực hiện
+[Nguyễn Văn Bảo trì] ▼
+
+▼ Chi phí (nếu có)
+[2,500,000] VNĐ
+
+▼ Kết quả
+[☑ Hoàn thành]  [☐ Cần bảo trì thêm]
+
+[LƯU PHIẾU BẢO TRÌ]
+4. Màn hình nhập liệu tổng hợp (All-in-One)
+Ý tưởng: Một màn hình duy nhất cho ca trưởng/quản đốc nhập tất cả dữ liệu của ca
+
+text
+[NHẬP LIỆU CA SẢN XUẤT]
+Ca ngày - 26/03/2026 - Phân xưởng A
+
+┌─────────────────────────────────────────┐
+│ SẢN XUẤT                                 │
+├─────────────────────────────────────────┤
+│ Máy CNC-01:  OK: 450  NG: 12  Ngừng: 30p │
+│ Máy CNC-02:  OK: 520  NG: 8   Ngừng: 0p  │
+│ Máy CNC-03:  OK: 380  NG: 25  Ngừng: 45p │
+│ [+ Thêm dòng]                            │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│ VẬT TƯ XUẤT KHO                          │
+├─────────────────────────────────────────┤
+│ Sơn công nghiệp:   20 lít               │
+│ Dung môi pha sơn:   5 lít               │
+│ Giấy nhám:         10 tờ                │
+│ [+ Thêm vật tư]                          │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│ ĐIỆN NĂNG                               │
+├─────────────────────────────────────────┤
+│ Tủ điện A1:  1,250 kWh                  │
+│ Tủ điện A2:    980 kWh                  │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│ SỰ CỐ / GHI CHÚ                         │
+├─────────────────────────────────────────┤
+│ [Máy CNC-03 bị lỗi cảm biến 15 phút]    │
+└─────────────────────────────────────────┘
+
+[HOÀN TẤT CA] [LƯU TẠM THỜI]
+ĐỀ XUẤT THỨ TỰ PHÁT TRIỂN
+Giai đoạn	Loại nhập liệu	Lý do
+1	Sản lượng + Thời gian ngừng máy	Cốt lõi của sản xuất, tính OEE
+2	Nhập kho / Xuất kho	Quản lý vật tư, đã có đề xuất vật tư cần bổ sung kho
+3	Bảo trì máy	Dữ liệu từ thời gian ngừng máy sẽ dẫn đến bảo trì
+4	Nguyên liệu sử dụng	Tính định mức, giá thành
+5	Các loại còn lại	Có thể làm sau khi các tính năng chính ổn định
+</file>
+
+<file path="lib/core/services/logger_service.dart">
+
 </file>
 
 <file path="lib/core/services/supabase_provider.dart">
@@ -224,6 +730,331 @@ class SyncService {
     }
   }
 }
+</file>
+
+<file path="lib/core/utils/app_logger.dart">
+import 'package:logger/logger.dart';
+
+class AppLogger {
+  static final Logger _logger = Logger(
+    printer: PrettyPrinter(
+      methodCount: 2,
+      errorMethodCount: 8,
+      lineLength: 120,
+      colors: true,
+      printEmojis: true,
+      printTime: true,
+    ),
+  );
+
+  static void i(String message) => _logger.i(message);
+  static void w(String message) => _logger.w(message);
+  static void e(String message, [dynamic error, StackTrace? stackTrace]) {
+    _logger.e(message, error: error, stackTrace: stackTrace);
+
+  }
+}
+</file>
+
+<file path="lib/core/widgets/common/app_dialog.dart">
+
+</file>
+
+<file path="lib/core/widgets/common/app_snackbar.dart">
+
+</file>
+
+<file path="lib/core/widgets/common/empty_state.dart">
+
+</file>
+
+<file path="lib/core/widgets/common/loading_overlay.dart">
+
+</file>
+
+<file path="lib/core/widgets/custom_date_picker.dart">
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+class CustomDatePicker extends StatelessWidget {
+  final String label;
+  final DateTime date;
+  final Function(DateTime) onPicked;
+
+  const CustomDatePicker({
+    super.key,
+    required this.label,
+    required this.date,
+    required this.onPicked,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+        const SizedBox(height: 4),
+        InkWell(
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: date,
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+            );
+            if (picked != null) onPicked(picked);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade400),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(DateFormat('dd/MM/yyyy').format(date)),
+                const Icon(Icons.calendar_today, size: 18, color: Colors.blue),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+</file>
+
+<file path="lib/core/widgets/custom_dropdown.dart">
+import 'package:flutter/material.dart';
+
+class CustomDropdown<T> extends StatelessWidget {
+  final String label;
+  final T? value;
+  final List<T> items;
+  final String Function(T) itemLabelBuilder;
+  final void Function(T?) onChanged;
+  final String? hintText;
+
+  const CustomDropdown({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.itemLabelBuilder,
+    required this.onChanged,
+    this.hintText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.grey.shade400),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<T>(
+              isExpanded: true,
+              value: value,
+              hint: hintText != null ? Text(hintText!) : null,
+              items: items
+                  .map(
+                    (e) => DropdownMenuItem<T>(
+                      value: e,
+                      child: Text(itemLabelBuilder(e)),
+                    ),
+                  )
+                  .toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+</file>
+
+<file path="lib/core/widgets/forms/date_picker_field.dart">
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+class DatePickerField extends StatelessWidget {
+  final String label;
+  final DateTime value;
+  final Function(DateTime) onChanged;
+  final DateTime? firstDate;
+  final DateTime? lastDate;
+  final bool showIcon;
+
+  const DatePickerField({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.firstDate,
+    this.lastDate,
+    this.showIcon = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+        const SizedBox(height: 4),
+        InkWell(
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: value,
+              firstDate: firstDate ?? DateTime(2020),
+              lastDate: lastDate ?? DateTime(2030),
+            );
+            if (picked != null) onChanged(picked);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade400),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(DateFormat('dd/MM/yyyy').format(value)),
+                if (showIcon) const Icon(Icons.calendar_today, size: 18),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+</file>
+
+<file path="lib/core/widgets/forms/dropdown_field.dart">
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+
+class DropdownField extends StatelessWidget {
+  final String label;
+  final String value;
+  final List<String> items;
+  final Function(String?) onChanged;
+  final bool isExpanded;
+
+  const DropdownField({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+    this.isExpanded = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade400),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: isExpanded,
+              value: value,
+              items: items
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+</file>
+
+<file path="lib/core/widgets/forms/number_field.dart">
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+
+class NumberField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final bool allowDecimal;
+
+  const NumberField({
+    super.key,
+    required this.label,
+    required this.controller,
+    this.allowDecimal = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: allowDecimal
+          ? const TextInputType.numberWithOptions(decimal: true)
+          : TextInputType.number,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        isDense: true,
+        labelStyle: const TextStyle(fontSize: 12),
+      ),
+    );
+  }
+}
+</file>
+
+<file path="lib/core/widgets/forms/text_field_with_label.dart">
+
+</file>
+
+<file path="lib/core/widgets/layout/page_header.dart">
+
+</file>
+
+<file path="lib/core/widgets/layout/responsive_grid.dart">
+
+</file>
+
+<file path="lib/core/widgets/layout/section_card.dart">
+
 </file>
 
 <file path="lib/features/admin/views/admin_dashboard_page.dart">
@@ -396,95 +1227,6 @@ class AdminDashboardPage extends StatelessWidget {
           ),
       ],
     );
-  }
-}
-</file>
-
-<file path="lib/features/attendance/controllers/evaluation_controller.dart">
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../../../core/services/supabase_provider.dart';
-import '../models/evaluation_model.dart';
-import '../../auth/controllers/auth_controller.dart';
-import 'attendance_controller.dart';
-
-
-final evaluationMonthProvider = StateProvider<DateTime>(
-  (ref) => DateTime.now(),
-);
-
-
-final monthlyEvaluationsProvider = FutureProvider<List<EvaluationModel>>((
-  ref,
-) async {
-  final supabase = ref.read(supabaseProvider);
-  final month = ref.watch(evaluationMonthProvider);
-  final monthYearStr = DateFormat('yyyy-MM').format(month);
-
-  final currentUser = ref.watch(currentProfileProvider).valueOrNull;
-  if (currentUser == null) return [];
-
-  final response = await supabase
-      .from('monthly_evaluations')
-      .select()
-      .eq('manager_id', currentUser.id)
-      .eq('month_year', monthYearStr);
-
-  return response.map((json) => EvaluationModel.fromJson(json)).toList();
-});
-
-
-final evaluationActionProvider = Provider(
-  (ref) => EvaluationActionController(ref),
-);
-
-class EvaluationActionController {
-  final Ref ref;
-  EvaluationActionController(this.ref);
-
-  Future<bool> saveEvaluation(EvaluationModel evaluation) async {
-    try {
-      final supabase = ref.read(supabaseProvider);
-
-      final data = evaluation.toJson();
-      data.remove('id');
-
-      await supabase
-          .from('monthly_evaluations')
-          .upsert(data, onConflict: 'user_id, month_year');
-
-
-      ref.invalidate(monthlyEvaluationsProvider);
-      return true;
-    } catch (e) {
-      print("Lỗi lưu đánh giá: $e");
-      return false;
-    }
-  }
-
-  Future<bool> submitAllEvaluations() async {
-    try {
-      final supabase = ref.read(supabaseProvider);
-      final month = ref.read(evaluationMonthProvider);
-      final monthYearStr = DateFormat('yyyy-MM').format(month);
-      final currentUser = ref.read(currentProfileProvider).valueOrNull;
-
-      if (currentUser == null) return false;
-
-
-      await supabase
-          .from('monthly_evaluations')
-          .update({'status': 'submitted'})
-          .eq('manager_id', currentUser.id)
-          .eq('month_year', monthYearStr)
-          .eq('status', 'draft');
-
-      ref.invalidate(monthlyEvaluationsProvider);
-      return true;
-    } catch (e) {
-      print("Lỗi gửi đánh giá: $e");
-      return false;
-    }
   }
 }
 </file>
@@ -2621,6 +3363,163 @@ class _CabinetManagementTab extends ConsumerWidget {
 }
 </file>
 
+<file path="lib/features/reports/views/material_main_page.dart">
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../../home/views/main_navigation_page.dart';
+
+
+import 'material_request_page.dart';
+
+import 'inventory_main_page.dart';
+
+class MaterialMainPage extends ConsumerWidget {
+  const MaterialMainPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(currentProfileProvider);
+
+
+    return profileAsync.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, s) => Scaffold(body: Center(child: Text("Lỗi tải hồ sơ: $e"))),
+      data: (profile) {
+        if (profile == null) {
+          return const Scaffold(
+            body: Center(child: Text("Không tìm thấy thông tin người dùng.")),
+          );
+        }
+
+
+        final permissionsAsync = ref.watch(
+          rolePermissionsProviderUser(profile.role),
+        );
+        final isGlobalAdmin = profile.role == 'admin';
+
+        return permissionsAsync.when(
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+          error: (e, s) =>
+              Scaffold(body: Center(child: Text("Lỗi tải quyền: $e"))),
+          data: (allowedFeatures) {
+
+            final canViewInventory =
+                isGlobalAdmin || allowedFeatures.contains('vat_tu_xem_kho');
+            final canRequest =
+                isGlobalAdmin || allowedFeatures.contains('vat_tu_de_xuat');
+            final canApprove =
+                isGlobalAdmin || allowedFeatures.contains('vat_tu_duyet');
+            final canViewHistory =
+                isGlobalAdmin || allowedFeatures.contains('vat_tu_lich_su');
+            final canManageCatalog =
+                isGlobalAdmin || allowedFeatures.contains('vat_tu_danh_muc');
+
+
+            List<Tab> tabs = [];
+            List<Widget> tabViews = [];
+
+
+            if (canRequest) {
+              tabs.add(
+                const Tab(
+                  icon: Icon(Icons.add_shopping_cart),
+                  text: "Tạo Đề Xuất",
+                ),
+              );
+              tabViews.add(CreateRequestTab(userProfile: profile));
+
+              tabs.add(
+                const Tab(icon: Icon(Icons.history_edu), text: "Phiếu Của Tôi"),
+              );
+              tabViews.add(MyRequestsTab(userId: profile.id));
+            }
+
+
+            if (canViewInventory) {
+              tabs.add(
+                const Tab(
+                  icon: Icon(Icons.inventory_2),
+                  text: "Tồn Kho & Nhập/Xuất",
+                ),
+              );
+              tabViews.add(
+                const InventoryMainPage(),
+              );
+            }
+
+            if (canApprove) {
+              tabs.add(
+                const Tab(
+                  icon: Icon(Icons.fact_check_outlined),
+                  text: "Chờ Duyệt",
+                ),
+              );
+              tabViews.add(const ApproveRequestsTab());
+            }
+
+            if (canViewHistory) {
+              tabs.add(
+                const Tab(
+                  icon: Icon(Icons.archive_outlined),
+                  text: "Lịch Sử Duyệt",
+                ),
+              );
+              tabViews.add(ApprovedHistoryTab());
+            }
+
+            if (canManageCatalog) {
+              tabs.add(
+                const Tab(
+                  icon: Icon(Icons.category_outlined),
+                  text: "Quản Lý Mã VTPT",
+                ),
+              );
+              tabViews.add(const CatalogSettingsTab());
+            }
+
+
+            if (tabs.isEmpty) {
+              return Scaffold(
+                appBar: AppBar(title: const Text("Quản lý Vật tư & Đề xuất")),
+                body: const Center(
+                  child: Text("Bạn không có quyền truy cập tính năng này."),
+                ),
+              );
+            }
+
+
+            return DefaultTabController(
+              length: tabs.length,
+              child: Scaffold(
+                appBar: AppBar(
+                  title: const Text(
+                    "Quản lý Vật tư & Đề xuất",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  backgroundColor: Colors.brown,
+                  foregroundColor: Colors.white,
+                  bottom: TabBar(
+                    isScrollable: true,
+                    indicatorColor: Colors.white,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white70,
+                    tabs: tabs,
+                  ),
+                ),
+                body: TabBarView(children: tabViews),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+</file>
+
 <file path="lib/main.dart">
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -2839,6 +3738,94 @@ class AuthExceptionHandler {
       }
     }
     return 'Lỗi kết nối máy chủ. Vui lòng kiểm tra lại mạng.';
+  }
+}
+</file>
+
+<file path="lib/features/attendance/controllers/evaluation_controller.dart">
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import '../../../core/services/supabase_provider.dart';
+import '../models/evaluation_model.dart';
+import '../../auth/controllers/auth_controller.dart';
+
+
+final evaluationMonthProvider = StateProvider<DateTime>(
+  (ref) => DateTime.now(),
+);
+
+
+final monthlyEvaluationsProvider = FutureProvider<List<EvaluationModel>>((
+  ref,
+) async {
+  final supabase = ref.read(supabaseProvider);
+  final month = ref.watch(evaluationMonthProvider);
+  final monthYearStr = DateFormat('yyyy-MM').format(month);
+
+  final currentUser = ref.watch(currentProfileProvider).valueOrNull;
+  if (currentUser == null) return [];
+
+  final response = await supabase
+      .from('monthly_evaluations')
+      .select()
+      .eq('manager_id', currentUser.id)
+      .eq('month_year', monthYearStr);
+
+  return response.map((json) => EvaluationModel.fromJson(json)).toList();
+});
+
+
+final evaluationActionProvider = Provider(
+  (ref) => EvaluationActionController(ref),
+);
+
+class EvaluationActionController {
+  final Ref ref;
+  EvaluationActionController(this.ref);
+
+  Future<bool> saveEvaluation(EvaluationModel evaluation) async {
+    try {
+      final supabase = ref.read(supabaseProvider);
+
+      final data = evaluation.toJson();
+      data.remove('id');
+
+      await supabase
+          .from('monthly_evaluations')
+          .upsert(data, onConflict: 'user_id, month_year');
+
+
+      ref.invalidate(monthlyEvaluationsProvider);
+      return true;
+    } catch (e) {
+      print("Lỗi lưu đánh giá: $e");
+      return false;
+    }
+  }
+
+  Future<bool> submitAllEvaluations() async {
+    try {
+      final supabase = ref.read(supabaseProvider);
+      final month = ref.read(evaluationMonthProvider);
+      final monthYearStr = DateFormat('yyyy-MM').format(month);
+      final currentUser = ref.read(currentProfileProvider).valueOrNull;
+
+      if (currentUser == null) return false;
+
+
+      await supabase
+          .from('monthly_evaluations')
+          .update({'status': 'submitted'})
+          .eq('manager_id', currentUser.id)
+          .eq('month_year', monthYearStr)
+          .eq('status', 'draft');
+
+      ref.invalidate(monthlyEvaluationsProvider);
+      return true;
+    } catch (e) {
+      print("Lỗi gửi đánh giá: $e");
+      return false;
+    }
   }
 }
 </file>
@@ -3500,453 +4487,6 @@ class _LeaveApprovalPageState extends ConsumerState<LeaveApprovalPage> {
           ),
         ],
       ),
-    );
-  }
-}
-</file>
-
-<file path="lib/features/attendance/views/manager_attendance_page.dart">
-import 'package:flutter/material.dart';
-import 'package:ung_dung_nm/features/attendance/views/tab_cham_cong_ngay.dart';
-import 'package:ung_dung_nm/features/attendance/views/tab_bang_cong_thang.dart';
-import 'package:ung_dung_nm/features/attendance/views/tab_danh_gia_xep_loai.dart';
-
-class ManagerAttendancePage extends StatelessWidget {
-  final String profileId;
-  const ManagerAttendancePage({super.key, required this.profileId});
-
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text("Quản lý Chấm Công"),
-          backgroundColor: Colors.blue.shade800,
-          bottom: const TabBar(
-            isScrollable: true,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            indicatorColor: Colors.white,
-            tabs: [
-              Tab(icon: Icon(Icons.playlist_add_check), text: "Chấm Công Ngày"),
-              Tab(icon: Icon(Icons.grid_on), text: "Bảng Tháng"),
-              Tab(icon: Icon(Icons.star_rate), text: "Đánh Giá Xếp Loại"),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            TabChamCongNgay(currentUserId: profileId),
-            const TabBangCongThang(),
-            const TabDanhGiaXepLoai(),
-          ],
-        ),
-      ),
-    );
-  }
-}
-</file>
-
-<file path="lib/features/attendance/views/tab_bang_cong_thang.dart">
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-
-import '../controllers/attendance_controller.dart';
-import '../models/timesheet_model.dart';
-import '../../admin/controllers/department_controller.dart';
-
-class TabBangCongThang extends ConsumerWidget {
-  const TabBangCongThang({super.key});
-
-
-  Map<String, dynamic> _getCellStyle(
-    String symbol,
-    bool isSunday,
-    bool isWorking,
-  ) {
-    Color bg = Colors.white;
-    Color text = Colors.black87;
-    FontWeight weight = FontWeight.bold;
-
-    if (symbol == '' || symbol == '-') {
-      bg = Colors.grey.shade100;
-      text = Colors.grey;
-      weight = FontWeight.normal;
-    } else if (isWorking) {
-      bg = const Color(0xFFE8F5E9); // Xanh nhạt
-      text = Colors.green.shade900;
-    } else {
-      bg = const Color(0xFFFFEBEE); // Đỏ nhạt
-      text = Colors.red.shade900;
-    }
-
-    if (isSunday && (symbol == '' || symbol == '-')) {
-      bg = const Color(0xFFFFF3E0);
-      text = Colors.red.shade300;
-    }
-
-    return {'bg': bg, 'text': text, 'weight': weight};
-  }
-
-
-  String _getSymbol(TimesheetModel? cellData) {
-    if (cellData == null) return '';
-    String tt = cellData.status;
-    String ca = cellData.shiftType;
-
-    if (tt == 'Có mặt') {
-      if (ca == 'Ca Ngày') return 'X';
-      if (ca == 'Sáng') return 'S';
-      if (ca == 'Chiều') return 'C';
-      if (ca == 'Đêm') return 'Đ';
-      if (ca == 'Nửa Ngày') return '/';
-      return 'X';
-    } else {
-      if (tt == 'Nghỉ phép') return 'P';
-      if (tt == 'Nghỉ ốm') return 'OM';
-      if (tt == 'Nghỉ không phép') return 'KP';
-      return '-';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentMonth = ref.watch(selectedMonthProvider);
-    final employeesAsync = ref.watch(departmentEmployeesProvider);
-
-
-    final timesheetsAsync = ref.watch(monthlyAttendanceProvider);
-
-
-    final shiftConfigs = ref.watch(shiftConfigsProvider).valueOrNull ?? [];
-    final statusConfigs =
-        ref.watch(attendanceStatusConfigsProvider).valueOrNull ?? [];
-
-    int daysInMonth = DateTime(
-      currentMonth.year,
-      currentMonth.month + 1,
-      0,
-    ).day;
-    const double cellWidth = 45.0;
-    const double cellHeight = 40.0;
-    const double nameColumnWidth = 150.0;
-
-    return Column(
-      children: [
-
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-          ),
-          child: Row(
-            children: [
-              InkWell(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: currentMonth,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                  );
-                  if (picked != null)
-                    ref.read(selectedMonthProvider.notifier).state = picked;
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.shade50,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.purple.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.date_range,
-                        color: Colors.purple,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Tháng ${DateFormat('MM/yyyy').format(currentMonth)}",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.purple,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        Expanded(
-          child: employeesAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, stack) =>
-                Center(child: Text("Lỗi tải nhân viên: $err")),
-            data: (employees) {
-              if (employees.isEmpty)
-                return const Center(child: Text("Chưa có nhân viên."));
-
-              return timesheetsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => Center(
-                  child: Text("Lỗi tải bảng công: $err"),
-                ),
-                data: (timesheetMap) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-
-                      SizedBox(
-                        width: nameColumnWidth,
-                        child: Column(
-                          children: [
-                            Container(
-                              height: cellHeight,
-                              alignment: Alignment.centerLeft,
-                              padding: const EdgeInsets.only(left: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: Colors.grey.shade400,
-                                  ),
-                                  right: BorderSide(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                ),
-                              ),
-                              child: const Text(
-                                "NHÂN VIÊN",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: ListView.builder(
-                                itemCount: employees.length,
-                                itemBuilder: (context, index) {
-                                  return Container(
-                                    height: cellHeight,
-                                    alignment: Alignment.centerLeft,
-                                    padding: const EdgeInsets.only(left: 12),
-                                    decoration: BoxDecoration(
-                                      border: Border(
-                                        bottom: BorderSide(
-                                          color: Colors.grey.shade200,
-                                        ),
-                                        right: BorderSide(
-                                          color: Colors.grey.shade300,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      employees[index].fullName,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-
-                      Expanded(
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: SizedBox(
-                            width: daysInMonth * cellWidth,
-                            child: Column(
-                              children: [
-
-                                Row(
-                                  children: List.generate(daysInMonth, (index) {
-                                    int day = index + 1;
-                                    bool isSun =
-                                        DateTime(
-                                          currentMonth.year,
-                                          currentMonth.month,
-                                          day,
-                                        ).weekday ==
-                                        7;
-                                    return Container(
-                                      width: cellWidth,
-                                      height: cellHeight,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: isSun
-                                            ? Colors.orange.shade50
-                                            : Colors.grey.shade100,
-                                        border: Border(
-                                          bottom: BorderSide(
-                                            color: Colors.grey.shade400,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        "$day",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                          color: isSun
-                                              ? Colors.red
-                                              : Colors.black87,
-                                        ),
-                                      ),
-                                    );
-                                  }),
-                                ),
-
-
-                                Expanded(
-                                  child: ListView.builder(
-                                    itemCount: employees.length,
-                                    itemBuilder: (context, empIndex) {
-                                      final empId = employees[empIndex].id;
-                                      final empTimesheets =
-                                          timesheetMap[empId] ?? {};
-
-                                      return Row(
-                                        children: List.generate(daysInMonth, (
-                                          dayIndex,
-                                        ) {
-                                          int day = dayIndex + 1;
-                                          bool isSun =
-                                              DateTime(
-                                                currentMonth.year,
-                                                currentMonth.month,
-                                                day,
-                                              ).weekday ==
-                                              7;
-                                          final cellData = empTimesheets[day];
-
-
-                                          String symbol = '-';
-                                          bool isWorking = false;
-
-                                          if (cellData != null) {
-
-                                            final currentStatusConfig =
-                                                statusConfigs.firstWhere(
-                                                  (s) =>
-                                                      s['name'] ==
-                                                      cellData.status,
-                                                  orElse: () => {
-                                                    'name': cellData.status,
-                                                    'symbol': '',
-                                                    'is_working_day': true,
-                                                  },
-                                                );
-
-
-
-                                            isWorking =
-                                                currentStatusConfig['is_working_day'] ==
-                                                    true ||
-                                                cellData.status == 'Có mặt';
-
-                                            if (isWorking) {
-
-                                              final currentShiftConfig =
-                                                  shiftConfigs.firstWhere(
-                                                    (s) =>
-                                                        s['name'] ==
-                                                        cellData.shiftType,
-                                                    orElse: () => {
-                                                      'symbol': 'X',
-                                                    },
-                                                  );
-                                              symbol =
-                                                  (currentShiftConfig['symbol']
-                                                      ?.toString() ??
-                                                  'X');
-                                            } else {
-
-                                              symbol =
-                                                  (currentStatusConfig['symbol']
-                                                      ?.toString() ??
-                                                  '-');
-                                            }
-                                          }
-
-                                          final style = _getCellStyle(
-                                            symbol,
-                                            isSun,
-                                            isWorking,
-                                          );
-                                          bool hasOvertime =
-                                              cellData?.overtimeStart != null &&
-                                              cellData!
-                                                  .overtimeStart!
-                                                  .isNotEmpty;
-
-                                          return Container(
-                                            width: cellWidth,
-                                            height: cellHeight,
-                                            alignment: Alignment.center,
-                                            decoration: BoxDecoration(
-                                              color: style['bg'],
-                                              border: Border(
-                                                right: BorderSide(
-                                                  color: Colors.grey.shade200,
-                                                  width: 0.5,
-                                                ),
-                                                bottom: BorderSide(
-                                                  color: hasOvertime
-                                                      ? Colors.orange.shade400
-                                                      : Colors.grey.shade200,
-                                                  width: hasOvertime
-                                                      ? 2.0
-                                                      : 0.5,
-                                                ),
-                                              ),
-                                            ),
-                                            child: Text(
-                                              symbol,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: style['weight'],
-                                                color: style['text'],
-                                              ),
-                                            ),
-                                          );
-                                        }),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }
@@ -6199,355 +6739,6 @@ class _ApprovedHistoryTabState extends ConsumerState<ApprovedHistoryTab> {
 }
 </file>
 
-<file path="database_schema.sql">
-CREATE TABLE public.assets (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  qr_code character varying UNIQUE,
-  name character varying NOT NULL,
-  department_id uuid,
-  status character varying DEFAULT 'active'::character varying,
-  CONSTRAINT assets_pkey PRIMARY KEY (id),
-  CONSTRAINT assets_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
-);
-CREATE TABLE public.attendance_logs (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  user_id uuid NOT NULL,
-  log_type USER-DEFINED NOT NULL,
-  log_time timestamp with time zone DEFAULT now(),
-  method character varying,
-  location_data jsonb,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT attendance_logs_pkey PRIMARY KEY (id),
-  CONSTRAINT attendance_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.attendance_status_configs (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  name character varying NOT NULL UNIQUE,
-  is_working_day boolean DEFAULT true,
-  is_active boolean DEFAULT true,
-  created_at timestamp with time zone DEFAULT now(),
-  symbol character varying,
-  CONSTRAINT attendance_status_configs_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.compressed_air_readings (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  pressure_value numeric,
-  flow_rate_value numeric,
-  recorded_by uuid,
-  recorded_at date NOT NULL UNIQUE,
-  notes text,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT compressed_air_readings_pkey PRIMARY KEY (id),
-  CONSTRAINT compressed_air_readings_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.daily_timesheets (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  user_id uuid NOT NULL,
-  date date NOT NULL,
-  shift_type character varying DEFAULT 'Ca Ngày'::character varying,
-  status character varying DEFAULT 'Có mặt'::character varying,
-  overtime_start time without time zone,
-  overtime_end time without time zone,
-  notes text,
-  created_by uuid,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT daily_timesheets_pkey PRIMARY KEY (id),
-  CONSTRAINT daily_timesheets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.departments (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  name character varying NOT NULL,
-  description text,
-  created_at timestamp with time zone DEFAULT now(),
-  division_id uuid,
-  CONSTRAINT departments_pkey PRIMARY KEY (id),
-  CONSTRAINT departments_division_id_fkey FOREIGN KEY (division_id) REFERENCES public.divisions(id)
-);
-CREATE TABLE public.divisions (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  name character varying NOT NULL,
-  description text,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT divisions_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.electrical_cabinets (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  name character varying NOT NULL,
-  location text,
-  department_id uuid,
-  is_active boolean DEFAULT true,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT electrical_cabinets_pkey PRIMARY KEY (id),
-  CONSTRAINT electrical_cabinets_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
-);
-CREATE TABLE public.electricity_readings (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  cabinet_id uuid NOT NULL,
-  reading_value numeric NOT NULL,
-  recorded_by uuid,
-  recorded_at date NOT NULL,
-  notes text,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT electricity_readings_pkey PRIMARY KEY (id),
-  CONSTRAINT electricity_readings_cabinet_id_fkey FOREIGN KEY (cabinet_id) REFERENCES public.electrical_cabinets(id),
-  CONSTRAINT electricity_readings_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.employee_feedbacks (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  user_id uuid NOT NULL,
-  feedback_type character varying NOT NULL,
-  content text NOT NULL,
-  status character varying DEFAULT 'pending'::character varying,
-  created_at timestamp with time zone DEFAULT now(),
-  is_anonymous boolean DEFAULT false,
-  CONSTRAINT employee_feedbacks_pkey PRIMARY KEY (id),
-  CONSTRAINT employee_feedbacks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.factory_machines (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  name character varying NOT NULL,
-  description text,
-  CONSTRAINT factory_machines_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.factory_materials (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  category character varying NOT NULL,
-  name character varying NOT NULL,
-  unit character varying NOT NULL,
-  initial_qty numeric DEFAULT 0,
-  total_import numeric DEFAULT 0,
-  total_export numeric DEFAULT 0,
-  current_qty numeric DEFAULT 0,
-  created_at timestamp with time zone DEFAULT now(),
-  department_id uuid,
-  CONSTRAINT factory_materials_pkey PRIMARY KEY (id),
-  CONSTRAINT factory_materials_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
-);
-CREATE TABLE public.internal_communications (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  author_id uuid NOT NULL,
-  title character varying NOT NULL,
-  content text,
-  comm_type character varying,
-  target_roles jsonb,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT internal_communications_pkey PRIMARY KEY (id),
-  CONSTRAINT internal_communications_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.inventory_items (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  qr_code character varying NOT NULL UNIQUE,
-  name character varying NOT NULL,
-  min_stock_level integer DEFAULT 0,
-  current_stock integer DEFAULT 0,
-  unit character varying,
-  CONSTRAINT inventory_items_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.leave_requests (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  user_id uuid NOT NULL,
-  leave_type character varying NOT NULL,
-  start_time timestamp with time zone NOT NULL,
-  end_time timestamp with time zone NOT NULL,
-  reason text,
-  current_approver_id uuid,
-  approval_history jsonb DEFAULT '[]'::jsonb,
-  created_at timestamp with time zone DEFAULT now(),
-  status USER-DEFINED DEFAULT 'pending_leader'::approval_status,
-  place_of_leave text,
-  CONSTRAINT leave_requests_pkey PRIMARY KEY (id),
-  CONSTRAINT leave_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
-  CONSTRAINT leave_requests_current_approver_id_fkey FOREIGN KEY (current_approver_id) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.maintenance_logs (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  asset_id uuid NOT NULL,
-  technician_id uuid NOT NULL,
-  maintenance_type character varying,
-  details text,
-  cost numeric DEFAULT 0,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT maintenance_logs_pkey PRIMARY KEY (id),
-  CONSTRAINT maintenance_logs_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES public.assets(id),
-  CONSTRAINT maintenance_logs_technician_id_fkey FOREIGN KEY (technician_id) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.material_catalogs (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  name character varying NOT NULL,
-  origin character varying,
-  unit character varying NOT NULL,
-  is_active boolean DEFAULT true,
-  department_id uuid,
-  CONSTRAINT material_catalogs_pkey PRIMARY KEY (id),
-  CONSTRAINT material_catalogs_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
-);
-CREATE TABLE public.material_requests (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  requester_id uuid NOT NULL,
-  items jsonb NOT NULL,
-  status USER-DEFINED DEFAULT 'pending_leader'::approval_status,
-  budget_approved boolean DEFAULT false,
-  approval_history jsonb DEFAULT '[]'::jsonb,
-  created_at timestamp with time zone DEFAULT now(),
-  request_number character varying,
-  manager_notes text,
-  department_id uuid,
-  CONSTRAINT material_requests_pkey PRIMARY KEY (id),
-  CONSTRAINT material_requests_requester_id_fkey FOREIGN KEY (requester_id) REFERENCES public.profiles(id),
-  CONSTRAINT material_requests_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
-);
-CREATE TABLE public.material_transactions (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  material_id uuid,
-  trans_type character varying NOT NULL,
-  quantity numeric NOT NULL,
-  trans_date date NOT NULL,
-  machine_id uuid,
-  notes text,
-  recorded_by uuid,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT material_transactions_pkey PRIMARY KEY (id),
-  CONSTRAINT material_transactions_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.factory_materials(id),
-  CONSTRAINT material_transactions_machine_id_fkey FOREIGN KEY (machine_id) REFERENCES public.factory_machines(id),
-  CONSTRAINT material_transactions_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.monthly_evaluations (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  user_id uuid,
-  manager_id uuid,
-  month_year character varying NOT NULL,
-  skill_rating character varying NOT NULL,
-  attitude_rating character varying NOT NULL,
-  working_days numeric DEFAULT 0,
-  leave_days numeric DEFAULT 0,
-  unpaid_leave_days numeric DEFAULT 0,
-  unexcused_days numeric DEFAULT 0,
-  violations text NOT NULL,
-  monthly_grade character varying NOT NULL,
-  proposed_action text NOT NULL,
-  status character varying DEFAULT 'draft'::character varying,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT monthly_evaluations_pkey PRIMARY KEY (id),
-  CONSTRAINT monthly_evaluations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
-  CONSTRAINT monthly_evaluations_manager_id_fkey FOREIGN KEY (manager_id) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.payslips (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  user_id uuid NOT NULL,
-  month integer NOT NULL,
-  year integer NOT NULL,
-  salary_data jsonb NOT NULL,
-  is_viewed boolean DEFAULT false,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT payslips_pkey PRIMARY KEY (id),
-  CONSTRAINT payslips_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.production_logs (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  user_id uuid NOT NULL,
-  shift_date date NOT NULL DEFAULT CURRENT_DATE,
-  product_code character varying NOT NULL,
-  quantity_ok integer DEFAULT 0,
-  quantity_ng integer DEFAULT 0,
-  electricity_kwh numeric,
-  oee_metrics jsonb,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT production_logs_pkey PRIMARY KEY (id),
-  CONSTRAINT production_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.profiles (
-  id uuid NOT NULL,
-  employee_code character varying NOT NULL UNIQUE,
-  full_name character varying NOT NULL,
-  role text DEFAULT 'worker'::character varying,
-  department_id uuid,
-  manager_id uuid,
-  is_active boolean DEFAULT true,
-  created_at timestamp with time zone DEFAULT now(),
-  email text,
-  phone_number text,
-  division_id uuid,
-  can_manage_inventory boolean DEFAULT false,
-  approval_status character varying DEFAULT 'approved'::character varying,
-  CONSTRAINT profiles_pkey PRIMARY KEY (id),
-  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
-  CONSTRAINT profiles_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id),
-  CONSTRAINT profiles_manager_id_fkey FOREIGN KEY (manager_id) REFERENCES public.profiles(id),
-  CONSTRAINT profiles_division_id_fkey FOREIGN KEY (division_id) REFERENCES public.divisions(id),
-  CONSTRAINT profiles_role_fkey FOREIGN KEY (role) REFERENCES public.roles(code)
-);
-CREATE TABLE public.quality_issues (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  reporter_id uuid NOT NULL,
-  machine_code character varying,
-  issue_type character varying,
-  downtime_minutes integer DEFAULT 0,
-  images jsonb DEFAULT '[]'::jsonb,
-  root_cause text,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT quality_issues_pkey PRIMARY KEY (id),
-  CONSTRAINT quality_issues_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.role_hierarchy (
-  role text NOT NULL,
-  managed_by_role text NOT NULL,
-  CONSTRAINT role_hierarchy_role_fkey FOREIGN KEY (role) REFERENCES public.roles(code),
-  CONSTRAINT role_hierarchy_managed_by_role_fkey FOREIGN KEY (managed_by_role) REFERENCES public.roles(code)
-);
-CREATE TABLE public.role_permissions (
-  role text NOT NULL,
-  allowed_features jsonb NOT NULL DEFAULT '[]'::jsonb,
-  CONSTRAINT role_permissions_pkey PRIMARY KEY (role)
-);
-CREATE TABLE public.roles (
-  code character varying NOT NULL,
-  name character varying NOT NULL,
-  description text,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT roles_pkey PRIMARY KEY (code)
-);
-CREATE TABLE public.shift_configs (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  name character varying NOT NULL UNIQUE,
-  start_time time without time zone,
-  end_time time without time zone,
-  is_active boolean DEFAULT true,
-  created_at timestamp with time zone DEFAULT now(),
-  symbol character varying,
-  CONSTRAINT shift_configs_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.tasks (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  assigner_id uuid NOT NULL,
-  assignee_id uuid,
-  team_id uuid,
-  title character varying NOT NULL,
-  description text,
-  deadline timestamp with time zone,
-  status USER-DEFINED DEFAULT 'todo'::task_status,
-  progress_images jsonb DEFAULT '[]'::jsonb,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT tasks_pkey PRIMARY KEY (id),
-  CONSTRAINT tasks_assigner_id_fkey FOREIGN KEY (assigner_id) REFERENCES public.profiles(id),
-  CONSTRAINT tasks_assignee_id_fkey FOREIGN KEY (assignee_id) REFERENCES public.profiles(id),
-  CONSTRAINT tasks_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.departments(id)
-);
-CREATE TABLE public.tool_borrow_logs (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  user_id uuid NOT NULL,
-  item_id uuid NOT NULL,
-  borrowed_at timestamp with time zone DEFAULT now(),
-  expected_return timestamp with time zone,
-  returned_at timestamp with time zone,
-  status character varying DEFAULT 'borrowed'::character varying,
-  CONSTRAINT tool_borrow_logs_pkey PRIMARY KEY (id),
-  CONSTRAINT tool_borrow_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
-  CONSTRAINT tool_borrow_logs_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.inventory_items(id)
-);
-</file>
-
 <file path="lib/features/attendance/controllers/attendance_controller.dart">
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -6710,6 +6901,674 @@ class AttendanceController extends AsyncNotifier<List<AttendanceRowModel>> {
       state = AsyncError(e, stack);
       return "error";
     }
+  }
+}
+</file>
+
+<file path="lib/features/attendance/views/manager_attendance_page.dart">
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ung_dung_nm/features/attendance/views/tab_cham_cong_ngay.dart';
+import 'package:ung_dung_nm/features/attendance/views/tab_bang_cong_thang.dart';
+import 'package:ung_dung_nm/features/attendance/views/tab_danh_gia_xep_loai.dart';
+import 'package:ung_dung_nm/features/admin/controllers/department_controller.dart';
+
+class ManagerAttendancePage extends StatelessWidget {
+  final String profileId;
+  const ManagerAttendancePage({super.key, required this.profileId});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Quản lý Chấm Công"),
+          backgroundColor: Colors.blue.shade800,
+          foregroundColor: Colors.white,
+          bottom: const TabBar(
+            isScrollable: true,
+            labelColor: Colors.orangeAccent,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: Colors.orangeAccent,
+            tabs: [
+              Tab(icon: Icon(Icons.playlist_add_check), text: "Chấm Công Ngày"),
+              Tab(icon: Icon(Icons.grid_on), text: "Bảng Tháng"),
+              Tab(icon: Icon(Icons.star_rate), text: "Đánh Giá Xếp Loại"),
+              Tab(icon: Icon(Icons.settings), text: "Cấu Hình"),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            TabChamCongNgay(currentUserId: profileId),
+            const TabBangCongThang(),
+            const TabDanhGiaXepLoai(),
+            const AttendanceConfigTab(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class AttendanceConfigTab extends ConsumerWidget {
+  const AttendanceConfigTab();
+
+  void _showAddOrEdit(
+    BuildContext context,
+    WidgetRef ref, {
+    required String type,
+    Map<String, dynamic>? item,
+  }) {
+    final isEditing = item != null;
+    final nameCtrl = TextEditingController(text: isEditing ? item['name'] : '');
+    final symbolCtrl = TextEditingController(
+      text: isEditing ? (item['symbol'] ?? '') : '',
+    );
+    bool isActive = isEditing ? item['is_active'] : true;
+
+    showDialog(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(isEditing ? "Sửa" : "Thêm mới"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                    labelText: type == 'shift'
+                        ? "Tên Ca (VD: Ca Ngày)"
+                        : "Trạng thái (VD: Nghỉ phép)",
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: symbolCtrl,
+                  decoration: const InputDecoration(
+                    labelText: "Ký hiệu trên bảng công (VD: X, P)",
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: const Text("Đang sử dụng"),
+                  value: isActive,
+                  onChanged: (val) => setState(() => isActive = val),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c),
+                child: const Text("Hủy"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (nameCtrl.text.isEmpty) return;
+                  final act = ref.read(systemActionProvider);
+                  bool success = false;
+
+                  if (type == 'shift') {
+                    success = isEditing
+                        ? await act.updateShiftConfig(
+                            item['id'].toString(),
+                            nameCtrl.text,
+                            symbolCtrl.text,
+                            isActive,
+                          )
+                        : await act.addShiftConfig(
+                            nameCtrl.text,
+                            symbolCtrl.text,
+                          );
+                  } else {
+                    success = isEditing
+                        ? await act.updateAttendanceStatusConfig(
+                            item['id'].toString(),
+                            nameCtrl.text,
+                            symbolCtrl.text,
+                            isActive,
+                          )
+                        : await act.addAttendanceStatusConfig(
+                            nameCtrl.text,
+                            symbolCtrl.text,
+                          );
+                  }
+
+                  if (context.mounted) {
+                    Navigator.pop(c);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? "Lưu thành công!"
+                              : "Lỗi (Có thể trùng tên).",
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: const Text("Lưu"),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSection(
+    BuildContext context,
+    WidgetRef ref,
+    String title,
+    String type,
+    AsyncValue<List<Map<String, dynamic>>> asyncData,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text("Thêm"),
+                style: ElevatedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: () => _showAddOrEdit(context, ref, type: type),
+              ),
+            ],
+          ),
+        ),
+        asyncData.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, s) => Center(child: Text("Lỗi: $e")),
+          data: (data) {
+            if (data.isEmpty)
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text("Chưa có dữ liệu."),
+              );
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: data.length,
+              itemBuilder: (c, i) => Card(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: ListTile(
+                  title: Text(
+                    data[i]['name'].toString(),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    "Ký hiệu: ${data[i]['symbol'] ?? 'Không có'} | Trạng thái: ${data[i]['is_active'] == true ? 'Đang dùng' : 'Đã ẩn'}",
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () => _showAddOrEdit(
+                          context,
+                          ref,
+                          type: type,
+                          item: data[i],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () async {
+                          final act = ref.read(systemActionProvider);
+                          final msg = type == 'shift'
+                              ? await act.deleteShiftConfig(
+                                  data[i]['id'].toString(),
+                                )
+                              : await act.deleteAttendanceStatusConfig(
+                                  data[i]['id'].toString(),
+                                );
+                          if (context.mounted)
+                            ScaffoldMessenger.of(
+                              context,
+                            ).showSnackBar(SnackBar(content: Text(msg)));
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const Divider(height: 32, thickness: 2),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final shiftData = ref.watch(shiftConfigsProvider);
+    final statusData = ref.watch(attendanceStatusConfigsProvider);
+
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            _buildSection(
+              context,
+              ref,
+              "1. Cấu hình Ca làm việc",
+              "shift",
+              shiftData,
+            ),
+            _buildSection(
+              context,
+              ref,
+              "2. Cấu hình Trạng thái nghỉ/công",
+              "status",
+              statusData,
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+}
+</file>
+
+<file path="lib/features/attendance/views/tab_bang_cong_thang.dart">
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+import '../controllers/attendance_controller.dart';
+import '../../admin/controllers/department_controller.dart';
+
+class TabBangCongThang extends ConsumerWidget {
+  const TabBangCongThang({super.key});
+
+
+  Map<String, dynamic> _getCellStyle(
+    String symbol,
+    bool isSunday,
+    bool isWorking,
+  ) {
+    Color bg = Colors.white;
+    Color text = Colors.black87;
+    FontWeight weight = FontWeight.bold;
+
+    if (symbol == '' || symbol == '-') {
+      bg = Colors.grey.shade100;
+      text = Colors.grey;
+      weight = FontWeight.normal;
+    } else if (isWorking) {
+      bg = const Color(0xFFE8F5E9); // Xanh nhạt
+      text = Colors.green.shade900;
+    } else {
+      bg = const Color(0xFFFFEBEE); // Đỏ nhạt
+      text = Colors.red.shade900;
+    }
+
+    if (isSunday && (symbol == '' || symbol == '-')) {
+      bg = const Color(0xFFFFF3E0);
+      text = Colors.red.shade300;
+    }
+
+    return {'bg': bg, 'text': text, 'weight': weight};
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentMonth = ref.watch(selectedMonthProvider);
+    final employeesAsync = ref.watch(departmentEmployeesProvider);
+
+
+    final timesheetsAsync = ref.watch(monthlyAttendanceProvider);
+
+
+    final shiftConfigs = ref.watch(shiftConfigsProvider).valueOrNull ?? [];
+    final statusConfigs =
+        ref.watch(attendanceStatusConfigsProvider).valueOrNull ?? [];
+
+    int daysInMonth = DateTime(
+      currentMonth.year,
+      currentMonth.month + 1,
+      0,
+    ).day;
+    const double cellWidth = 45.0;
+    const double cellHeight = 40.0;
+    const double nameColumnWidth = 150.0;
+
+    return Column(
+      children: [
+
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+          ),
+          child: Row(
+            children: [
+              InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: currentMonth,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030),
+                  );
+                  if (picked != null)
+                    ref.read(selectedMonthProvider.notifier).state = picked;
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.shade50,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.purple.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.date_range,
+                        color: Colors.purple,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Tháng ${DateFormat('MM/yyyy').format(currentMonth)}",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.purple,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: employeesAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) =>
+                Center(child: Text("Lỗi tải nhân viên: $err")),
+            data: (employees) {
+              if (employees.isEmpty)
+                return const Center(child: Text("Chưa có nhân viên."));
+
+              return timesheetsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) => Center(
+                  child: Text("Lỗi tải bảng công: $err"),
+                ),
+                data: (timesheetMap) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
+                      SizedBox(
+                        width: nameColumnWidth,
+                        child: Column(
+                          children: [
+                            Container(
+                              height: cellHeight,
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.only(left: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  right: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                              ),
+                              child: const Text(
+                                "NHÂN VIÊN",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: ListView.builder(
+                                itemCount: employees.length,
+                                itemBuilder: (context, index) {
+                                  return Container(
+                                    height: cellHeight,
+                                    alignment: Alignment.centerLeft,
+                                    padding: const EdgeInsets.only(left: 12),
+                                    decoration: BoxDecoration(
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: Colors.grey.shade200,
+                                        ),
+                                        right: BorderSide(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      employees[index].fullName,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: SizedBox(
+                            width: daysInMonth * cellWidth,
+                            child: Column(
+                              children: [
+
+                                Row(
+                                  children: List.generate(daysInMonth, (index) {
+                                    int day = index + 1;
+                                    bool isSun =
+                                        DateTime(
+                                          currentMonth.year,
+                                          currentMonth.month,
+                                          day,
+                                        ).weekday ==
+                                        7;
+                                    return Container(
+                                      width: cellWidth,
+                                      height: cellHeight,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: isSun
+                                            ? Colors.orange.shade50
+                                            : Colors.grey.shade100,
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: Colors.grey.shade400,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        "$day",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                          color: isSun
+                                              ? Colors.red
+                                              : Colors.black87,
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ),
+
+
+                                Expanded(
+                                  child: ListView.builder(
+                                    itemCount: employees.length,
+                                    itemBuilder: (context, empIndex) {
+                                      final empId = employees[empIndex].id;
+                                      final empTimesheets =
+                                          timesheetMap[empId] ?? {};
+
+                                      return Row(
+                                        children: List.generate(daysInMonth, (
+                                          dayIndex,
+                                        ) {
+                                          int day = dayIndex + 1;
+                                          bool isSun =
+                                              DateTime(
+                                                currentMonth.year,
+                                                currentMonth.month,
+                                                day,
+                                              ).weekday ==
+                                              7;
+                                          final cellData = empTimesheets[day];
+
+
+                                          String symbol = '-';
+                                          bool isWorking = false;
+
+                                          if (cellData != null) {
+
+                                            final currentStatusConfig =
+                                                statusConfigs.firstWhere(
+                                                  (s) =>
+                                                      s['name'] ==
+                                                      cellData.status,
+                                                  orElse: () => {
+                                                    'name': cellData.status,
+                                                    'symbol': '',
+                                                    'is_working_day': true,
+                                                  },
+                                                );
+
+
+
+                                            isWorking =
+                                                currentStatusConfig['is_working_day'] ==
+                                                    true ||
+                                                cellData.status == 'Có mặt';
+
+                                            if (isWorking) {
+
+                                              final currentShiftConfig =
+                                                  shiftConfigs.firstWhere(
+                                                    (s) =>
+                                                        s['name'] ==
+                                                        cellData.shiftType,
+                                                    orElse: () => {
+                                                      'symbol': 'X',
+                                                    },
+                                                  );
+                                              symbol =
+                                                  (currentShiftConfig['symbol']
+                                                      ?.toString() ??
+                                                  'X');
+                                            } else {
+
+                                              symbol =
+                                                  (currentStatusConfig['symbol']
+                                                      ?.toString() ??
+                                                  '-');
+                                            }
+                                          }
+
+                                          final style = _getCellStyle(
+                                            symbol,
+                                            isSun,
+                                            isWorking,
+                                          );
+                                          bool hasOvertime =
+                                              cellData?.overtimeStart != null &&
+                                              cellData!
+                                                  .overtimeStart!
+                                                  .isNotEmpty;
+
+                                          return Container(
+                                            width: cellWidth,
+                                            height: cellHeight,
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              color: style['bg'],
+                                              border: Border(
+                                                right: BorderSide(
+                                                  color: Colors.grey.shade200,
+                                                  width: 0.5,
+                                                ),
+                                                bottom: BorderSide(
+                                                  color: hasOvertime
+                                                      ? Colors.orange.shade400
+                                                      : Colors.grey.shade200,
+                                                  width: hasOvertime
+                                                      ? 2.0
+                                                      : 0.5,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              symbol,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: style['weight'],
+                                                color: style['text'],
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 }
 </file>
@@ -7683,6 +8542,368 @@ entrypoint = "./functions/update_credentials/index.ts"
 # static_files = [ "./functions/update_credentials/*.html" ]
 </file>
 
+<file path="database_schema.sql">
+CREATE TABLE public.app_features (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  module_group character varying NOT NULL,
+  group_name character varying NOT NULL,
+  feature_code character varying NOT NULL UNIQUE,
+  feature_name character varying NOT NULL,
+  CONSTRAINT app_features_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.approval_workflows (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  role_code character varying NOT NULL,
+  workflow_name character varying NOT NULL,
+  steps jsonb NOT NULL DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  module_type character varying DEFAULT 'leave_request'::character varying,
+  CONSTRAINT approval_workflows_pkey PRIMARY KEY (id),
+  CONSTRAINT approval_workflows_role_fkey FOREIGN KEY (role_code) REFERENCES public.roles(code)
+);
+CREATE TABLE public.assets (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  qr_code character varying UNIQUE,
+  name character varying NOT NULL,
+  department_id uuid,
+  status character varying DEFAULT 'active'::character varying,
+  CONSTRAINT assets_pkey PRIMARY KEY (id),
+  CONSTRAINT assets_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
+);
+CREATE TABLE public.attendance_logs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  log_type USER-DEFINED NOT NULL,
+  log_time timestamp with time zone DEFAULT now(),
+  method character varying,
+  location_data jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT attendance_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT attendance_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.attendance_status_configs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL UNIQUE,
+  is_working_day boolean DEFAULT true,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  symbol character varying,
+  CONSTRAINT attendance_status_configs_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.compressed_air_readings (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  pressure_value numeric,
+  flow_rate_value numeric,
+  recorded_by uuid,
+  recorded_at date NOT NULL UNIQUE,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compressed_air_readings_pkey PRIMARY KEY (id),
+  CONSTRAINT compressed_air_readings_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.daily_timesheets (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  date date NOT NULL,
+  shift_type character varying DEFAULT 'Ca Ngày'::character varying,
+  status character varying DEFAULT 'Có mặt'::character varying,
+  overtime_start time without time zone,
+  overtime_end time without time zone,
+  notes text,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT daily_timesheets_pkey PRIMARY KEY (id),
+  CONSTRAINT daily_timesheets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.departments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  division_id uuid,
+  CONSTRAINT departments_pkey PRIMARY KEY (id),
+  CONSTRAINT departments_division_id_fkey FOREIGN KEY (division_id) REFERENCES public.divisions(id)
+);
+CREATE TABLE public.divisions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT divisions_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.electrical_cabinets (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  location text,
+  department_id uuid,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT electrical_cabinets_pkey PRIMARY KEY (id),
+  CONSTRAINT electrical_cabinets_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
+);
+CREATE TABLE public.electricity_readings (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  cabinet_id uuid NOT NULL,
+  reading_value numeric NOT NULL,
+  recorded_by uuid,
+  recorded_at date NOT NULL,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT electricity_readings_pkey PRIMARY KEY (id),
+  CONSTRAINT electricity_readings_cabinet_id_fkey FOREIGN KEY (cabinet_id) REFERENCES public.electrical_cabinets(id),
+  CONSTRAINT electricity_readings_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.employee_feedbacks (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  feedback_type character varying NOT NULL,
+  content text NOT NULL,
+  status character varying DEFAULT 'pending'::character varying,
+  created_at timestamp with time zone DEFAULT now(),
+  is_anonymous boolean DEFAULT false,
+  CONSTRAINT employee_feedbacks_pkey PRIMARY KEY (id),
+  CONSTRAINT employee_feedbacks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.factory_machines (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  description text,
+  CONSTRAINT factory_machines_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.factory_materials (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  category character varying NOT NULL,
+  name character varying NOT NULL,
+  unit character varying NOT NULL,
+  initial_qty numeric DEFAULT 0,
+  total_import numeric DEFAULT 0,
+  total_export numeric DEFAULT 0,
+  current_qty numeric DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  department_id uuid,
+  CONSTRAINT factory_materials_pkey PRIMARY KEY (id),
+  CONSTRAINT factory_materials_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
+);
+CREATE TABLE public.internal_communications (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  author_id uuid NOT NULL,
+  title character varying NOT NULL,
+  content text,
+  comm_type character varying,
+  target_roles jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT internal_communications_pkey PRIMARY KEY (id),
+  CONSTRAINT internal_communications_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.inventory_items (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  qr_code character varying NOT NULL UNIQUE,
+  name character varying NOT NULL,
+  min_stock_level integer DEFAULT 0,
+  current_stock integer DEFAULT 0,
+  unit character varying,
+  CONSTRAINT inventory_items_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.leave_requests (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  leave_type character varying NOT NULL,
+  start_time timestamp with time zone NOT NULL,
+  end_time timestamp with time zone NOT NULL,
+  reason text,
+  current_approver_id uuid,
+  approval_history jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  status USER-DEFINED DEFAULT 'pending_leader'::approval_status,
+  place_of_leave text,
+  CONSTRAINT leave_requests_pkey PRIMARY KEY (id),
+  CONSTRAINT leave_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT leave_requests_current_approver_id_fkey FOREIGN KEY (current_approver_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.maintenance_logs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  asset_id uuid NOT NULL,
+  technician_id uuid NOT NULL,
+  maintenance_type character varying,
+  details text,
+  cost numeric DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT maintenance_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT maintenance_logs_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES public.assets(id),
+  CONSTRAINT maintenance_logs_technician_id_fkey FOREIGN KEY (technician_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.material_catalogs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  origin character varying,
+  unit character varying NOT NULL,
+  is_active boolean DEFAULT true,
+  department_id uuid,
+  CONSTRAINT material_catalogs_pkey PRIMARY KEY (id),
+  CONSTRAINT material_catalogs_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
+);
+CREATE TABLE public.material_requests (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  requester_id uuid NOT NULL,
+  items jsonb NOT NULL,
+  status USER-DEFINED DEFAULT 'pending_leader'::approval_status,
+  budget_approved boolean DEFAULT false,
+  approval_history jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  request_number character varying,
+  manager_notes text,
+  department_id uuid,
+  CONSTRAINT material_requests_pkey PRIMARY KEY (id),
+  CONSTRAINT material_requests_requester_id_fkey FOREIGN KEY (requester_id) REFERENCES public.profiles(id),
+  CONSTRAINT material_requests_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
+);
+CREATE TABLE public.material_transactions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  material_id uuid,
+  trans_type character varying NOT NULL,
+  quantity numeric NOT NULL,
+  trans_date date NOT NULL,
+  machine_id uuid,
+  notes text,
+  recorded_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT material_transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT material_transactions_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.factory_materials(id),
+  CONSTRAINT material_transactions_machine_id_fkey FOREIGN KEY (machine_id) REFERENCES public.factory_machines(id),
+  CONSTRAINT material_transactions_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.monthly_evaluations (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  manager_id uuid,
+  month_year character varying NOT NULL,
+  skill_rating character varying NOT NULL,
+  attitude_rating character varying NOT NULL,
+  working_days numeric DEFAULT 0,
+  leave_days numeric DEFAULT 0,
+  unpaid_leave_days numeric DEFAULT 0,
+  unexcused_days numeric DEFAULT 0,
+  violations text NOT NULL,
+  monthly_grade character varying NOT NULL,
+  proposed_action text NOT NULL,
+  status character varying DEFAULT 'draft'::character varying,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT monthly_evaluations_pkey PRIMARY KEY (id),
+  CONSTRAINT monthly_evaluations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT monthly_evaluations_manager_id_fkey FOREIGN KEY (manager_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.payslips (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  month integer NOT NULL,
+  year integer NOT NULL,
+  salary_data jsonb NOT NULL,
+  is_viewed boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT payslips_pkey PRIMARY KEY (id),
+  CONSTRAINT payslips_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.production_logs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  shift_date date NOT NULL DEFAULT CURRENT_DATE,
+  product_code character varying NOT NULL,
+  quantity_ok integer DEFAULT 0,
+  quantity_ng integer DEFAULT 0,
+  electricity_kwh numeric,
+  oee_metrics jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT production_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT production_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  employee_code character varying NOT NULL UNIQUE,
+  full_name character varying NOT NULL,
+  role text DEFAULT 'worker'::character varying,
+  department_id uuid,
+  manager_id uuid,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  email text,
+  phone_number text,
+  division_id uuid,
+  can_manage_inventory boolean DEFAULT false,
+  approval_status character varying DEFAULT 'approved'::character varying,
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
+  CONSTRAINT profiles_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id),
+  CONSTRAINT profiles_manager_id_fkey FOREIGN KEY (manager_id) REFERENCES public.profiles(id),
+  CONSTRAINT profiles_division_id_fkey FOREIGN KEY (division_id) REFERENCES public.divisions(id),
+  CONSTRAINT profiles_role_fkey FOREIGN KEY (role) REFERENCES public.roles(code)
+);
+CREATE TABLE public.quality_issues (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  reporter_id uuid NOT NULL,
+  machine_code character varying,
+  issue_type character varying,
+  downtime_minutes integer DEFAULT 0,
+  images jsonb DEFAULT '[]'::jsonb,
+  root_cause text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT quality_issues_pkey PRIMARY KEY (id),
+  CONSTRAINT quality_issues_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.role_permissions (
+  role text NOT NULL,
+  allowed_features jsonb NOT NULL DEFAULT '[]'::jsonb,
+  CONSTRAINT role_permissions_pkey PRIMARY KEY (role)
+);
+CREATE TABLE public.roles (
+  code character varying NOT NULL,
+  name character varying NOT NULL,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  level_rank integer DEFAULT 4,
+  CONSTRAINT roles_pkey PRIMARY KEY (code)
+);
+CREATE TABLE public.shift_configs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL UNIQUE,
+  start_time time without time zone,
+  end_time time without time zone,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  symbol character varying,
+  CONSTRAINT shift_configs_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.tasks (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  assigner_id uuid NOT NULL,
+  assignee_id uuid,
+  team_id uuid,
+  title character varying NOT NULL,
+  description text,
+  deadline timestamp with time zone,
+  status USER-DEFINED DEFAULT 'todo'::task_status,
+  progress_images jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT tasks_pkey PRIMARY KEY (id),
+  CONSTRAINT tasks_assigner_id_fkey FOREIGN KEY (assigner_id) REFERENCES public.profiles(id),
+  CONSTRAINT tasks_assignee_id_fkey FOREIGN KEY (assignee_id) REFERENCES public.profiles(id),
+  CONSTRAINT tasks_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.departments(id)
+);
+CREATE TABLE public.tool_borrow_logs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  item_id uuid NOT NULL,
+  borrowed_at timestamp with time zone DEFAULT now(),
+  expected_return timestamp with time zone,
+  returned_at timestamp with time zone,
+  status character varying DEFAULT 'borrowed'::character varying,
+  CONSTRAINT tool_borrow_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT tool_borrow_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT tool_borrow_logs_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.inventory_items(id)
+);
+</file>
+
 <file path="lib/features/admin/controllers/employee_controller.dart">
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/supabase_provider.dart';
@@ -7692,7 +8913,6 @@ import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_html/html.dart' as html;
-import '../../attendance/models/profile_model.dart';
 
 
 final employeeListProvider = FutureProvider<List<ProfileModel>>((ref) async {
@@ -7898,9 +9118,11 @@ class EmployeeActionController {
   // ===============================================
   // HÀM MỚI: NHẬP DỮ LIỆU TỪ FILE CSV
   // ===============================================
+  // Thay thế toàn bộ hàm cũ bằng hàm này:
   Future<String> importEmployeesFromCsv() async {
     try {
-      // 1. Mở cửa sổ chọn file
+      final supabase = ref.read(supabaseProvider);
+
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['csv'],
@@ -7908,28 +9130,43 @@ class EmployeeActionController {
 
       if (result == null) return "Hủy bỏ. Không có file nào được chọn.";
 
+      Uint8List bytes = result.files.single.bytes!;
 
-      final bytes = result.files.single.bytes!;
-      final csvString = utf8.decode(bytes);
+      if (bytes.length > 3 &&
+          bytes[0] == 239 &&
+          bytes[1] == 187 &&
+          bytes[2] == 191) {
+        bytes = bytes.sublist(3);
+      }
+      final csvString = utf8.decode(bytes, allowMalformed: true);
 
 
-      final supabase = ref.read(supabaseProvider);
       final response = await supabase.functions.invoke(
         'bulk_upsert_employees',
         body: {'csvData': csvString},
       );
 
       if (response.status != 200) {
-        throw Exception(
-          response.data['error'] ?? 'Lỗi không xác định từ server.',
-        );
+        final errorData = response.data;
+        if (response.status == 403 &&
+            errorData is Map &&
+            errorData.containsKey('error')) {
+          return "Từ chối truy cập: ${errorData['error']}";
+        }
+        if (errorData is Map && errorData.containsKey('error')) {
+          throw Exception(errorData['error']);
+        }
+        throw Exception('Lỗi máy chủ: Status ${response.status}.');
       }
-
 
       ref.invalidate(employeeListProvider);
       return response.data['message'] ?? "Import thành công!";
     } catch (e) {
-      return "Import thất bại: ${e.toString()}";
+      print("CSV Error: $e");
+      if (e.toString().contains('JWT') || e.toString().contains('401')) {
+        return "Phiên đăng nhập không hợp lệ. Vui lòng đăng xuất và đăng nhập lại.";
+      }
+      return "Import thất bại: Cấu trúc file không đúng hoặc có lỗi kết nối.";
     }
   }
 }
@@ -8009,20 +9246,11 @@ class DepartmentManagementPage extends ConsumerWidget {
           tabViews.add(const _RolePermissionsTab());
         }
         if (isAdmin || myFeatures.contains('phong_ban_cap_bac')) {
-          tabs.add(const Tab(icon: Icon(Icons.account_tree), text: "Cấp Bậc"));
-          tabViews.add(const _RoleHierarchyTab());
-        }
 
-        if (isAdmin ||
-            myFeatures.contains('phong_ban_cau_hinh_ca') ||
-            myFeatures.contains('phong_ban_cau_hinh_cong')) {
           tabs.add(
-            const Tab(
-              icon: Icon(Icons.settings_suggest),
-              text: "Cấu Hình Chấm Công",
-            ),
+            const Tab(icon: Icon(Icons.account_tree), text: "Tuyến Duyệt Đơn"),
           );
-          tabViews.add(const _AttendanceConfigTab());
+          tabViews.add(const _ApprovalWorkflowTab());
         }
 
         if (tabs.isEmpty)
@@ -8376,34 +9604,25 @@ class _RolePermissionsTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, s) => Text("Lỗi: $e"),
       data: (roles) {
+
+        final sortedRoles = List<Map<String, dynamic>>.from(roles);
+        sortedRoles.sort(
+          (a, b) => (a['level_rank'] ?? 4).compareTo(b['level_rank'] ?? 4),
+        );
+
         return permissionsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, s) => Text("Lỗi: $e"),
           data: (perms) {
             return ListView.builder(
-              itemCount: roles.length,
+              itemCount: sortedRoles.length,
               itemBuilder: (context, index) {
-                final roleCode = roles[index]['code'];
-                final roleName = roles[index]['name'];
+                final roleCode = sortedRoles[index]['code'];
+                final roleName = sortedRoles[index]['name'];
+                final level = sortedRoles[index]['level_rank'] ?? 4;
 
-                if (roleCode == 'admin') {
-                  return Card(
-                    margin: const EdgeInsets.all(8),
-                    child: ListTile(
-                      title: Text(
-                        "Chức vụ: $roleName",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        "Tài khoản mặc định có TẤT CẢ quyền. Không thể chỉnh sửa.",
-                      ),
-                      trailing: const Icon(Icons.lock, color: Colors.red),
-                    ),
-                  );
-                }
+                if (roleCode == 'admin')
+                  return const SizedBox.shrink();
 
                 final existingRecord = perms
                     .where((p) => p['role'] == roleCode)
@@ -8421,7 +9640,7 @@ class _RolePermissionsTab extends ConsumerWidget {
                   ),
                   child: ExpansionTile(
                     title: Text(
-                      "Chức vụ: $roleName",
+                      "Cấp $level - $roleName ($roleCode)",
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.blue,
@@ -8429,110 +9648,70 @@ class _RolePermissionsTab extends ConsumerWidget {
                     ),
                     children: GROUP_NAMES.entries.map((group) {
                       final featuresInGroup = ALL_FEATURES_NESTED[group.key]!;
-                      final Set<String> groupFeatureKeys = featuresInGroup.keys
+                      final groupFeatureKeys = featuresInGroup.keys
                           .map((e) => e.toString())
                           .toSet();
-                      final Set<String> selectedFeaturesInGroup =
-                          currentFeatures
-                              .where((f) => groupFeatureKeys.contains(f))
-                              .toSet();
-
-
+                      final selectedInGroup = currentFeatures
+                          .where((f) => groupFeatureKeys.contains(f))
+                          .toSet();
                       final bool isAllSelected =
-                          selectedFeaturesInGroup.length ==
-                          groupFeatureKeys.length;
-
+                          selectedInGroup.length == groupFeatureKeys.length;
                       final bool isIndeterminate =
-                          selectedFeaturesInGroup.isNotEmpty && !isAllSelected;
+                          selectedInGroup.isNotEmpty && !isAllSelected;
 
-                      return Padding(
-                        padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-
-                            CheckboxListTile(
-                              title: Text(
-                                group.value,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CheckboxListTile(
+                            title: Text(
+                              group.value,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
                               ),
-                              value: isIndeterminate ? null : isAllSelected,
-                              tristate: true,
-                              onChanged: (bool? checked) {
-                                List<String> newFeatures = List.from(
-                                  currentFeatures,
+                            ),
+                            value: isIndeterminate ? null : isAllSelected,
+                            tristate: true,
+                            onChanged: (bool? checked) {
+                              List<String> newF = List.from(currentFeatures);
+                              if (checked == true) {
+                                newF.addAll(groupFeatureKeys);
+                                newF = newF.toSet().toList();
+                              } else {
+                                newF.removeWhere(
+                                  (f) => groupFeatureKeys.contains(f),
                                 );
-                                if (checked == true) {
-
-
-                                  newFeatures.addAll(groupFeatureKeys);
-
-                                  newFeatures = newFeatures.toSet().toList();
-                                } else {
-
-
-                                  newFeatures.removeWhere(
-                                    (feature) =>
-                                        groupFeatureKeys.contains(feature),
-                                  );
-                                }
-
-                                ref
-                                    .read(systemActionProvider)
-                                    .updateRolePermissions(
-                                      roleCode,
-                                      newFeatures,
+                              }
+                              ref
+                                  .read(systemActionProvider)
+                                  .updateRolePermissions(roleCode, newF);
+                            },
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 24.0),
+                            child: Column(
+                              children: featuresInGroup.entries.map((f) {
+                                return CheckboxListTile(
+                                  visualDensity: VisualDensity.compact,
+                                  title: Text(f.value),
+                                  value: currentFeatures.contains(f.key),
+                                  onChanged: (bool? checked) {
+                                    List<String> newF = List.from(
+                                      currentFeatures,
                                     );
-                              },
+                                    if (checked == true)
+                                      newF.add(f.key);
+                                    else
+                                      newF.remove(f.key);
+                                    ref
+                                        .read(systemActionProvider)
+                                        .updateRolePermissions(roleCode, newF);
+                                  },
+                                );
+                              }).toList(),
                             ),
-
-
-                            Padding(
-                              padding: const EdgeInsets.only(left: 24.0),
-                              child: Column(
-                                children: featuresInGroup.entries.map((
-                                  feature,
-                                ) {
-                                  final isAllowed = currentFeatures.contains(
-                                    feature.key,
-                                  );
-                                  return CheckboxListTile(
-                                    visualDensity: VisualDensity.compact,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                    ),
-                                    title: Text(
-                                      feature.value,
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                    value: isAllowed,
-                                    onChanged: (bool? checked) {
-                                      if (checked == null) return;
-                                      List<String> newFeatures = List.from(
-                                        currentFeatures,
-                                      );
-                                      if (checked) {
-                                        newFeatures.add(feature.key);
-                                      } else {
-                                        newFeatures.remove(feature.key);
-                                      }
-                                      ref
-                                          .read(systemActionProvider)
-                                          .updateRolePermissions(
-                                            roleCode,
-                                            newFeatures,
-                                          );
-                                    },
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                            const Divider(),
-                          ],
-                        ),
+                          ),
+                          const Divider(),
+                        ],
                       );
                     }).toList(),
                   ),
@@ -8561,17 +9740,20 @@ class _RolesTab extends ConsumerWidget {
     final descCtrl = TextEditingController(
       text: isEditing ? item['description'] : '',
     );
+    final levelCtrl = TextEditingController(
+      text: isEditing ? (item['level_rank']?.toString() ?? '4') : '4',
+    );
 
     showDialog(
       context: context,
       builder: (c) => AlertDialog(
-        title: Text(isEditing ? "Sửa Chức Vụ" : "Thêm Chức Vụ Mới"),
+        title: Text(isEditing ? "Sửa Chức Vụ & Cấp Bậc" : "Thêm Chức Vụ Mới"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: codeCtrl,
-              enabled: !isEditing, // Đã tạo thì không cho sửa mã Code
+              enabled: !isEditing,
               decoration: const InputDecoration(
                 labelText: "Mã chức vụ (VD: manager)",
               ),
@@ -8579,6 +9761,15 @@ class _RolesTab extends ConsumerWidget {
             TextField(
               controller: nameCtrl,
               decoration: const InputDecoration(labelText: "Tên hiển thị"),
+            ),
+            TextField(
+              controller: levelCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: "Cấp bậc (Level: 0, 1, 2, 3, 4)",
+                helperText:
+                    "Số càng nhỏ, cấp càng cao. (VD: Giám đốc=1, Quản lý=2, NV=4)",
+              ),
             ),
             TextField(
               controller: descCtrl,
@@ -8595,16 +9786,19 @@ class _RolesTab extends ConsumerWidget {
             onPressed: () async {
               if (codeCtrl.text.isEmpty || nameCtrl.text.isEmpty) return;
               final act = ref.read(systemActionProvider);
+              final lvl = int.tryParse(levelCtrl.text) ?? 4;
               final success = isEditing
                   ? await act.updateRole(
                       codeCtrl.text.trim(),
                       nameCtrl.text.trim(),
                       descCtrl.text.trim(),
+                      lvl,
                     )
                   : await act.addRole(
                       codeCtrl.text.trim(),
                       nameCtrl.text.trim(),
                       descCtrl.text.trim(),
+                      lvl,
                     );
               if (context.mounted) {
                 Navigator.pop(c);
@@ -8645,7 +9839,7 @@ class _RolesTab extends ConsumerWidget {
                   ? const Icon(
                       Icons.lock,
                       color: Colors.grey,
-                    ) // Không cho sửa/xóa admin
+                    )
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -8679,35 +9873,43 @@ class _RolesTab extends ConsumerWidget {
   }
 }
 
-// ====================== TAB 4: PHÂN CẤP QUẢN LÝ ======================
-class _RoleHierarchyTab extends ConsumerWidget {
-  const _RoleHierarchyTab();
+
+class _ApprovalWorkflowTab extends ConsumerWidget {
+  const _ApprovalWorkflowTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Lấy danh sách cấu hình cấp bậc
-    final hierarchyAsync = ref.watch(roleHierarchyProvider);
-    // Lấy danh sách chức vụ động
+    final workflowsAsync = ref.watch(approvalWorkflowsProvider);
     final rolesAsync = ref.watch(roleListProvider);
 
     return rolesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, s) => Center(child: Text("Lỗi tải chức vụ: $e")),
       data: (roles) {
-        return hierarchyAsync.when(
+
+        final sortedRoles = List<Map<String, dynamic>>.from(roles);
+        sortedRoles.sort(
+          (a, b) => (a['level_rank'] ?? 4).compareTo(b['level_rank'] ?? 4),
+        );
+
+        return workflowsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, s) => Center(child: Text("Lỗi tải cấp bậc: $e")),
-          data: (hierarchy) {
+          error: (e, s) => Center(child: Text("Lỗi tải quy trình: $e")),
+          data: (workflows) {
             return ListView.builder(
-              itemCount: roles.length,
+              itemCount: sortedRoles.length,
               itemBuilder: (context, index) {
-                final roleCode = roles[index]['code'];
-                final roleName = roles[index]['name'];
+                final roleCode = sortedRoles[index]['code'];
+                final roleName = sortedRoles[index]['name'];
+                final level = sortedRoles[index]['level_rank'] ?? 4;
 
 
-                final managedByRoles = hierarchy
-                    .where((h) => h['role'] == roleCode)
-                    .map((h) => h['managed_by_role'])
+                if (roleCode == 'admin' || level <= 1)
+                  return const SizedBox.shrink();
+
+
+                final myWorkflows = workflows
+                    .where((w) => w['role_code'] == roleCode)
                     .toList();
 
                 return Card(
@@ -8716,95 +9918,161 @@ class _RoleHierarchyTab extends ConsumerWidget {
                     vertical: 8,
                   ),
                   elevation: 2,
-                  child: ListTile(
-                    title: Text(
-                      "Chức vụ: $roleName ($roleCode)",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Wrap(
-                        spacing: 8,
-                        children: managedByRoles.map((mCode) {
-
-                          final managerRoleObj = roles.firstWhere(
-                            (r) => r['code'] == mCode,
-                            orElse: () => {
-                              'name': mCode,
-                            },
-                          );
-                          final managerName = managerRoleObj['name'];
-
-                          return Chip(
-                            label: Text(
-                              "Báo cáo cho: $managerName",
-                              style: const TextStyle(fontSize: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Chức vụ tạo đơn: $roleName (Cấp $level)",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.blue,
+                              ),
                             ),
-                            backgroundColor: Colors.blue.shade50,
-                            deleteIconColor: Colors.red,
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.alt_route, size: 16),
+                              label: const Text("Thêm Quy Trình"),
+                              style: ElevatedButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                backgroundColor: Colors.green.shade600,
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: () => _showAddWorkflowDialog(
+                                context,
+                                ref,
+                                sortedRoles,
+                                roleCode,
+                                roleName,
+                                level,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(),
+                        if (myWorkflows.isEmpty)
+                          const Row(
+                            children: [
+                              Icon(
+                                Icons.warning_amber_rounded,
+                                color: Colors.red,
+                                size: 18,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Chưa cấu hình luồng duyệt. Đơn sẽ không gửi được.",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ...myWorkflows.map((wf) {
 
-                            onDeleted: roleCode == 'admin'
-                                ? null
-                                : () => ref
-                                      .read(systemActionProvider)
-                                      .deleteRoleHierarchy(
-                                        roleCode,
-                                        mCode.toString(),
+                          List<dynamic> steps = wf['steps'] ?? [];
+
+
+                          List<Widget> stepWidgets = [
+                            Chip(
+                              label: const Text(
+                                "Người làm đơn",
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              backgroundColor: Colors.grey.shade200,
+                            ),
+                          ];
+
+                          for (var stepCode in steps) {
+                            final approverRole = sortedRoles.firstWhere(
+                              (r) => r['code'] == stepCode,
+                              orElse: () => {'name': stepCode, 'level_rank': 4},
+                            );
+                            stepWidgets.add(
+                              const Icon(
+                                Icons.arrow_forward,
+                                color: Colors.orange,
+                                size: 20,
+                              ),
+                            );
+                            stepWidgets.add(
+                              Chip(
+                                label: Text(
+                                  "${approverRole['name']}",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                backgroundColor: approverRole['level_rank'] == 1
+                                    ? Colors.purple
+                                    : Colors
+                                          .blue,
+                              ),
+                            );
+                          }
+
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                              top: 8.0,
+                              bottom: 8.0,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.label_important,
+                                            color: Colors.blue,
+                                            size: 18,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            "${wf['workflow_name']}",
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                      const SizedBox(height: 6),
+                                      Wrap(
+                                        spacing: 4,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
+                                        children: stepWidgets,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () => ref
+                                      .read(systemActionProvider)
+                                      .deleteApprovalWorkflow(
+                                        wf['id'].toString(),
+                                      ),
+                                ),
+                              ],
+                            ),
                           );
                         }).toList(),
-                      ),
+                      ],
                     ),
-
-                    trailing: roleCode == 'admin'
-                        ? const Icon(Icons.lock, color: Colors.grey)
-                        : IconButton(
-                            icon: const Icon(
-                              Icons.add_circle,
-                              color: Colors.green,
-                              size: 32,
-                            ),
-                            tooltip: "Thêm người quản lý",
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (c) => SimpleDialog(
-                                  title: Text("Thêm cấp trên cho:\n$roleName"),
-                                  children: roles
-                                      .where(
-
-                                        (r) =>
-                                            r['code'] != roleCode &&
-                                            !managedByRoles.contains(r['code']),
-                                      )
-                                      .map(
-                                        (r) => ListTile(
-                                          leading: const Icon(
-                                            Icons.person_add,
-                                            color: Colors.blueGrey,
-                                          ),
-                                          title: Text(
-                                            "${r['name']} (${r['code']})",
-                                          ),
-                                          onTap: () {
-                                            ref
-                                                .read(systemActionProvider)
-                                                .addRoleHierarchy(
-                                                  roleCode,
-                                                  r['code'],
-                                                );
-                                            Navigator.pop(c);
-                                          },
-                                        ),
-                                      )
-                                      .toList(),
-                                ),
-                              );
-                            },
-                          ),
                   ),
                 );
               },
@@ -8814,56 +10082,112 @@ class _RoleHierarchyTab extends ConsumerWidget {
       },
     );
   }
-}
 
 
-class _AttendanceConfigTab extends ConsumerWidget {
-  const _AttendanceConfigTab();
-
-  void _showAddOrEdit(
+  void _showAddWorkflowDialog(
     BuildContext context,
-    WidgetRef ref, {
-    required String type,
-    Map<String, dynamic>? item,
-  }) {
-    final isEditing = item != null;
-    final nameCtrl = TextEditingController(text: isEditing ? item['name'] : '');
-    final symbolCtrl = TextEditingController(
-      text: isEditing ? (item['symbol'] ?? '') : '',
-    );
-    bool isActive = isEditing ? item['is_active'] : true;
+    WidgetRef ref,
+    List<Map<String, dynamic>> allRoles,
+    String roleCode,
+    String roleName,
+    int currentLevel,
+  ) {
+    final nameCtrl = TextEditingController();
+
+    final availableApprovers = allRoles
+        .where(
+          (r) => (r['level_rank'] ?? 4) < currentLevel && r['code'] != 'admin',
+        )
+        .toList();
+    List<String> selectedSteps = [];
+    String selectedModule = 'leave_request';
 
     showDialog(
       context: context,
       builder: (c) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: Text(isEditing ? "Sửa" : "Thêm mới"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  decoration: InputDecoration(
-                    labelText: type == 'shift'
-                        ? "Tên Ca (VD: Ca Ngày)"
-                        : "Trạng thái (VD: Nghỉ phép)",
+            title: Text("Tạo quy trình cho: $roleName"),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+
+                  const Text(
+                    "Áp dụng cho tính năng:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: symbolCtrl,
-                  decoration: const InputDecoration(
-                    labelText: "Ký hiệu trên bảng công (VD: X, P)",
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: selectedModule,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'leave_request',
+                            child: Text("Đơn Xin Nghỉ Phép"),
+                          ),
+                          DropdownMenuItem(
+                            value: 'material_request',
+                            child: Text("Phiếu Đề Xuất Vật Tư"),
+                          ),
+                        ],
+                        onChanged: (val) =>
+                            setState(() => selectedModule = val!),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                SwitchListTile(
-                  title: const Text("Đang sử dụng"),
-                  value: isActive,
-                  onChanged: (val) => setState(() => isActive = val),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: "Tên quy trình",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Tick chọn những cấp sẽ tham gia duyệt đơn này:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const Text(
+                    "(Hệ thống sẽ tự động sắp xếp theo thứ tự cấp bậc từ thấp đến Giám đốc)",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  ...availableApprovers.map((r) {
+                    final rCode = r['code'].toString();
+                    final isDirector = r['level_rank'] == 1;
+                    return CheckboxListTile(
+                      title: Text(
+                        "${r['name']} (Cấp ${r['level_rank']})",
+                        style: TextStyle(
+                          color: isDirector ? Colors.purple : Colors.black87,
+                          fontWeight: isDirector
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                      value: selectedSteps.contains(rCode),
+                      onChanged: (val) {
+                        setState(() {
+                          if (val == true)
+                            selectedSteps.add(rCode);
+                          else
+                            selectedSteps.remove(rCode);
+                        });
+                      },
+                    );
+                  }).toList(),
+                ],
+              ),
             ),
             actions: [
               TextButton(
@@ -8871,184 +10195,55 @@ class _AttendanceConfigTab extends ConsumerWidget {
                 child: const Text("Hủy"),
               ),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade800,
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: () async {
-                  if (nameCtrl.text.isEmpty) return;
-                  final act = ref.read(systemActionProvider);
-                  bool success = false;
+                  if (nameCtrl.text.isEmpty || selectedSteps.isEmpty) return;
 
-                  if (type == 'shift') {
-                    success = isEditing
-                        ? await act.updateShiftConfig(
-                            item['id'].toString(),
-                            nameCtrl.text,
-                            symbolCtrl.text,
-                            isActive,
-                          )
-                        : await act.addShiftConfig(
-                            nameCtrl.text,
-                            symbolCtrl.text,
-                          );
-                  } else {
-                    success = isEditing
-                        ? await act.updateAttendanceStatusConfig(
-                            item['id'].toString(),
-                            nameCtrl.text,
-                            symbolCtrl.text,
-                            isActive,
-                          )
-                        : await act.addAttendanceStatusConfig(
-                            nameCtrl.text,
-                            symbolCtrl.text,
-                          );
-                  }
+
+                  selectedSteps.sort((a, b) {
+                    final levelA =
+                        allRoles.firstWhere(
+                          (r) => r['code'] == a,
+                          orElse: () => {'level_rank': 0},
+                        )['level_rank'] ??
+                        0;
+                    final levelB =
+                        allRoles.firstWhere(
+                          (r) => r['code'] == b,
+                          orElse: () => {'level_rank': 0},
+                        )['level_rank'] ??
+                        0;
+                    return levelB.compareTo(levelA);
+                  });
+
+                  final success = await ref
+                      .read(systemActionProvider)
+                      .addApprovalWorkflow(
+                        roleCode,
+                        nameCtrl.text,
+                        selectedModule,
+                        selectedSteps,
+                      );
 
                   if (context.mounted) {
                     Navigator.pop(c);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          success
-                              ? "Lưu thành công!"
-                              : "Lỗi (Có thể trùng tên).",
+                          success ? "Đã lưu quy trình!" : "Lỗi khi lưu.",
                         ),
                       ),
                     );
                   }
                 },
-                child: const Text("Lưu"),
+                child: const Text("TẠO QUY TRÌNH"),
               ),
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildSection(
-    BuildContext context,
-    WidgetRef ref,
-    String title,
-    String type,
-    AsyncValue<List<Map<String, dynamic>>> asyncData,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-              ),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text("Thêm"),
-                style: ElevatedButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                ),
-                onPressed: () => _showAddOrEdit(context, ref, type: type),
-              ),
-            ],
-          ),
-        ),
-        asyncData.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, s) => Center(child: Text("Lỗi: $e")),
-          data: (data) {
-            if (data.isEmpty)
-              return const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text("Chưa có dữ liệu."),
-              );
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: data.length,
-              itemBuilder: (c, i) => Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                child: ListTile(
-                  title: Text(
-                    data[i]['name'].toString(),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    "Ký hiệu: ${data[i]['symbol'] ?? 'Không có'} | Trạng thái: ${data[i]['is_active'] == true ? 'Đang dùng' : 'Đã ẩn'}",
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showAddOrEdit(
-                          context,
-                          ref,
-                          type: type,
-                          item: data[i],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () async {
-                          final act = ref.read(systemActionProvider);
-                          final msg = type == 'shift'
-                              ? await act.deleteShiftConfig(
-                                  data[i]['id'].toString(),
-                                )
-                              : await act.deleteAttendanceStatusConfig(
-                                  data[i]['id'].toString(),
-                                );
-                          if (context.mounted)
-                            ScaffoldMessenger.of(
-                              context,
-                            ).showSnackBar(SnackBar(content: Text(msg)));
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        const Divider(height: 32, thickness: 2),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final shiftData = ref.watch(shiftConfigsProvider);
-    final statusData = ref.watch(attendanceStatusConfigsProvider);
-
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            _buildSection(
-              context,
-              ref,
-              "1. Cấu hình Ca làm việc",
-              "shift",
-              shiftData,
-            ),
-            _buildSection(
-              context,
-              ref,
-              "2. Cấu hình Trạng thái nghỉ/công",
-              "status",
-              statusData,
-            ),
-            const SizedBox(height: 40),
-          ],
-        ),
       ),
     );
   }
@@ -9097,19 +10292,24 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
     'Chờ duyệt',
   ];
 
+
   void _downloadTemplate(WidgetRef ref) {
+
     final headers = [
       'employee_code',
       'full_name',
       'email',
+      'password',
       'phone_number',
       'role',
       'is_active',
     ];
+
     final exampleRow = [
-      'NV000',
+      'NV001',
       'Nguyen Van A',
       'a@example.com',
+      'Abc@12345',
       '0909123456',
       'worker',
       'true',
@@ -9757,7 +10957,6 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
               final divisionsAsync = ref.watch(divisionListProvider);
               final departmentsAsync = ref.watch(departmentListProvider);
               final rolesAsync = ref.watch(roleListProvider);
-              final hierarchyAsync = ref.watch(roleHierarchyProvider);
               final employeesAsync = ref.watch(employeeListProvider);
 
               return AlertDialog(
@@ -9941,67 +11140,78 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
                         const SizedBox(height: 12),
 
 
-                        hierarchyAsync.when(
+                        employeesAsync.when(
                           loading: () => const SizedBox.shrink(),
-                          error: (e, s) => const Text("Lỗi tải phân cấp"),
-                          data: (hierarchyList) {
-                            return employeesAsync.when(
-                              loading: () => const SizedBox.shrink(),
-                              error: (e, s) => const Text("Lỗi tải NV"),
-                              data: (employees) {
-                                final allowedManagerRoles = hierarchyList
-                                    .where((h) => h['role'] == selectedRole)
-                                    .map((h) => h['managed_by_role'] as String)
-                                    .toList();
+                          error: (e, s) => const Text("Lỗi tải NV"),
+                          data: (employees) {
 
-                                final validManagers = employees.where((e) {
-                                  if (e.id == profile.id) return false;
-                                  if (!allowedManagerRoles.contains(e.role))
-                                    return false;
+                            final roles = rolesAsync.valueOrNull ?? [];
 
-                                  if (e.role == 'team_leader' ||
-                                      e.role == 'section_head') {
-                                    bool matchDept =
-                                        selectedDepartmentId == null ||
-                                        e.departmentId == selectedDepartmentId;
-                                    bool matchDiv =
-                                        selectedDivisionId == null ||
-                                        e.divisionId == selectedDivisionId;
-                                    return matchDept && matchDiv;
-                                  }
-                                  return true;
-                                }).toList();
 
-                                if (selectedManagerId != null &&
-                                    !validManagers.any(
-                                      (m) => m.id == selectedManagerId,
-                                    )) {
-                                  WidgetsBinding.instance.addPostFrameCallback(
-                                    (_) => setState(
-                                      () => selectedManagerId = null,
+                            final currentRoleLevel =
+                                roles.firstWhere(
+                                  (r) => r['code'] == selectedRole,
+                                  orElse: () => {'level_rank': 4},
+                                )['level_rank'] ??
+                                4;
+
+
+                            final validManagers = employees.where((e) {
+                              if (e.id == profile.id)
+                                return false;
+
+                              final eLevel =
+                                  roles.firstWhere(
+                                    (r) => r['code'] == e.role,
+                                    orElse: () => {'level_rank': 4},
+                                  )['level_rank'] ??
+                                  4;
+
+
+                              if (eLevel >= currentRoleLevel &&
+                                  e.role != 'admin')
+                                return false;
+
+
+                              bool matchDept =
+                                  selectedDepartmentId == null ||
+                                  e.departmentId == selectedDepartmentId;
+                              bool matchDiv =
+                                  selectedDivisionId == null ||
+                                  e.divisionId == selectedDivisionId;
+
+                              return (matchDept && matchDiv) ||
+                                  e.role == 'director' ||
+                                  e.role == 'admin';
+                            }).toList();
+
+
+                            if (selectedManagerId != null &&
+                                !validManagers.any(
+                                  (m) => m.id == selectedManagerId,
+                                )) {
+                              WidgetsBinding.instance.addPostFrameCallback(
+                                (_) => setState(() => selectedManagerId = null),
+                              );
+                            }
+
+                            return DropdownButtonFormField<String>(
+                              value: selectedManagerId,
+                              decoration: const InputDecoration(
+                                labelText: "Người quản lý trực tiếp",
+                              ),
+                              items: validManagers
+                                  .map(
+                                    (manager) => DropdownMenuItem(
+                                      value: manager.id,
+                                      child: Text(
+                                        "${manager.fullName} (${manager.role})",
+                                      ),
                                     ),
-                                  );
-                                }
-
-                                return DropdownButtonFormField<String>(
-                                  value: selectedManagerId,
-                                  decoration: const InputDecoration(
-                                    labelText: "Người quản lý trực tiếp",
-                                  ),
-                                  items: validManagers
-                                      .map(
-                                        (manager) => DropdownMenuItem(
-                                          value: manager.id,
-                                          child: Text(
-                                            "${manager.fullName} (${manager.role})",
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                  onChanged: (val) =>
-                                      setState(() => selectedManagerId = val),
-                                );
-                              },
+                                  )
+                                  .toList(),
+                              onChanged: (val) =>
+                                  setState(() => selectedManagerId = val),
                             );
                           },
                         ),
@@ -10464,84 +11674,6 @@ class TabCongCaNhan extends ConsumerWidget {
       ),
     );
   }
-
-  Widget _buildDatePicker(
-    BuildContext context,
-    String label,
-    DateTime date,
-    Function(DateTime) onPicked,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
-        ),
-        const SizedBox(height: 4),
-        InkWell(
-          onTap: () async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: date,
-              firstDate: DateTime(2020),
-              lastDate: DateTime(2030),
-            );
-            if (picked != null) onPicked(picked);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade400),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(DateFormat('MM/dd/yyyy').format(date)),
-                const Icon(Icons.calendar_today, size: 18),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDropdown(
-    String label,
-    String value,
-    List<String> items,
-    Function(String?) onChanged,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade400),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              isExpanded: true,
-              value: value,
-              items: items
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: onChanged,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 
@@ -10697,25 +11829,43 @@ class _XinNghiPhepDialogState extends ConsumerState<XinNghiPhepDialog> {
 
                   return Consumer(
                     builder: (context, ref, child) {
-                      final hierarchyAsync = ref.watch(roleHierarchyProvider);
+                      final workflowsAsync = ref.watch(
+                        approvalWorkflowsProvider,
+                      );
                       final currentUserAsync = ref.watch(
                         currentProfileProvider,
                       );
 
-                      return hierarchyAsync.when(
+                      return workflowsAsync.when(
                         loading: () => const CircularProgressIndicator(),
-                        error: (e, s) => const Text("Lỗi phân cấp"),
-                        data: (hierarchy) {
+                        error: (e, s) => const Text(
+                          "Lỗi tải quy trình duyệt",
+                          style: TextStyle(color: Colors.red),
+                        ),
+                        data: (workflows) {
                           final currentUserRole =
                               currentUserAsync.valueOrNull?.role ?? 'worker';
                           final currentUserDept =
                               currentUserAsync.valueOrNull?.departmentId;
 
 
-                          final allowedManagerRoles = hierarchy
-                              .where((h) => h['role'] == currentUserRole)
-                              .map((h) => h['managed_by_role'])
+                          final myWorkflows = workflows
+                              .where(
+                                (w) =>
+                                    w['role_code'] == currentUserRole &&
+                                    w['module_type'] ==
+                                        'leave_request',
+                              )
                               .toList();
+
+
+                          final List<String> allowedManagerRoles = [];
+                          for (var wf in myWorkflows) {
+                            final steps = wf['steps'] as List<dynamic>? ?? [];
+                            if (steps.isNotEmpty) {
+                              allowedManagerRoles.add(steps.first.toString());
+                            }
+                          }
 
 
                           final managers = employees.where((e) {
@@ -10725,10 +11875,10 @@ class _XinNghiPhepDialogState extends ConsumerState<XinNghiPhepDialog> {
                             bool isSameDept =
                                 e.departmentId == currentUserDept ||
                                 e.role == 'director' ||
-                                e.role ==
-                                    'admin';
+                                e.role == 'admin';
                             return isAllowedRole && isSameDept;
                           }).toList();
+
 
                           if (_selectedApproverId != null &&
                               !managers.any(
@@ -10750,7 +11900,7 @@ class _XinNghiPhepDialogState extends ConsumerState<XinNghiPhepDialog> {
                                 isExpanded: true,
                                 value: _selectedApproverId,
                                 hint: const Text(
-                                  "-- Chọn người quản lý (Theo cấp bậc) --",
+                                  "-- Chọn người nhận đơn (Bước 1) --",
                                 ),
                                 items: managers
                                     .map(
@@ -10992,6 +12142,7 @@ dependencies:
 
 
   flutter_riverpod: ^2.5.1
+  logger: ^2.0.2
 
 
   freezed_annotation: ^2.4.1
@@ -11013,6 +12164,7 @@ dev_dependencies:
   build_runner: ^2.4.8
   freezed: ^2.4.7
   json_serializable: ^6.9.5
+  mocktail: ^1.0.3
 
 
 
@@ -11034,6 +12186,7 @@ import '../../../core/services/supabase_provider.dart';
 
 
 
+
 final Map<String, String> GROUP_NAMES = {
   "nhan_su": "Quản lý Nhân sự",
   "phong_ban": "Cơ Cấu Tổ Chức & Cấu Hình",
@@ -11041,8 +12194,7 @@ final Map<String, String> GROUP_NAMES = {
   "duyet_don": "Duyệt Đơn Từ",
   "nhap_lieu": "Nhập Số Liệu & Cấu Hình Máy",
   "bao_cao": "Báo cáo & Thống kê",
-  "de_xuat": "Đề Xuất Vật Tư Phụ Tùng",
-  "vat_tu": "Quản Lý Kho Vật Tư",
+  "vat_tu": "Quản Lý Vật Tư & Đề Xuất",
   "gop_y": "Đóng Góp & Tiện Ích",
 };
 
@@ -11056,40 +12208,32 @@ final Map<String, Map<String, String>> ALL_FEATURES_NESTED = {
   "phong_ban": {
     "phong_ban_bo_phan": "Quản lý Bộ Phận",
     "phong_ban_phong_ban": "Quản lý Phòng Ban",
-    "phong_ban_chuc_vu": "Quản lý Chức Vụ",
+    "phong_ban_chuc_vu": "Quản lý Chức Vụ & Cấp Bậc",
     "phong_ban_phan_quyen": "Phân Quyền App",
-    "phong_ban_cap_bac": "Cấp Bậc Quản Lý",
   },
   "cham_cong": {
     "cham_cong_ngay": "Chấm Công Ngày",
     "cham_cong_thang": "Bảng Công Tháng",
     "cham_cong_danh_gia": "Đánh Giá Xếp Loại",
+    "cham_cong_cau_hinh": "Cấu hình Ca/Trạng thái",
   },
   "duyet_don": {
     "duyet_don_cho": "Chờ duyệt",
     "duyet_don_lich_su": "Lịch sử đã duyệt",
   },
-
   "nhap_lieu": {
-    "nhap_lieu_dien": "Nhập số điện tiêu thụ hàng ngày",
+    "nhap_lieu_dien": "Nhập số điện tiêu thụ",
     "nhap_lieu_cau_hinh": "Cấu hình Máy móc / Tủ điện",
   },
   "bao_cao": {"bao_cao_view_stats": "Xem Thống Kê & Biểu Đồ"},
-  "gop_y": {"gop_y": "Đóng góp Ý kiến"},
-  "de_xuat": {
-    "de_xuat_tao": "Tạo phiếu & Xem phiếu cá nhân",
-    "de_xuat_duyet": "Duyệt phiếu đề xuất (Cấp Giám đốc)",
-    "de_xuat_lich_su": "Xem lịch sử tất cả phiếu đã duyệt",
-    "de_xuat_xoa": "Xóa phiếu đã duyệt/từ chối",
-    "de_xuat_danh_muc": "Quản lý danh mục VTPT (Thêm/Sửa/Xóa)",
-  },
-
   "vat_tu": {
-    "vat_tu_xem": "Xem bảng vật tư & lịch sử",
-    "vat_tu_nhap_xuat": "Thực hiện Nhập/Xuất kho",
-    "vat_tu_cau_hinh_chung": "Cấu hình Vật tư & Máy móc chung",
-    "vat_tu_cap_quyen": "Cấp quyền Quản lý kho cho NV khác (HR/Admin)",
+    "vat_tu_xem_kho": "Xem Tồn kho & Nhập/Xuất",
+    "vat_tu_de_xuat": "Tạo phiếu & Xem phiếu cá nhân",
+    "vat_tu_duyet": "Duyệt phiếu đề xuất",
+    "vat_tu_lich_su": "Xem lịch sử phiếu đề xuất",
+    "vat_tu_danh_muc": "Quản lý danh mục Mã VTPT",
   },
+  "gop_y": {"gop_y": "Đóng góp Ý kiến"},
 };
 
 final shiftConfigsProvider = FutureProvider<List<Map<String, dynamic>>>((
@@ -11154,11 +12298,14 @@ final rolePermissionsProvider = FutureProvider<List<Map<String, dynamic>>>((
   return List<Map<String, dynamic>>.from(response);
 });
 
-final roleHierarchyProvider = FutureProvider<List<Map<String, dynamic>>>((
+final approvalWorkflowsProvider = FutureProvider<List<Map<String, dynamic>>>((
   ref,
 ) async {
   final supabase = ref.read(supabaseProvider);
-  final response = await supabase.from('role_hierarchy').select();
+  final response = await supabase
+      .from('approval_workflows')
+      .select()
+      .order('created_at', ascending: true);
   return List<Map<String, dynamic>>.from(response);
 });
 
@@ -11282,45 +12429,52 @@ class SystemActionController {
     }
   }
 
-
-  Future<bool> addRoleHierarchy(String role, String managedBy) async {
+  Future<bool> addApprovalWorkflow(
+    String roleCode,
+    String workflowName,
+    String moduleType,
+    List<String> steps,
+  ) async {
     try {
-      await ref.read(supabaseProvider).from('role_hierarchy').insert({
-        'role': role,
-        'managed_by_role': managedBy,
+      await ref.read(supabaseProvider).from('approval_workflows').insert({
+        'role_code': roleCode,
+        'workflow_name': workflowName,
+        'module_type': moduleType,
+        'steps': steps,
       });
-      ref.invalidate(roleHierarchyProvider);
+      ref.invalidate(approvalWorkflowsProvider);
       return true;
     } catch (e) {
-
-      print("Lỗi thêm cấp bậc: $e");
-
       return false;
     }
   }
 
-  Future<bool> deleteRoleHierarchy(String role, String managedBy) async {
+  Future<String> deleteApprovalWorkflow(String id) async {
     try {
       await ref
           .read(supabaseProvider)
-          .from('role_hierarchy')
+          .from('approval_workflows')
           .delete()
-          .eq('role', role)
-          .eq('managed_by_role', managedBy);
-      ref.invalidate(roleHierarchyProvider);
-      return true;
+          .eq('id', id);
+      ref.invalidate(approvalWorkflowsProvider);
+      return "Đã xóa quy trình";
     } catch (e) {
-      print("Lỗi xóa cấp bậc: $e");
-      return false;
+      return "Lỗi khi xóa quy trình";
     }
   }
 
-  Future<bool> addRole(String code, String name, String? desc) async {
+  Future<bool> addRole(
+    String code,
+    String name,
+    String? desc,
+    int levelRank,
+  ) async {
     try {
       await ref.read(supabaseProvider).from('roles').insert({
         'code': code,
         'name': name,
         'description': desc,
+        'level_rank': levelRank,
       });
       ref.invalidate(roleListProvider);
       return true;
@@ -11329,12 +12483,17 @@ class SystemActionController {
     }
   }
 
-  Future<bool> updateRole(String code, String name, String? desc) async {
+  Future<bool> updateRole(
+    String code,
+    String name,
+    String? desc,
+    int levelRank,
+  ) async {
     try {
       await ref
           .read(supabaseProvider)
           .from('roles')
-          .update({'name': name, 'description': desc})
+          .update({'name': name, 'description': desc, 'level_rank': levelRank})
           .eq('code', code);
       ref.invalidate(roleListProvider);
       return true;
@@ -11479,8 +12638,6 @@ class SystemActionController {
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ung_dung_nm/core/services/supabase_provider.dart';
-import 'package:ung_dung_nm/features/reports/views/inventory_main_page.dart';
-import 'package:ung_dung_nm/features/reports/views/material_request_page.dart';
 
 import 'home_dashboard_page.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -11490,9 +12647,9 @@ import '../../admin/views/tab_quan_ly_nhan_su.dart';
 import '../../admin/views/department_management_page.dart';
 import '../../attendance/views/manager_attendance_page.dart';
 import '../../reports/views/production_report_page.dart';
-import '../../attendance/views/feedback_submission_page.dart';
 import '../../attendance/views/feedback_main_page.dart';
 import '../../reports/views/data_entry_page.dart';
+import '../../reports/views/material_main_page.dart';
 
 
 final rolePermissionsProviderUser =
@@ -11631,16 +12788,10 @@ class MainNavigationPage extends ConsumerWidget {
 
 
           "vat_tu": const FeatureMenuItem(
-            title: 'Quản lý Vật tư',
-            icon: Icons.inventory_2,
-            destination: InventoryMainPage(),
+            title: 'Quản lý Vật tư & Đề xuất',
+            icon: Icons.inventory,
+            destination: MaterialMainPage(),
             iconColor: Colors.brown,
-          ),
-          "de_xuat_vt": const FeatureMenuItem(
-            title: 'Đề Xuất Vật Tư',
-            icon: Icons.assignment_add,
-            destination: MaterialRequestPage(),
-            iconColor: Colors.teal,
           ),
 
           "tai_san": const FeatureMenuItem(
@@ -11721,12 +12872,6 @@ class MainNavigationPage extends ConsumerWidget {
             if (canAccessInventory ||
                 hasAnyPermissionInGroup(allowedFeatures, 'vat_tu')) {
               userFeatures.add(allFeaturesMap['vat_tu']!);
-            }
-
-            if (hasAnyPermissionInGroup(allowedFeatures, 'de_xuat')) {
-              userFeatures.add(
-                allFeaturesMap['de_xuat_vt']!,
-              );
             }
 
 

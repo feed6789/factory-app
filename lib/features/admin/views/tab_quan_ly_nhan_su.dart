@@ -42,19 +42,24 @@ class _TabQuanLyNhanSuState extends ConsumerState<TabQuanLyNhanSu> {
     'Chờ duyệt',
   ];
 
+  // Thay thế hàm cũ bằng hàm này
   void _downloadTemplate(WidgetRef ref) {
+    // Thêm 'password' vào Headers
     final headers = [
       'employee_code',
       'full_name',
       'email',
+      'password', // <-- THÊM CỘT PASSWORD
       'phone_number',
       'role',
       'is_active',
     ];
+    // Thêm một mật khẩu tạm thời vào dòng ví dụ
     final exampleRow = [
-      'NV000',
+      'NV001',
       'Nguyen Van A',
       'a@example.com',
+      'Abc@12345', // <-- MẬT KHẨU MẪU
       '0909123456',
       'worker',
       'true',
